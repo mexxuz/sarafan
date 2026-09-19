@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Сарафан · значок</title>
+<style>
+  html, body { margin: 0; width: 640px; height: 640px; }
+  body { display: grid; place-items: center; background: #2f7bff; }
+  .icon {
+    width: 640px; height: 640px; display: grid; place-items: center; position: relative; overflow: hidden;
+    background: linear-gradient(150deg, #4b92ff 0%, #2f7bff 52%, #1f63dd 100%);
+  }
+  .icon::before {
+    content: ''; position: absolute; right: -130px; top: -170px; width: 540px; height: 540px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, .28), transparent 68%);
+  }
+  svg { position: relative; width: 430px; height: 430px; }
+</style>
+</head>
+<body>
+  <div class="icon">
+    <!-- вы в центре, три знакомых вокруг: нить и узелки -->
+    <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round">
+      <g stroke="#ffffff" stroke-opacity=".62" stroke-width="6">
+        <path d="M60 45 L60 31"/>
+        <path d="M47.6 68.5 L35.4 76.9"/>
+        <path d="M72.4 68.5 L84.6 76.9"/>
+      </g>
+      <circle cx="60" cy="60" r="16" fill="#ffffff"/>
+      <g fill="none" stroke="#ffffff" stroke-width="6.5">
+        <circle cx="60" cy="22" r="9"/>
+        <circle cx="28" cy="82" r="9"/>
+        <circle cx="92" cy="82" r="9"/>
+      </g>
+    </svg>
+  </div>
+</body>
+</html>
