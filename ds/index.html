@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сарафан · дизайн-система</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/app.css">
+<style>
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 24px 96px; }
+  .ds-nav {
+    position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; margin: 0 -24px 32px; padding: 14px 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(246, 250, 255, .88)); backdrop-filter: blur(16px);
+  }
+  .layer { margin-bottom: 72px; }
+  .layer > header { margin-bottom: 24px; }
+  .layer .no { font: 800 var(--fs-xxs)/1 var(--t); letter-spacing: .12em; color: var(--blue); text-transform: uppercase; }
+  .layer > header h2 { font: 800 var(--fs-2xl)/1.1 var(--t); letter-spacing: -.03em; margin: 8px 0 6px; }
+  .layer > header p { color: var(--ink-3); font-size: var(--fs-sm); margin: 0; max-width: 620px; }
+  .layer .file { font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-4); margin-top: 8px; display: block; }
+  .item { margin-bottom: 28px; }
+  .item h3 { font: 700 var(--fs-md)/1.2 var(--t); margin: 0 0 4px; }
+  .item p { color: var(--ink-3); font-size: var(--fs-xs); margin: 0 0 12px; max-width: 600px; }
+  .demo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+  .sw { border-radius: var(--r-md); overflow: hidden; box-shadow: var(--sh-1); background: var(--paper); }
+  .sw .fill { height: 58px; }
+  .sw .meta { padding: 9px 11px; font-size: var(--fs-xxs); color: var(--ink-3); }
+  .sw .meta b { display: block; color: var(--ink); font-size: var(--fs-xs); }
+  .type-row { display: flex; align-items: baseline; gap: 20px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .type-row .lbl { font-size: var(--fs-xxs); color: var(--ink-4); width: 90px; flex: none; }
+  .box { background: var(--paper); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--sh-1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div style="margin-bottom:28px">
+    <div class="eyebrow">дизайн-система</div>
+    <h1 class="h1" style="margin:6px 0 8px">Сарафан</h1>
+    <p class="muted" style="max-width:640px;margin:0">Собрана слоями: значения → атомы → молекулы → организмы → шаблоны. Каждый следующий слой складывается из предыдущего и ничего не изобретает заново.</p>
+  </div>
+
+  <nav class="ds-nav">
+    <a class="chip" href="#l1">1 · Основа</a>
+    <a class="chip" href="#l2">2 · Атомы</a>
+    <a class="chip" href="#l3">3 · Молекулы</a>
+    <a class="chip" href="#l4">4 · Организмы</a>
+    <a class="chip" href="#l5">5 · Шаблоны</a>
+  </nav>
+
+  <!-- ——— 1 ——— -->
+  <section class="layer" id="l1">
+    <header>
+      <div class="no">слой 1</div><h2>Основа</h2>
+      <p>Значения, из которых собрано всё остальное: цвет, градиенты, тени, шрифт, ритм, скругления. Меняются только здесь.</p>
+      <span class="file">miniapp/css/tokens.css</span>
+    </header>
+
+    <div class="item">
+      <h3>Цвет</h3>
+      <p>Синий — единственный акцент: действие, ваш круг, нить доверия. Зелёный только для подтверждений, оранжевый только для подозрения в накрутке.</p>
+      <div class="grid">
+        <div class="sw"><div class="fill" style="background:var(--sky-1)"></div><div class="meta"><b>sky-1</b>холст сверху</div></div>
+        <div class="sw"><div class="fill" style="background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)"></div><div class="meta"><b>paper</b>карточка</div></div>
+        <div class="sw"><div class="fill" style="background:var(--mist)"></div><div class="meta"><b>mist</b>вложенная плашка</div></div>
+        <div class="sw"><div class="fill" style="background:var(--ink)"></div><div class="meta"><b>ink</b>заголовок</div></div>
+        <div class="sw"><div class="fill" style="background:var(--ink-3)"></div><div class="meta"><b>ink-3</b>служебный текст</div></div>
+        <div class="sw"><div class="fill" style="background:var(--blue)"></div><div class="meta"><b>blue</b>акцент</div></div>
+        <div class="sw"><div class="fill" style="background:var(--good)"></div><div class="meta"><b>good</b>подтверждено</div></div>
+        <div class="sw"><div class="fill" style="background:var(--warn)"></div><div class="meta"><b>warn</b>подозрение</div></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <h3>Градиенты и подсветка</h3>
+      <p>Переходы мягкие, без резких границ. Свечение появляется там, где есть действие или где вы сами.</p>
+      <div class="grid">
+        <div class="sw"><div class="fill" style="background:var(--grad-canvas)"></div><div class="meta"><b>grad-canvas</b>холст</div></div>
+        <div class="sw"><div class="fill" style="background:var(--grad-card)"></div><div class="meta"><b>grad-card</b>карточка</div></div>
+        <div class="sw"><div class="fill" style="background:var(--grad-blue)"></div><div class="meta"><b>grad-blue</b>действие</div></div>
+        <div class="sw"><div class="fill" style="background:var(--grad-ink)"></div><div class="meta"><b>grad-ink</b>тёмные блоки</div></div>
+      </div>
+      <div class="demo" style="margin-top:14px">
+        <div class="box" style="box-shadow:var(--sh-1);width:140px;text-align:center;font-size:var(--fs-xxs);color:var(--ink-3)">sh-1</div>
+        <div class="box" style="box-shadow:var(--sh-2);width:140px;text-align:center;font-size:var(--fs-xxs);color:var(--ink-3)">sh-2</div>
+        <div class="box" style="box-shadow:var(--sh-3);width:140px;text-align:center;font-size:var(--fs-xxs);color:var(--ink-3)">sh-3</div>
+        <div class="box" style="background:var(--grad-blue);box-shadow:var(--sh-blue-lg);width:140px;text-align:center;font-size:var(--fs-xxs);color:#fff">sh-blue</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <h3>Шрифт</h3>
+      <p>Manrope во всех ролях. Иерархию держит насыщенность, а не размер. Цифры одинаковой ширины.</p>
+      <div class="type-row"><span class="lbl">800 · 32</span><span class="h1">Алексей Петров</span></div>
+      <div class="type-row"><span class="lbl">800 · 21</span><span class="h2">Как вы связаны</span></div>
+      <div class="type-row"><span class="lbl">700 · 15</span><span class="h3">Иван Ким</span></div>
+      <div class="type-row"><span class="lbl">400 · 15</span><span>Основной текст интерфейса</span></div>
+      <div class="type-row"><span class="lbl">400 · 13</span><span class="small muted">Второстепенный текст и подписи</span></div>
+      <div class="type-row"><span class="lbl">800 · числа</span><span class="h1 num" style="font-size:var(--fs-2xl)">23 · 8 · 6</span></div>
+    </div>
+  </section>
+
+  <!-- ——— 2 ——— -->
+  <section class="layer" id="l2">
+    <header>
+      <div class="no">слой 2</div><h2>Атомы</h2>
+      <p>Неделимые элементы. Атом не знает, где он стоит, и сам себе внешних отступов не назначает.</p>
+      <span class="file">miniapp/css/atoms.css</span>
+    </header>
+
+    <div class="item"><h3>Портрет</h3>
+      <p>Круг знакомства виден по обводке: синяя — ваш контакт, светлая — второй круг, без обводки — дальше. Свой портрет подсвечен.</p>
+      <div class="demo"><span class="av xl r1">ВЫ</span><span class="av l r1">ИК</span><span class="av r2">МЛ</span><span class="av">ДХ</span><span class="av s">СП</span><span class="av xs">АП</span></div>
+    </div>
+
+    <div class="item"><h3>Кнопки</h3>
+      <div class="demo"><button class="btn primary">Рекомендовать</button><button class="btn">Написать</button><button class="btn white">Войти в сеть</button><button class="btn soft sm">Профиль</button><button class="btn ghost sm">Отменить</button><button class="btn primary" disabled>Недоступно</button><span class="go">Открыть</span></div>
+    </div>
+
+    <div class="item"><h3>Метки и значки</h3>
+      <div class="demo"><span class="tag circle-1">Ваш контакт</span><span class="tag circle-2">2-й круг</span><span class="tag circle-3">3-й круг</span><span class="tag brand">Графический дизайн</span><span class="tag warm">Одна тесная группа</span><span class="tag done">Подтверждено</span><span class="trust">✓ надёжно</span><span class="badge">3</span></div>
+    </div>
+
+    <div class="item"><h3>Чипы</h3>
+      <div class="demo"><button class="chip on">Все <span class="n">12</span></button><button class="chip">1-й круг <span class="n">3</span></button><button class="chip">2-й круг <span class="n">7</span></button><button class="chip">Дальше <span class="n">2</span></button></div>
+    </div>
+
+    <div class="item"><h3>Поля</h3>
+      <div class="box" style="max-width:420px">
+        <input class="input" placeholder="Например: Рустам">
+        <textarea class="textarea" style="margin-top:12px" placeholder="Что человек сделал, как работал, какой был результат"></textarea>
+        <p class="hint">40 до минимума · конкретика помогает другим</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— 3 ——— -->
+  <section class="layer" id="l3">
+    <header>
+      <div class="no">слой 3</div><h2>Молекулы</h2>
+      <p>Два-три атома ради одной задачи. Главная молекула системы — нить доверия: строкой и сверху вниз.</p>
+      <span class="file">miniapp/css/molecules.css</span>
+    </header>
+
+    <div class="item"><h3>Нить строкой</h3>
+      <div class="box"><div class="stitch"><span class="you">Вы</span><span class="thr"></span>Сергей<span class="thr"></span><b>Рустам</b></div></div>
+    </div>
+
+    <div class="item"><h3>Нить сверху вниз</h3>
+      <p>У искомого человека кружок закрашен и подсвечен.</p>
+      <div class="box">
+        <div class="rail">
+          <a class="step"><span class="mark"><span class="dot"></span><span class="line"></span></span><span class="body"><span class="av s">ВЫ</span><span class="grow"><span class="who">Вы</span><span class="role">начало цепочки</span></span></span></a>
+          <a class="step"><span class="mark"><span class="dot"></span><span class="line"></span></span><span class="body"><span class="av s">ИК</span><span class="grow"><span class="who">Иван Ким</span><span class="role">ваш контакт</span></span></span></a>
+          <a class="step now"><span class="mark"><span class="dot"></span><span class="line"></span></span><span class="body"><span class="av s r1">АП</span><span class="grow"><span class="who">Алексей Петров</span><span class="role">Иван ручается · дизайнер</span></span></span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="item"><h3>Поиск, стопка лиц, числа</h3>
+      <div class="box">
+        <label class="search"><span style="color:var(--ink-4)">🔍</span><input placeholder="Дизайнер, врач, юрист…"></label>
+        <div class="demo" style="margin-top:16px">
+          <span class="av-stack"><span class="av xs">МЛ</span><span class="av xs">СП</span><span class="av xs">АЦ</span><span class="more-n">+9</span></span>
+          <span class="muted small">кто рекомендует</span>
+        </div>
+        <div class="stat-grid" style="margin-top:16px">
+          <div class="stat"><b>8</b><span>рекомендаций</span></div>
+          <div class="stat"><b>6</b><span>независимых источников</span></div>
+          <div class="stat"><b>7</b><span>связей в сети</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item"><h3>Шкала репутации</h3>
+      <div class="box">
+        <div class="rep-row on"><div class="num">23</div><div style="flex:1">
+          <div class="h3">Ремонт часов</div><div class="small muted">2 независимых источника</div>
+          <div class="bar-meter"><i class="grp" style="flex:20"></i><i style="flex:3"></i></div>
+          <div class="warn"><span>!</span><div>20 из 23 рекомендаций — от людей, которые знакомы между собой. Считаем их одним источником.</div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— 4 ——— -->
+  <section class="layer" id="l4">
+    <header>
+      <div class="no">слой 4</div><h2>Организмы</h2>
+      <p>Самостоятельные куски экрана. Каждый отвечает за один смысл целиком.</p>
+      <span class="file">miniapp/css/organisms.css</span>
+    </header>
+
+    <div class="item"><h3>Карточка человека</h3>
+      <p>Портрет и имя, значок «надёжно», крупно область, нить, числа, лица рекомендателей и кнопка. Первая карточка в ленте — синяя.</p>
+      <div class="rail-x">
+        <a class="card tap pcard accent">
+          <div class="head"><span class="av r1">ИК</span><div class="grow"><div class="name">Иван Ким <span class="trust">✓ надёжно</span></div><div class="sub ellip">Вы рекомендуете, и ещё Сергей</div></div><span class="tag circle-1">Ваш контакт</span></div>
+          <div class="role">Фотосъёмка</div>
+          <div class="meta"><span class="tag">4 рекомендации</span><span class="tag">3 источника</span></div>
+          <div class="foot"><span class="av-stack"><span class="av xs">МЛ</span><span class="av xs">СП</span><span class="av xs">АЦ</span><span class="more-n">+2</span></span><span class="grow"></span><span class="go">Открыть</span></div>
+        </a>
+        <a class="card tap pcard">
+          <div class="head"><span class="av r2">РЮ</span><div class="grow"><div class="name">Рустам Юсупов</div><div class="sub ellip">Рекомендует: Сергей</div></div><span class="tag circle-2">2-й круг</span></div>
+          <div class="role">Ремонт часов</div>
+          <div class="stitch" style="margin-bottom:10px"><span class="you">Вы</span><span class="thr"></span>Сергей<span class="thr"></span><b>Рустам</b></div>
+          <div class="meta"><span class="tag">3 рекомендации</span><span class="tag">3 источника</span></div>
+          <div class="foot"><span class="av-stack"><span class="av xs">СП</span><span class="av xs">ФТ</span></span><span class="grow"></span><span class="go">Открыть</span></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="item"><h3>Запрос сети</h3>
+      <p>Одно главное дело на экране — синей карточкой.</p>
+      <div class="card accent" style="max-width:420px">
+        <div class="row"><span class="av s">МЛ</span><div class="grow"><div class="h3">Мария Ли</div><div class="tiny muted">спрашивает · 2 ч назад</div></div></div>
+        <p class="q">Ищу хорошего педиатра рядом с Юнусабадом — сестре с малышом нужен постоянный врач.</p>
+        <div class="btn-row"><button class="btn primary sm">Посоветовать</button><button class="btn sm">Не знаю</button></div>
+      </div>
+      <button class="ask-hero" style="max-width:420px;margin-top:12px"><span class="ic">?</span><span class="grow"><span class="t1">Спросить сеть</span><span class="t2">Запрос получат 6 человек из вашего круга</span></span></button>
+    </div>
+
+    <div class="item"><h3>Лента событий</h3>
+      <div class="box" style="max-width:420px">
+        <div class="feed-item"><span class="av s">ТР</span><div class="grow"><div class="txt"><b>Тимур Рахимов</b> рекомендует вас · AI и нейросети</div><div class="when">5 ч назад</div></div></div>
+        <div class="feed-item"><span class="av s">АЦ</span><div class="grow"><div class="txt"><b>Анна Цой</b> делится с вами контактом</div><div class="when">9 ч назад</div></div></div>
+        <div class="feed-item"><span class="av s">МЛ</span><div class="grow"><div class="txt"><b>Мария Ли</b> рекомендует · Английский язык</div><div class="when">вчера</div></div></div>
+      </div>
+    </div>
+
+    <div class="item"><h3>Приглашение</h3>
+      <div class="invite-card" style="max-width:420px">
+        <div class="h2">Пригласите знакомых</div>
+        <div class="small" style="margin-top:6px">В Сарафан входят только по личной ссылке. Приглашение — не рекомендация.</div>
+        <div class="link-box"><span>t.me/sarafan_bot?start=vikram-7Q2</span></div>
+        <div class="btn-row"><button class="btn sm">Отправить</button><button class="btn ghost sm">Скопировать</button></div>
+        <div class="small" style="margin-top:14px">Использовано 3 из 10</div>
+        <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— 5 ——— -->
+  <section class="layer" id="l5">
+    <header>
+      <div class="no">слой 5</div><h2>Шаблоны</h2>
+      <p>Как организмы расставлены на экране: поля, шапки, заголовки разделов, полоса действий, ритм и появление.</p>
+      <span class="file">miniapp/css/templates.css</span>
+    </header>
+
+    <div class="item"><h3>Шапка главной</h3>
+      <div class="box" style="max-width:420px;padding:0 16px">
+        <div class="place"><span class="av r1">ВЫ</span><div class="grow"><div class="lbl">Ваша сеть</div><div class="val">Ташкент · 23 человека</div></div><span class="icon-btn bell">!<i class="badge">1</i></span></div>
+      </div>
+    </div>
+
+    <div class="item"><h3>Заголовок раздела и счётчик</h3>
+      <div style="max-width:420px">
+        <div class="sec-title" style="margin-top:0"><h2 class="h2">Рядом с вами</h2><a class="link">Все</a></div>
+        <div class="count-line"><b>2 человека найдено</b><span class="link">Показать всех</span></div>
+      </div>
+    </div>
+
+    <div class="item"><h3>Порядок блоков на экранах</h3>
+      <div class="box" style="max-width:640px;font-size:var(--fs-sm);color:var(--ink-2);line-height:1.7">
+        <b>Главная:</b> шапка → круги знакомых → поиск → области → лента «Рядом с вами» → «Спросить сеть» → заявки → запросы → события.<br>
+        <b>Поиск:</b> заголовок → поле → круги → сколько нашли → карточки по кругам → «Спросить сеть».<br>
+        <b>Человек:</b> шапка → числа → как вы связаны → за что рекомендуют → рекомендации → кого рекомендует → действия внизу.<br>
+        <b>Моя сеть:</b> круги во весь экран → приглашение → «кого здесь нет» → заявки → списки.
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

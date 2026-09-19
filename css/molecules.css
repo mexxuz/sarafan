@@ -1,0 +1,121 @@
+/* ——— СЛОЙ 3. МОЛЕКУЛЫ ———
+   Два-три атома, соединённые ради одной задачи: поле с подписью, строка человека,
+   нить доверия, стопка лиц, шкала репутации. Молекула самостоятельна, но не экран. */
+
+/* Поле с подписью */
+.field { display: block; margin-top: var(--s-4); }
+.field > span { display: block; font: 600 var(--fs-xs)/1.2 var(--t); color: var(--ink-3); margin: 0 0 var(--s-2); }
+
+/* Поле поиска */
+.search {
+  display: flex; align-items: center; gap: var(--s-3); background: var(--mist); border-radius: var(--r-md);
+  padding: 0 var(--s-2) 0 var(--s-4); height: 52px;
+  background: linear-gradient(170deg, #f7fafe, #edf3fa); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85);
+  transition: box-shadow var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.search:focus-within { background: #fff; box-shadow: inset 0 0 0 2px var(--blue), var(--glow-blue); }
+.search svg { width: 19px; height: 19px; color: var(--ink-3); flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: var(--fs-md); height: 100%; }
+.search input::placeholder { color: var(--ink-4); }
+.search .clear { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--ink-3); }
+.search .clear svg { width: 16px; height: 16px; }
+
+/* Ряд чипов */
+.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.chips.scroll { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--s-5)); padding: 2px var(--s-5); scrollbar-width: none; }
+.chips.scroll::-webkit-scrollbar { display: none; }
+
+/* Ряд кнопок */
+.btn-row { display: flex; gap: var(--s-2); }
+.btn-row .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
+
+/* Стопка лиц со счётчиком «+N» */
+.av-stack { display: flex; }
+.av-stack .av { box-shadow: 0 0 0 2px var(--paper); }
+.av-stack .av + .av { margin-left: -10px; }
+.more-n { width: 26px; height: 26px; border-radius: 50%; background: var(--grad-ink); color: #fff; font: 700 10px/26px var(--t); text-align: center; margin-left: -10px; box-shadow: 0 0 0 2px var(--paper); position: relative; }
+
+/* Нить доверия строкой: Вы — Сергей — Рустам */
+.stitch { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); font-size: var(--fs-xs); color: var(--ink-2); }
+.stitch b { font-weight: 700; color: var(--ink); }
+.stitch .you { color: var(--blue); font-weight: 700; }
+.stitch .thr { flex: none; width: 22px; height: 8px; position: relative; }
+.stitch .thr::before { content: ''; position: absolute; left: 0; right: 5px; top: 3.5px; height: 1.5px; background: var(--line); border-radius: 2px; }
+.stitch .thr::after { content: ''; position: absolute; right: 0; top: 1px; width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid var(--blue); }
+
+/* Нить доверия сверху вниз: как вы связаны */
+.rail { display: flex; flex-direction: column; }
+.rail .step { display: flex; gap: var(--s-4); }
+.rail .mark { width: 18px; flex: none; display: flex; flex-direction: column; align-items: center; }
+.rail .mark .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--blue); background: var(--paper); flex: none; margin-top: 15px; }
+.rail .step.now .mark .dot { box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 9px var(--blue), var(--glow-blue); border-color: var(--blue); }
+.rail .mark .line { flex: 1; width: 2px; background: var(--line); border-radius: 2px; margin: 6px 0 0; min-height: 22px; }
+.rail .step:last-child .mark .line { display: none; }
+.rail .body { flex: 1; min-width: 0; padding-bottom: var(--s-3); display: flex; align-items: center; gap: var(--s-3); }
+.rail .body .who { display: block; font: 700 var(--fs-md)/1.3 var(--t); }
+.rail .body .role { display: block; font-size: var(--fs-xs); color: var(--ink-3); margin-top: 1px; }
+
+/* Строка человека */
+.person { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.person:first-child { border-top: 0; padding-top: 0; }
+.person .grow { flex: 1; min-width: 0; }
+.person .name { font: 700 var(--fs-md)/1.3 var(--t); }
+.person .sub { font-size: var(--fs-xs); color: var(--ink-3); }
+.person .chev { width: 16px; height: 16px; color: var(--ink-4); flex: none; }
+.person-box { background: var(--mist); border-radius: var(--r-sm); padding: 0 var(--s-3); margin-top: var(--s-2); }
+.person-box .person { padding: var(--s-2) 0; border: 0; }
+
+/* Цитата из рекомендации */
+.quote { font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); margin: var(--s-3) 0 0; padding-left: var(--s-3); border-left: 2px solid var(--blue); }
+
+/* Шкала репутации и предупреждение */
+.bar-meter { height: 4px; border-radius: 2px; background: var(--mist-2); overflow: hidden; margin-top: var(--s-2); display: flex; gap: 2px; }
+.bar-meter i { display: block; height: 100%; background: linear-gradient(90deg, #5a9bff, #2f7bff); border-radius: 2px; }
+.bar-meter i.grp { background: var(--warn); opacity: .6; }
+.warn { display: flex; gap: var(--s-2); align-items: flex-start; background: var(--warn-soft); color: var(--warn); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--fs-xs); margin-top: var(--s-2); }
+.warn svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+
+/* Числа строкой */
+.stat-grid { display: flex; flex-wrap: wrap; gap: var(--s-3) var(--s-6); padding: var(--s-4) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stat { background: none; padding: 0; }
+.stat b { display: block; font: 800 var(--fs-2xl)/1 var(--t); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: var(--fs-xs); color: var(--ink-3); display: block; margin-top: 2px; max-width: 110px; }
+.card .stat-grid { border: 0; padding: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 2px var(--s-4); font-size: var(--fs-xs); color: var(--ink-3); }
+.stats b { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 3px; }
+
+/* Переключатель */
+.tabs { display: flex; gap: var(--s-2); margin-bottom: var(--s-4); }
+.tabs button {
+  flex: 1; height: 40px; border-radius: var(--r-sm); font: 700 var(--fs-xs)/1 var(--t); color: var(--ink-3); background: var(--mist);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.tabs button.on { background: var(--grad-ink); color: var(--paper); box-shadow: var(--sh-1); }
+
+/* Выбор в шторке */
+.pick { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-sm); width: 100%; text-align: left; background: var(--mist); margin-top: var(--s-2); transition: background var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+.pick.on { background: var(--blue-soft); box-shadow: inset 0 0 0 2px var(--blue); }
+.pick .grow { flex: 1; min-width: 0; }
+.pick .radio { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line); flex: none; background: var(--paper); }
+.pick.on .radio { box-shadow: inset 0 0 0 5px var(--blue); }
+
+/* Пояснение и ссылка-приглашение */
+.note { font-size: var(--fs-xs); color: var(--ink-2); background: var(--mist); border-radius: var(--r-sm); padding: var(--s-3); margin-top: var(--s-3); }
+.link-box { display: flex; align-items: center; gap: var(--s-2); background: rgba(255, 255, 255, .12); border-radius: var(--r-sm); padding: 11px var(--s-3); margin: var(--s-4) 0; font-size: var(--fs-xs); }
+.link-box span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dots { display: flex; gap: 3px; margin-top: var(--s-2); }
+.dots i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .2); }
+.dots i.on { background: var(--blue); }
+
+/* Кто пригласил */
+.inviter { display: flex; align-items: center; gap: var(--s-3); background: var(--mist); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); }
+
+/* Легенда кругов */
+.orbit-legend { display: flex; justify-content: center; gap: var(--s-5); font-size: var(--fs-xxs); color: var(--ink-3); margin-top: var(--s-4); }
+.orbit-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.orbit-legend i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+
+/* Строка «сколько нашли» */
+.count-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: var(--s-5) 0 var(--s-3); }
+.count-line b { font: 800 var(--fs-md)/1 var(--t); }
+.group-label { font: 700 var(--fs-xs)/1 var(--t); color: var(--ink-3); margin: var(--s-6) 0 var(--s-3); }
