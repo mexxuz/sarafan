@@ -255,7 +255,7 @@
     else if (name === 'net') { html = Network(params); active = 'net'; }
     else if (name === 'new') { html = News(); active = 'new'; }
     else if (name === 'o' && id) { html = Node(id); nav = false; }
-    else if (name === 'map') { html = Map(); active = 'net'; }
+    else if (name === 'map') { html = CloudScreen(); active = 'net'; }
     else if (name === 'me') { html = Me(params); active = 'me'; }
     else { html = Home(); active = 'home'; }
     const app = $('#app');
@@ -701,7 +701,7 @@
   // ——— Карта сети ———
   // Вы в центре, вокруг кольцами — знакомые и знакомые знакомых, дальше места и фирмы.
   // Линии показывают, что кого держит: серая — знакомство, синяя — поручительство.
-  function Map() {
+  function CloudScreen() {
     if (F.show === undefined) F.show = 'all';
     const ring1 = myContacts();
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
