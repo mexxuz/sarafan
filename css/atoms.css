@@ -64,7 +64,7 @@ p { text-wrap: pretty; }
   transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
 .btn:active { transform: scale(.97); }
-.btn svg { width: 17px; height: 17px; flex: none; }
+.btn svg { width: 18px; height: 18px; flex: none; }
 .btn.primary { background: var(--grad-blue); color: var(--blue-ink); box-shadow: var(--sh-blue); }
 .btn.white { background: var(--grad-ink); color: var(--paper); box-shadow: var(--sh-2); }
 .btn.soft { background: linear-gradient(170deg, #f1f6ff, #e3edff); color: var(--blue); }
