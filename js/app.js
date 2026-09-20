@@ -412,12 +412,18 @@
     const numbers = r.rep.count
       ? `${r.rep.count} ${pl(r.rep.count, 'рекомендация', 'рекомендации', 'рекомендаций').split(' ').pop()} · ${pl(r.rep.independent, 'источник', 'источника', 'источников')}`
       : 'рекомендаций пока нет';
-    const circle = r.circle === 1 ? '1-й круг' : r.circle === 2 ? '2-й круг' : r.circle === 3 ? '3-й круг' : '';
+    // Номер круга — наш внутренний жаргон. Человеку нужно знать, как он до этого
+    // человека дойдёт: сам напишет, попросит знакомого или пойдёт в два шага.
+    const via = r.chain && r.chain.length > 1 ? r.chain[1] : null;
+    const path = r.circle === 1 ? 'Ваш контакт'
+      : r.circle === 2 && via ? `через ${esc(first(via))}`
+        : r.circle === 2 ? 'через знакомого'
+          : r.circle === 3 ? 'в два шага' : '';
     return `<a class="card tap pcard ${accent ? 'accent' : ''}" href="#/p/${u.id}?cat=${r.cat}">
       <div class="head">${av(u.id, '', r.circle === 1 ? 'r1' : r.circle === 2 ? 'r2' : '')}
         <div class="grow"><div class="name ellip">${esc(u.name)} ${trustMark(r.rep)}</div>
           <div class="job ellip">${esc(cat(r.cat).name)}${otherCats ? ` <span class="more">+${otherCats}</span>` : ''}</div></div>
-        ${circle ? `<span class="tag circle-${r.circle}">${circle}</span>` : ''}</div>
+        ${path ? `<span class="tag circle-${r.circle}">${path}</span>` : ''}</div>
       <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
         <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
