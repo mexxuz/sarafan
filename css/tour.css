@@ -192,11 +192,12 @@
   animation: shine 2.8s var(--ease) 600ms infinite;
 }
 @keyframes shine { from { transform: translateX(0); } to { transform: translateX(400%); } }
+/* значок вида — справа на границе обложки, как в карточках приложения */
 .sc-places .pin {
-  position: absolute; left: var(--s-4); bottom: -16px; width: 34px; height: 34px; border-radius: 50%;
+  position: absolute; right: var(--s-4); bottom: -14px; width: 30px; height: 30px; border-radius: 50%;
   display: grid; place-items: center; background: var(--paper); color: var(--blue); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
 }
-.sc-places .pin svg { width: 18px; height: 18px; }
+.sc-places .pin svg { width: 16px; height: 16px; }
 .sc-places .place-card b { display: block; font: 700 var(--fs-sm)/1.25 var(--t); }
 .sc-places .place-card s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; margin-top: 2px; }
 .sc-places .fact {

@@ -225,7 +225,7 @@
       const prevId = chain[i - 1];
       const isRec = i === chain.length - 1 && prevId === recAuthor;
       const role = i === 0 ? 'начало цепочки'
-        : isRec ? (prevId === S.me ? 'вы за него ручаетесь' : `${esc(first(prevId))} ручается${catId ? ' · ' + esc(cat(catId).who.toLowerCase()) : ''}`)
+        : isRec ? (prevId === S.me ? 'вы его рекомендуете' : `${esc(first(prevId))} рекомендует${catId ? ' · ' + esc(cat(catId).who.toLowerCase()) : ''}`)
           : i === 1 ? 'ваш контакт' : `знакомый: ${esc(first(prevId))}`;
       const last = i === chain.length - 1;
       return `<a class="step ${last ? 'now' : ''}" href="#/p/${id}" style="--k:${i}">
@@ -446,7 +446,7 @@
 
   const repRows = (id, onlyCat) => {
     const cats = G.catsOf(id).filter((c) => !onlyCat || c === onlyCat);
-    if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда за человека ручаются другие.</p>';
+    if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда человека рекомендуют другие.</p>';
     return cats.map((c) => {
       const r = G.reputation(id, c);
       const nearOthers = r.near.filter((a) => a !== S.me);
@@ -464,7 +464,7 @@
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
   const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'зарабатывает на этом' };
-  // Двое поручились друг за друга — это сильнее, чем две отдельные рекомендации
+  // Двое рекомендуют друг друга — это сильнее, чем две отдельные рекомендации
   const mutualRec = (a, b) => S.recs.some((x) => !x.private && x.from === a && x.to === b)
     && S.recs.some((x) => !x.private && x.from === b && x.to === a);
 
@@ -478,7 +478,7 @@
       <p class="txt">${esc(r.text)}</p>${target}</div>`;
   };
 
-  // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто ручается.
+  // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто рекомендует.
   // Главное — не числа, а чужие слова: ради них сюда и приходят.
   const resultCard = (r, accent) => {
     const u = r.user;
@@ -489,9 +489,9 @@
     // цитата — от самого близкого человека, его же имя под ней
     const best = (r.rep.recs || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
     let who1;
-    if (iRec) who1 = others.length ? `Вы и ещё ${others.length}` : 'Вы ручаетесь';
-    else if (others.length) who1 = esc(first(others[0])) + (others.length > 1 ? ` и ещё ${others.length - 1}` : ' ручается');
-    else if (r.via) who1 = esc(first(r.via)) + ' ручается';
+    if (iRec) who1 = others.length ? `Вы и ещё ${others.length}` : 'Вы рекомендуете';
+    else if (others.length) who1 = esc(first(others[0])) + (others.length > 1 ? ` и ещё ${others.length - 1}` : ' рекомендует');
+    else if (r.via) who1 = esc(first(r.via)) + ' рекомендует';
     else if (r.circle === 1) who1 = 'Ваш контакт';
     else who1 = 'Общих знакомых нет';
     const otherCats = G.catsOf(u.id).filter((c) => c !== r.cat).length;
@@ -513,7 +513,7 @@
       <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
         <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
-    : `<p class="quote empty">${r.circle === 1 ? 'Вы знакомы, но за него пока никто не ручался.' : 'За этого человека пока никто не ручался.'}</p>`}
+    : `<p class="quote empty">${r.circle === 1 ? 'Вы знакомы, но его пока никто не рекомендовал.' : 'Этого человека пока никто не рекомендовал.'}</p>`}
       <div class="foot">${authors.length ? stack(authors) : ''}
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
@@ -557,7 +557,7 @@
       (n.recs || []).filter((r) => !r.private).forEach((r) => {
         if (r.from === S.me || !c1.has(r.from)) return;
         ev.push({ at: r.at, who: r.from, link: '#/o/' + n.id,
-          html: `<div class="txt"><b>${esc(U(r.from).name)}</b> ручается за ${n.kind === 'company' ? 'фирму' : 'место'} · <b>${esc(n.name)}</b></div><div class="quote sm">${esc(r.text)}</div>` });
+          html: `<div class="txt"><b>${esc(U(r.from).name)}</b> рекомендует ${n.kind === 'company' ? 'фирму' : 'место'} · <b>${esc(n.name)}</b></div><div class="quote sm">${esc(r.text)}</div>` });
       });
       (n.facts || []).forEach((f) => {
         if (f.from === S.me || !c1.has(f.from) || Date.now() - f.at > 21 * 864e5) return;
@@ -587,7 +587,7 @@
         done: myRecs > 0, num: 2,
         title: 'Запишите своих проверенных',
         text: c1.length
-          ? (myRecs ? `Вы поручились за ${pl(myRecs, 'человека', 'человек', 'человек')}. Так вас находят через ваших знакомых.`
+          ? (myRecs ? `Вы рекомендуете ${pl(myRecs, 'человека', 'человек', 'человек')}. Так вас находят через ваших знакомых.`
             : 'Напишите, за что вы их советуете: «делал мне сайт», «лечил зуб». Так ваш круг становится полезным знакомым.')
           : 'Станет доступно, когда в сети появится хотя бы один знакомый.',
         btn: c1.length ? 'Кого рекомендовать' : '', act: 'goto', href: '#/net',
@@ -608,7 +608,7 @@
       <div class="row"><div class="eyebrow grow">с чего начать · осталось ${left} из 3</div>
         <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
       <h2 class="h2" style="margin:6px 0 4px">Книжка наполняется людьми</h2>
-      <p class="small muted" style="margin:0 0 4px">Чем больше знакомых рядом, тем больше проверенных людей вам открыто. Видно, кто за человека ручается и через кого вы на него вышли.</p>
+      <p class="small muted" style="margin:0 0 4px">Чем больше знакомых рядом, тем больше проверенных людей вам открыто. Видно, кто человека рекомендует и через кого вы на него вышли.</p>
       ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
         <span class="mark">${st.done ? ic('check') : st.num}</span>
         <div class="grow"><div class="h3">${st.title}</div><div class="small muted" style="margin-top:2px">${st.text}</div>
@@ -648,7 +648,7 @@
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
-      <p class="sec-note">За них поручились знакомые и их знакомые</p>
+      <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
       ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
@@ -687,7 +687,7 @@
     const ring = (id) => (id === S.me ? 0 : Math.min(G.dist[id] ?? 9, 9));
     let people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
     if (maxFar) {
-      // на маленьком полотне показываем не всех: сначала тех, за кого ручаются
+      // на маленьком полотне показываем не всех: сначала тех, кого рекомендуют
       const far = people.filter((id) => ring(id) === 2)
         .sort((a, b) => G.recsTo(b).length - G.recsTo(a).length).slice(0, maxFar);
       const keep = new Set([...people.filter((id) => ring(id) <= 1), ...far]);
@@ -715,7 +715,7 @@
     const pairSeen = new Set();
     S.recs.filter((r) => !r.private && known.has(r.from) && known.has(r.to))
       .forEach((r) => {
-        // взаимность: оба поручились друг за друга — такую нить рисуем одну и особо
+        // взаимность: оба рекомендуют друг друга — такую нить рисуем одну и особо
         const both = vouched.has(r.to + '>' + r.from);
         const key = both ? [r.from, r.to].sort().join('~') : null;
         if (both) { if (pairSeen.has(key)) return; pairSeen.add(key); }
@@ -795,7 +795,7 @@
         ${facts.length ? `<div class="card" style="box-shadow:none;background:var(--card-2);margin-top:10px">${facts.map((f) => `<div class="fact"><p>${esc(f.text)}</p><div class="tiny muted">${esc(FACT_KIND[f.kind] || '')} · ${esc(first(f.from))}</div></div>`).join('')}</div>` : ''}
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Открыть</button>
-          <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}Поручиться</button>
+          <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}Рекомендовать</button>
         </div></div>`,
     });
   }
@@ -816,7 +816,7 @@
 
   // ——— Карта сети ———
   // Вы в центре, вокруг кольцами — знакомые и знакомые знакомых, дальше места и фирмы.
-  // Линии показывают, что кого держит: серая — знакомство, синяя — поручительство.
+  // Линии показывают, что кого держит: серая — знакомство, синяя — рекомендация.
   function CloudScreen() {
     if (F.show === undefined) F.show = 'all';
     const ring1 = myContacts();
@@ -835,7 +835,7 @@
         <span><i class="lg-place"></i>места</span>
         <span><i class="lg-co"></i>фирмы</span>
         <span><i class="lg-trust"></i>надёжно</span></div>
-      <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — ручается. Точку можно тянуть, нажатие открывает карточку.</p>`;
+      <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — рекомендует. Точку можно тянуть, нажатие открывает карточку.</p>`;
   }
 
   // ——— Места и фирмы ———
@@ -871,8 +871,8 @@
   const nodeCard = (n, accent) => {
     const recs = nodeRecs(n);
     const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
-    const who1 = recs.some((r) => r.from === S.me) ? 'Вы ручаетесь'
-      : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' ручается')
+    const who1 = recs.some((r) => r.from === S.me) ? 'Вы рекомендуете'
+      : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' рекомендует')
         : esc(first(n.by)) + ' записал';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
@@ -928,7 +928,7 @@
 
       <div class="stat-grid" style="margin-top:18px">
         <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
-        <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек ручается', 'человека ручаются', 'человек ручаются')}</span></div>
+        <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек рекомендует', 'человека рекомендуют', 'человек рекомендуют')}</span></div>
         <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
 
       <div class="sec-title"><h2 class="h2">Что об этом знают</h2><button class="btn sm" data-act="addFact" data-id="${n.id}">Добавить</button></div>
@@ -940,7 +940,7 @@
       </div>`).join('')}</div>`
     : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}
 
-      ${recs.length ? `<div class="sec-title"><h2 class="h2">Кто ручается</h2></div>
+      ${recs.length ? `<div class="sec-title"><h2 class="h2">Кто рекомендует</h2></div>
       <div class="card">${recs.map((r) => `<div class="rec"><div class="row"><a href="#/p/${r.from}">${av(r.from, 's')}</a>
         <div class="grow"><div class="row" style="gap:8px"><a href="#/p/${r.from}" class="h3 ellip" style="text-decoration:none">${esc(full(r.from))}</a>${G.dist[r.from] === 1 ? circleTag(1) : G.dist[r.from] === 2 ? circleTag(2) : ''}${r.private ? '<span class="tag">только для вас</span>' : ''}</div>
         <div class="tiny muted">${when(r.at)}</div></div></div>
@@ -948,7 +948,7 @@
 
       <div style="height:96px"></div>
       <div class="actions"><div class="inner">
-        <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Поручиться'}</button>
+        <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Рекомендовать'}</button>
         </div></div>`;
   }
 
@@ -1038,7 +1038,7 @@
     });
   }
 
-  // Поручиться за место
+  // Рекомендовать место
   function sheetNodeRec(id) {
     const n = nodeById(id);
     const was = nodeRecs(n).find((r) => r.from === S.me);
@@ -1046,14 +1046,14 @@
     openSheet({
       F: f,
       valid: () => f.text.trim().length >= 20,
-      render: () => `${sheetHead(null, was ? 'Изменить запись' : 'Поручиться', esc(n.name))}
-        <label class="field" style="margin-top:0"><span>За что вы ручаетесь</span>
+      render: () => `${sheetHead(null, was ? 'Изменить запись' : 'Рекомендовать', esc(n.name))}
+        <label class="field" style="margin-top:0"><span>За что рекомендуете</span>
           <textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что здесь было хорошо: что делали, сколько ждали, чем кончилось">${esc(f.text)}</textarea>
           <p class="hint" data-count="text" data-min="20"></p></label>
         <button class="pick ${f.priv ? 'on' : ''}" data-act="set" data-k="priv" data-v="${f.priv ? '' : '1'}">
           <span class="grow"><span class="h3" style="display:block">Только для себя</span>
           <span class="small muted">Останется в вашем кругу, знакомым видно не будет</span></span><span class="radio"></span></button>
-        <div class="s-foot"><button class="btn primary block" data-act="submitNodeRec" data-id="${id}" data-submit>${ic('seal')}${was ? 'Сохранить' : 'Поручиться'}</button></div>`,
+        <div class="s-foot"><button class="btn primary block" data-act="submitNodeRec" data-id="${id}" data-submit>${ic('seal')}${was ? 'Сохранить' : 'Рекомендовать'}</button></div>`,
       submit: () => {
         const body = { node: id, text: f.text.trim(), private: f.priv };
         closeSheet();
@@ -1382,7 +1382,7 @@
     const invite = `
       <div class="card accent invite-strong">
         <div class="eyebrow">сильное приглашение</div>
-        <h2 class="h2" style="margin:6px 0 8px">Позовите и сразу поручитесь</h2>
+        <h2 class="h2" style="margin:6px 0 8px">Позовите и сразу порекомендуйте</h2>
         <p class="small" style="margin:0 0 4px;color:rgba(255,255,255,.88)">Напишите рекомендацию заранее — человек войдёт по вашей ссылке, и она уже будет ждать у него в профиле. Так сеть с первого дня наполняется доверием, а не просто людьми.</p>
         <p class="small" style="margin:8px 0 0;color:rgba(255,255,255,.72)">Каждый приглашённый открывает вам свой список проверенных — и списки его знакомых.</p>
         <button class="btn primary block" style="margin-top:14px" data-act="outsider">${ic('seal')}Написать рекомендацию</button>
@@ -1395,7 +1395,7 @@
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
         <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
         <div class="dots plain">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
-        <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы за человека ручаетесь: это отдельное действие.</p>
+        <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы человека рекомендуете: это отдельное действие.</p>
       </div>`;
 
     const howto = `<div class="card" style="margin-top:10px">
@@ -1403,7 +1403,7 @@
       <div class="rail" style="margin-top:10px">
         ${[['Вы отправляете ссылку', 'в Telegram, любым знакомым'],
            ['Человек открывает её', 'и нажимает «Открыть Сарафан»'],
-           ['Он в сети и он ваш контакт', 'дальше вы можете поручиться друг за друга']]
+           ['Он в сети и он ваш контакт', 'дальше вы можете рекомендовать друг друга']]
           .map(([t, d], i, all) => `<div class="step ${i === all.length - 1 ? 'now' : ''}" style="--k:${i}">
             <span class="mark"><span class="dot"></span><span class="line"></span></span>
             <span class="body"><span class="grow"><span class="who">${t}</span><span class="role">${d}</span></span></span></div>`).join('')}
@@ -1492,7 +1492,7 @@
       <div class="reveal" style="text-align:center;margin-top:10px">
         <h1 class="h1" style="--k:0">Спросите своих —</h1>
         <h1 class="h1" style="--k:1">получите имя</h1>
-        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен часовщик, педиатр, электрик? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, за кого ручаются. Видно, кто ручается и через кого вы на него вышли.</p>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен часовщик, педиатр, электрик? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, кого рекомендуют сами. Видно, кто рекомендует и через кого вы на него вышли.</p>
       </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
@@ -1600,14 +1600,14 @@
       key: 'ask',
       eyebrow: 'запрос',
       title: 'Спросите свой круг',
-      gain: 'Вместо сорока вариантов из поиска — одно имя, за которое ручается знакомый',
+      gain: 'Вместо сорока вариантов из поиска — одно имя — то, которое советует знакомый',
       scene: `<div class="sc sc-ask">
         <span class="bubble">Нужен педиатр${ic('ask')}</span>
         <i class="hop h1"></i><i class="hop h2"></i><i class="hop h3"></i>
         <div class="answer-card">
           <span class="av-n">НА</span>
           <div class="who"><b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s></div>
-          <em class="vouch">${ic('seal')}Азиз ручается</em>
+          <em class="vouch">${ic('seal')}Азиз рекомендует</em>
           <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div></div>`,
     },
     {
@@ -1621,7 +1621,7 @@
           <b>Чайхана Центральная</b><s>кухня и торты · Мирабад</s>
           <i class="fact f1"><u>когда</u>Плов до 14:00, потом шашлык</i>
           <i class="fact f2"><u>к кому</u>Спросить Дилю, она держит столы</i>
-          <i class="fact f3">${ic('seal')}Эстелла и ещё двое ручаются</i></div></div>`,
+          <i class="fact f3">${ic('seal')}Эстелла и ещё двое рекомендуют</i></div></div>`,
     },
   ];
 
@@ -1685,13 +1685,13 @@
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
       <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Спросите своих —<br>получите имя</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен часовщик, педиатр, юрист? Знакомые посмотрят у себя и посоветуют того, за кого ручаются. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
+      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен часовщик, педиатр, юрист? Знакомые посмотрят у себя и посоветуют того, кого рекомендуют сами. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
         ${rule('net', 'Вам уже открыт чужой круг', inviter
       ? `${esc(first(inviter))} пригласил вас — значит, вам видно всех, кого ${esc(first(inviter))} проверил на себе, и тех, кого проверили его знакомые.`
       : 'Каждый знакомый открывает вам свой список проверенных людей и мест — и списки его знакомых.')}
-        ${rule('ask', 'Спросить дешевле, чем искать', 'Опишите задачу — вопрос уйдёт вашему кругу. Вместо сорока вариантов из интернета вы получите одно имя, за которое ручаются.')}
+        ${rule('ask', 'Спросить дешевле, чем искать', 'Опишите задачу — вопрос уйдёт вашему кругу. Вместо сорока вариантов из интернета вы получите одно имя, которое советуют знакомые.')}
         ${rule('seal', 'Ваша запись работает на вас', 'Записывая своих проверенных, вы не отдаёте их — вы делаете так, что знакомые перестают спрашивать одно и то же, а вам открываются их находки.')}
       </div></div>
       <div class="card" style="margin-top:10px">
@@ -1736,7 +1736,7 @@
     const data = SH ? SH.F : F;
     $$('[data-count]', scope).forEach((el) => {
       const n = (data[el.dataset.count] || '').trim().length, min = +el.dataset.min;
-      el.textContent = n < min ? `${min - n} до минимума · конкретика помогает другим` : 'Так понятно, за что вы ручаетесь';
+      el.textContent = n < min ? `${min - n} до минимума · конкретика помогает другим` : 'Так понятно, за что вы его рекомендуете';
       el.classList.toggle('ok', n >= min);
     });
     const valid = SH ? (SH.valid ? SH.valid() : true) : route().path[0] === 'ask' ? askValid() : !S.onboarded ? !!(F.name || '').trim() : true;
