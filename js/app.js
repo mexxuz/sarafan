@@ -514,7 +514,7 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${av(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1></div>${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${av(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1></div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
@@ -525,6 +525,7 @@
       <div class="card">${shown.map((r) => recItem(r)).join('')}${recs.length > shown.length ? `<button class="btn ghost block" style="margin-top:12px" data-act="more">Показать все ${recs.length}</button>` : ''}</div>` : ''}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, cat(r.cat).who)).join('')}</div>` : ''}
+      ${direct ? '' : `<div style="text-align:center;margin-top:22px"><button class="btn ghost sm" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
       <div class="actions"><div class="inner">${actions}</div></div>`;
   }
 
@@ -964,7 +965,9 @@
   // Изменить свой профиль
   function sheetEditMe() {
     const me = U(S.me);
-    const f = { name: me.name, about: me.about, cats: [...me.cats], role: me.role || 'both' };
+    const f = { name: me.name, about: me.about, cats: [...me.cats], role: me.role || 'both',
+      avail: S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open') };
+    const hidden = S.blocked || [];
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 2,
@@ -976,11 +979,20 @@
           ${f.own ? `<div class="row" style="margin-top:8px"><input class="input" data-bind="ownName" placeholder="Например: таможенный брокер" maxlength="40" value="${esc(f.ownName || '')}">
             <button class="btn sm" data-act="saveOwnJob">Добавить</button></div>` : ''}</div>`}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
+        <div class="field"><span>Как вы видны сети</span><div class="chips">${[
+          ['open', 'Беру работу'], ['busy', 'Сейчас занят'], ['hidden', 'Не показывать меня'],
+        ].map(([k, l]) => `<button class="chip ${f.avail === k ? 'on' : ''}" data-act="set" data-k="avail" data-v="${k}">${l}</button>`).join('')}</div>
+          <p class="hint">${f.avail === 'open' ? 'Вас находят в поиске, к вам приходят запросы'
+            : f.avail === 'busy' ? 'Вас по-прежнему видно, но рядом с именем написано, что сейчас вы не берёте'
+              : 'Вас не найдут в поиске и не посоветуют. Видят только ваши знакомые'}</p></div>
+        ${hidden.length ? `<div class="field"><span>Скрыты от вас</span><div class="chips">${hidden.map((b) => `<button class="chip" data-act="unblock" data-id="${b.id}">${esc(b.name)} ✕</button>`).join('')}</div>
+          <p class="hint">Вы друг друга не видите. Нажмите, чтобы вернуть</p></div>` : ''}
         <div class="s-foot"><button class="btn primary block" data-act="submitEdit" data-submit>Сохранить</button></div>`,
       submit: () => {
-        const body = { name: f.name.trim(), about: f.about.trim(), role: f.role, cats: f.role === 'client' ? [] : f.cats };
+        const body = { name: f.name.trim(), about: f.about.trim(), role: f.role, availability: f.avail,
+          cats: f.role === 'client' ? [] : f.cats };
         closeSheet();
-        mutate(() => Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role }),
+        mutate(() => { S.availability = f.avail; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden' }); },
           '/profile', body, 'Сохранено');
       },
     });
@@ -1097,6 +1109,19 @@
     askOwn: () => { F.own = true; $('#askcats').innerHTML = askCats(); },
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
+    // «Не показывайте меня этому человеку»: перестают видеть друг друга, он не узнаёт
+    hideFrom: (d) => {
+      const name = U(d.id).name;
+      mutate(() => {
+        S.blocked = [...(S.blocked || []), { id: d.id, name }];
+        S.conns = S.conns.filter((c) => !((c.a === S.me && c.b === d.id) || (c.b === S.me && c.a === d.id)));
+        delete S.users[d.id];
+        G = window.Graph(S);
+      }, '/blocks', { user: d.id, on: true }, name + ' больше вас не видит');
+      location.hash = '#/';
+    },
+    unblock: (d) => mutate(() => { S.blocked = (S.blocked || []).filter((b) => b.id !== d.id); },
+      '/blocks', { user: d.id, on: false }, 'Снова видите друг друга'),
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
     resetDemo: () => {
