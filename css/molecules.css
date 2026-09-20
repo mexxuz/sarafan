@@ -88,10 +88,17 @@
 /* Переключатель */
 .tabs { display: flex; gap: var(--s-2); margin-bottom: var(--s-4); }
 .tabs button {
-  flex: 1; height: 40px; border-radius: var(--r-sm); font: 700 var(--fs-xs)/1 var(--t); color: var(--ink-3); background: var(--mist);
+  /* равные доли, одна строка: число живёт отдельной приглушённой меткой,
+     поэтому длинные подписи не ломают ряд на две строки */
+  flex: 1 1 0; min-width: 0; height: 40px; padding: 0 var(--s-3); border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font: 700 var(--fs-xs)/1 var(--t); color: var(--ink-3); background: var(--mist);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
 }
+.tabs button i { font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-4); flex: none; }
 .tabs button.on { background: var(--grad-ink); color: var(--paper); box-shadow: var(--sh-1); }
+.tabs button.on i { color: rgba(255, 255, 255, .6); }
 
 /* Выбор в шторке */
 .pick { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-sm); width: 100%; text-align: left; background: var(--mist); margin-top: var(--s-2); transition: background var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }

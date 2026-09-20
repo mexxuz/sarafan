@@ -1407,7 +1407,10 @@
       <div class="sec-title"><h2 class="h2">Кто рядом с вами</h2></div>
       ${orbit({ inner: c1.slice(0, 8), outer: c2.slice(0, 8), cap: 'вы', size: 360, big: true, dim })}
       <div class="orbit-legend" style="margin-bottom:var(--s-5)"><span><i class="dot-1"></i>ваши контакты</span><span><i class="dot-2"></i>через них</span></div>
-      <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Ваши контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них · ${c2.length}</button><button class="${F.tab === 'places' ? 'on' : ''}" data-act="tab" data-v="places">Места и фирмы · ${allPlaces.length}</button></div>
+      <div class="tabs" role="tablist">
+        <button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Знакомые<i>${c1.length}</i></button>
+        <button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button>
+        <button class="${F.tab === 'places' ? 'on' : ''}" data-act="tab" data-v="places">Места<i>${allPlaces.length}</i></button></div>
       ${F.tab === 'places'
     ? (allPlaces.length
       ? `<div class="stack">${allPlaces.map((n) => nodeCard(n)).join('')}</div>`
@@ -1444,7 +1447,7 @@
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
       <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
-      <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам · ${inRecs.length}</button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас · ${outRecs.length}</button></div>
+      <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
       ${LIVE && !window.API.inTelegram ? '' : `<div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
         <p class="small muted" style="margin:6px 0 12px">Сарафан открывается и на компьютере, без Telegram. Возьмите код и наберите его там — вход сохранится в том браузере.</p>
