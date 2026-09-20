@@ -264,6 +264,18 @@
     navBack = false;
     app.innerHTML = `<div class="${enter}">${html}</div>`;
     app.classList.toggle('no-nav', !nav);
+    // Нижняя полоса живёт в каркасе, а не внутри экрана: внутри она цеплялась
+    // за анимацию появления и уезжала вместе с ней
+    const bar = $('#actions');
+    const inside = $('.actions', app);
+    if (inside) {
+      bar.innerHTML = inside.innerHTML;
+      bar.hidden = false;
+      inside.remove();
+    } else {
+      bar.hidden = true;
+      bar.innerHTML = '';
+    }
     drawNav(nav, active);
     if (hashChanged) window.scrollTo(0, 0);
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }

@@ -34,16 +34,17 @@
 .empty p { color: var(--ink-3); margin: var(--s-2) auto var(--s-4); max-width: 290px; font-size: var(--fs-sm); }
 
 /* Нижняя полоса действий на карточке человека */
-.actions {
+.actions, #actions {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   padding: var(--s-5) var(--s-5) calc(var(--s-4) + env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--paper) 62%, rgba(255, 255, 255, .86) 86%, transparent);
   pointer-events: none;
 }
-.actions .inner { pointer-events: auto; }
-.actions .inner { max-width: 420px; margin: 0 auto; display: flex; gap: var(--s-2); }
-.actions .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
-.actions .btn.icon { flex: none; width: 50px; padding: 0; }
+.actions .inner, #actions .inner { pointer-events: auto; }
+#actions[hidden] { display: none; }
+#actions .inner { max-width: 420px; margin: 0 auto; display: flex; gap: var(--s-2); }
+#actions .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
+#actions .btn.icon { flex: none; width: 50px; padding: 0; }
 
 /* ——— Движение: только вход, до 320 мс ——— */
 .fade-in { animation: fade var(--base) var(--ease) backwards; }
