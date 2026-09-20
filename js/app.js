@@ -546,6 +546,7 @@
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
+        <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
       <div class="cloud-where">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div>
       <p class="cloud-gain">${op.total1
@@ -1934,6 +1935,7 @@
     },
     hideStarter: () => { try { localStorage.setItem(STARTER_KEY, '1'); } catch (e) { /* */ } render(); toast('Убрали. Всё это есть в разделах ниже'); },
     mapShow: (d) => { F.show = d.v; render(); },
+    cloudHome: () => { if (cloud) cloud.home(); },
     newNode: (d) => sheetNewNode(d.v),
     submitNode: () => SH.submit(),
     editNode: (d) => sheetEditNode(d.id),

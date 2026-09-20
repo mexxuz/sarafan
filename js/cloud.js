@@ -10,6 +10,10 @@ window.Cloud = function (canvas, opts) {
   let nodes = [], edges = [], byId = {};
   let raf = null, held = null, hover = null, moved = 0;
   let pointer = { x: 0, y: 0, down: false, id: null };
+  // Полотно бесконечное: у графа нет стен, зато есть камера — её можно двигать и приближать
+  const cam = { x: 0, y: 0, scale: 1, vx: 0, vy: 0 };
+  const touches = new Map();
+  let pinch = 0;
   const imgs = {};
 
   const rnd = (n) => (Math.random() - 0.5) * n;
@@ -20,7 +24,6 @@ window.Cloud = function (canvas, opts) {
     W = box.width; H = box.height;
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   // ——— данные ———
@@ -97,18 +100,14 @@ window.Cloud = function (canvas, opts) {
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
-      // Держим узлы в мягком овале. Центр графа смещён вниз, поэтому сверху и снизу
-      // места разное — считаем полуоси от настоящего центра, иначе облако сплющивает.
-      const pad = n.r + 16;
-      const ax = W / 2 - pad;
-      const ay = (n.y < cy ? cy : H - cy) - pad;
-      const ox = (n.x - cx) / Math.max(20, ax);
-      const oy = (n.y - cy) / Math.max(20, ay);
-      const out = Math.hypot(ox, oy);
-      if (out > 1) {
-        n.x = cx + (ox / out) * ax;
-        n.y = cy + (oy / out) * ay;
-        n.vx *= 0.5; n.vy *= 0.5;
+      // Стен нет. Если узел ушёл совсем далеко, его мягко тянет обратно —
+      // пространство бесконечное, но граф не разлетается в пустоту.
+      const far = Math.hypot(n.x - cx, n.y - cy);
+      const edge = Math.max(W, H) * 0.9;
+      if (far > edge) {
+        const back = (far - edge) * 0.004;
+        n.vx -= ((n.x - cx) / far) * back;
+        n.vy -= ((n.y - cy) / far) * back;
       }
     });
   }
@@ -136,7 +135,9 @@ window.Cloud = function (canvas, opts) {
   const ringColor = (n) => (n.self ? COLOR.me : n.ring === 1 ? COLOR.ring1 : n.ring === 2 ? COLOR.ring2 : COLOR.far);
 
   function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    ctx.setTransform(dpr * cam.scale, 0, 0, dpr * cam.scale, dpr * cam.x, dpr * cam.y);
 
     // Круги никуда не делись — они просто перестали быть расстановкой.
     // Две еле видные окружности напоминают: ближе центра свои, дальше — через них.
@@ -305,6 +306,14 @@ window.Cloud = function (canvas, opts) {
       n.glow += (want - n.glow) * 0.18;            // подсветка приходит плавно
     });
 
+    // полотно по инерции доезжает после того, как его отпустили
+    if (!pointer.down) {
+      cam.x += cam.vx; cam.y += cam.vy;
+      cam.vx *= 0.92; cam.vy *= 0.92;
+      if (Math.abs(cam.vx) < 0.02) cam.vx = 0;
+      if (Math.abs(cam.vy) < 0.02) cam.vy = 0;
+    }
+
     draw();
     raf = requestAnimationFrame(tick);
   }
@@ -320,34 +329,68 @@ window.Cloud = function (canvas, opts) {
   // ——— касания ———
   const at = (e) => {
     const b = canvas.getBoundingClientRect();
-    return { x: e.clientX - b.left, y: e.clientY - b.top };
+    const sx = e.clientX - b.left, sy = e.clientY - b.top;
+    return { x: (sx - cam.x) / cam.scale, y: (sy - cam.y) / cam.scale, sx, sy };
   };
-  const find = (p) => nodes.find((n) => Math.hypot(n.x - p.x, n.y - p.y) <= n.r + 6);
+  const find = (p) => nodes.find((n) => Math.hypot(n.x - p.x, n.y - p.y) <= n.r + 8 / cam.scale);
 
   canvas.addEventListener('pointerdown', (e) => {
     const p = at(e);
+    touches.set(e.pointerId, { sx: p.sx, sy: p.sy });
+    if (touches.size === 2) {                        // два пальца — приближение
+      const [a, b] = [...touches.values()];
+      pinch = Math.hypot(a.sx - b.sx, a.sy - b.sy);
+      held = null;
+      return;
+    }
     held = find(p);
     moved = 0;
-    pointer = { x: p.x, y: p.y, down: true, id: e.pointerId };
-    if (held) { try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* без захвата тоже works */ } }
+    cam.vx = cam.vy = 0;
+    pointer = { x: p.x, y: p.y, sx: p.sx, sy: p.sy, down: true, id: e.pointerId };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* и без захвата работает */ }
   });
   canvas.addEventListener('pointermove', (e) => {
     const p = at(e);
-    if (held && pointer.down) {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { sx: p.sx, sy: p.sy });
+
+    if (touches.size === 2 && pinch) {               // приближение двумя пальцами
+      const [a, b] = [...touches.values()];
+      const now = Math.hypot(a.sx - b.sx, a.sy - b.sy);
+      const mid = { x: (a.sx + b.sx) / 2, y: (a.sy + b.sy) / 2 };
+      zoomAt(mid, now / pinch);
+      pinch = now;
+      if (calm) draw();
+      return;
+    }
+
+    if (pointer.down && held) {                      // тянем узел
       moved += Math.hypot(p.x - pointer.x, p.y - pointer.y);
       held.x = p.x; held.y = p.y; held.vx = held.vy = 0;
       pointer.x = p.x; pointer.y = p.y;
       if (calm) draw();
       return;
     }
+    if (pointer.down) {                              // тянем всё полотно
+      const dx = p.sx - pointer.sx, dy = p.sy - pointer.sy;
+      moved += Math.hypot(dx, dy);
+      cam.x += dx; cam.y += dy;
+      cam.vx = dx; cam.vy = dy;
+      pointer.sx = p.sx; pointer.sy = p.sy;
+      canvas.style.cursor = 'grabbing';
+      if (calm) draw();
+      return;
+    }
     const was = hover;
     hover = find(p);
-    canvas.style.cursor = hover ? 'pointer' : 'default';
+    canvas.style.cursor = hover ? 'pointer' : 'grab';
     if (calm && was !== hover) draw();
   });
   const release = (e) => {
+    if (e && e.pointerId != null) touches.delete(e.pointerId);
+    if (touches.size < 2) pinch = 0;
     if (held && moved < 6 && opts.onPick) opts.onPick(held);
     held = null; pointer.down = false;
+    canvas.style.cursor = 'grab';
     if (e && canvas.hasPointerCapture && e.pointerId != null) {
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) { /* уже отпущено */ }
     }
@@ -356,8 +399,30 @@ window.Cloud = function (canvas, opts) {
   canvas.addEventListener('pointercancel', release);
   canvas.addEventListener('pointerleave', () => { hover = null; });
 
+  function zoomAt(point, factor) {
+    const next = Math.min(2.4, Math.max(0.45, cam.scale * factor));
+    const k = next / cam.scale;
+    cam.x = point.x - (point.x - cam.x) * k;
+    cam.y = point.y - (point.y - cam.y) * k;
+    cam.scale = next;
+  }
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const b = canvas.getBoundingClientRect();
+    zoomAt({ x: e.clientX - b.left, y: e.clientY - b.top }, e.deltaY < 0 ? 1.08 : 0.93);
+    if (calm) draw();
+  }, { passive: false });
+
+  canvas.addEventListener('dblclick', () => {
+    cam.x = 0; cam.y = 0; cam.scale = 1; cam.vx = cam.vy = 0;
+    if (calm) draw();
+  });
+
+  canvas.style.cursor = 'grab';
   size();
   return {
+    home: () => { cam.x = 0; cam.y = 0; cam.scale = 1; cam.vx = cam.vy = 0; },
     setData: (d) => { setData(d); },
     start,
     stop,

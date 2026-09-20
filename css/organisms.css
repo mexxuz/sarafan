@@ -410,3 +410,14 @@
 .pcard.closed { opacity: .72; }
 .pcard.closed .name { text-decoration: line-through; text-decoration-color: rgba(18,20,26,.28); }
 .node-ic.off { background: var(--mist); color: var(--ink-4); }
+
+/* Кнопка «вернуть в центр» — рядом с разворотом */
+.cloud-home {
+  position: absolute; right: 12px; top: 52px; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue);
+  box-shadow: 0 1px 4px rgba(23, 43, 77, .07); backdrop-filter: blur(10px);
+  opacity: .8; transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.cloud-home svg { width: 16px; height: 16px; }
+.cloud-home:active { transform: scale(.94); }
+@media (hover: hover) { .cloud-home:hover { opacity: 1; } }
