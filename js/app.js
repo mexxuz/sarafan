@@ -772,10 +772,10 @@
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам · ${inRecs.length}</button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас · ${outRecs.length}</button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
-      <div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
+      ${LIVE && !window.API.inTelegram ? '' : `<div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
         <p class="small muted" style="margin:6px 0 12px">Сарафан открывается и на компьютере, без Telegram. Возьмите код и наберите его там — вход сохранится в том браузере.</p>
-        <div id="handoff"><button class="btn block" data-act="handoff">Получить код</button></div></div>
-      <p style="text-align:center;margin-top:20px"><button class="btn ghost sm" data-act="resetDemo">Начать демо заново</button></p>`;
+        <div id="handoff"><button class="btn block" data-act="handoff">Получить код</button></div></div>`}
+      ${LIVE ? '' : '<p style="text-align:center;margin-top:20px"><button class="btn ghost sm" data-act="resetDemo">Начать демо заново</button></p>'}`;
   }
 
   // ——— Вход в браузере ———
