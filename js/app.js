@@ -1131,7 +1131,7 @@
       <div class="tiny" style="opacity:.85">просит познакомить · ${when(i.at)}</div></div></div>
     <div style="margin:12px 0"><div class="stitch"><b>${esc(first(i.from))}</b><span class="thr"></span><span class="you">Вы</span><span class="thr"></span><b>${esc(first(i.to))}</b></div></div>
     <p class="q" style="margin:0 0 12px">«${esc(i.text)}»</p>
-    <div class="small" style="opacity:.85;margin-bottom:12px">${esc(full(i.to))} ничего не узнает, пока вы не согласитесь.</div>
+    <div class="small" style="opacity:.85;margin-bottom:12px">Согласитесь — ${esc(first(i.to))} увидит просьбу и сможет ответить, а вы останетесь в цепочке. Откажете — ${esc(first(i.from))} узнает только «не сейчас», без объяснений.</div>
     <div class="btn-row"><button class="btn primary sm" data-act="introYes" data-id="${i.id}">Познакомить</button><button class="btn sm" data-act="introNo" data-id="${i.id}">Не сейчас</button></div></div>`;
 
   // «Сложилось?» — спокойный вопрос без оценок и звёзд
