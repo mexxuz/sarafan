@@ -494,8 +494,8 @@
     const op = orbitPeople(6, 8);
     const small = op.total1 < 3;
     return `
-      <div class="place">${av(S.me, '', 'r1')}
-        <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
+      <div class="place">
+        <div class="grow"><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <button class="icon-btn bell ${inc.length ? 'ping' : ''}" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
       ${starter()}
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
