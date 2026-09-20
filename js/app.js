@@ -1627,7 +1627,7 @@
           <span class="from">АК</span>
           <div class="bubble-in">
             <b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s>
-            <em>${ic('seal')}рекомендую, сам вожу дочку</em></div>
+            <em>${ic('seal')}рекомендую, вожу к ней дочку</em></div>
         </div>
         <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div>`,
     },

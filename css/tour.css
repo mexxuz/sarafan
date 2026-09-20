@@ -197,12 +197,12 @@
 .sc-ask .mate.more b { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink-4); }
 /* Ответ приходит репликой: справа пузырь от того, кто ответил */
 .sc-ask .reply {
-  position: absolute; right: 0; bottom: 30px; display: flex; align-items: flex-end; gap: 8px; max-width: 86%;
+  position: absolute; right: 0; bottom: 30px; display: flex; align-items: flex-end; gap: 10px; max-width: 92%;
   animation: rise 620ms cubic-bezier(.22, 1, .36, 1) 1500ms backwards;
 }
 .sc-ask .from {
-  width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center;
-  background: #dbe8ff; color: var(--blue); font: 700 var(--fs-xxs)/1 var(--t);
+  width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid; place-items: center; position: relative; z-index: 1;
+  background: #dbe8ff; color: var(--blue); font: 700 var(--fs-xxs)/1 var(--t); box-shadow: 0 0 0 2px var(--sky-2);
 }
 .sc-ask .bubble-in {
   text-align: left; padding: 14px 17px; border-radius: 18px 18px 5px 18px;
