@@ -1220,6 +1220,9 @@
     const left = inv.max - inv.used;
     const empty = c1.length === 0;
     const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
+    // места и фирмы, которые есть в вашей сети: сначала ваши, потом от знакомых
+    const mineNodes = myNodes();
+    const allPlaces = [...mineNodes, ...nodesNear().filter((n) => !mineNodes.includes(n))];
     const dim = F.tab === 'c1' ? 'in' : F.tab === 'c2' ? 'out' : null;
 
     const invite = `
@@ -1270,8 +1273,13 @@
       <div class="sec-title"><h2 class="h2">Кто рядом с вами</h2></div>
       ${orbit({ inner: c1.slice(0, 8), outer: c2.slice(0, 8), cap: 'вы', size: 360, big: true, dim })}
       <div class="orbit-legend" style="margin-bottom:var(--s-5)"><span><i class="dot-1"></i>ваши контакты</span><span><i class="dot-2"></i>через них</span></div>
-      <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Ваши контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них · ${c2.length}</button></div>
-      <div class="card">${people || '<p class="muted small" style="margin:0">Здесь пока пусто</p>'}</div>`}`;
+      <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Ваши контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них · ${c2.length}</button><button class="${F.tab === 'places' ? 'on' : ''}" data-act="tab" data-v="places">Места и фирмы · ${allPlaces.length}</button></div>
+      ${F.tab === 'places'
+    ? (allPlaces.length
+      ? `<div class="stack">${allPlaces.map((n) => nodeCard(n)).join('')}</div>`
+      : `<div class="card"><p class="muted small" style="margin:0">Ни вы, ни ваши знакомые пока не записали ни одного места. Чайхана, клиника, автосервис, мастерская — всё, куда вы ходите сами.</p>
+         <button class="btn primary block" style="margin-top:12px" data-act="newNode" data-v="place">${ic('plus')}Записать первое</button></div>`)
+    : `<div class="card">${people || '<p class="muted small" style="margin:0">Здесь пока пусто</p>'}</div>`}`}`;
   }
 
   // ——— Мой профиль ———
