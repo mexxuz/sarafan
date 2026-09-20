@@ -574,7 +574,7 @@
       // Благодарность относится к тому, кто посоветовал, поэтому живёт наверху, рядом с его именем.
       const act = a.person === S.me ? '' : direct ? `<a class="btn soft sm block" href="#/p/${a.person}?cat=${q.cat}">Открыть профиль</a>`
         : intro ? `<a class="btn ghost sm block" href="#/p/${a.person}?cat=${q.cat}">${intro.status === 'ok' ? 'Знакомство состоялось' : 'Ждём ответа'}</a>`
-          : `<button class="btn primary sm block" data-act="intro" data-id="${a.person}" data-via="${a.from}" data-cat="${q.cat}">${ic('hand')}Попросить знакомство</button>
+          : `<button class="btn primary sm block" data-act="intro" data-id="${a.person}" data-via="${a.from}" data-cat="${q.cat}" data-q="${mine ? q.id : ''}">${ic('hand')}Попросить знакомство</button>
              <p class="tiny muted" style="margin:7px 0 0;text-align:center">${esc(first(a.from))} передаст вашу просьбу</p>`;
       const thanks = mine ? (a.thanked ? `<span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Спасибо</span>` : `<button class="btn ghost xs" data-act="thank" data-q="${q.id}" data-i="${i}">Сказать спасибо</button>`) : '';
       return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">советует · ${when(a.at)}</span></div>${thanks}</div>
@@ -827,17 +827,19 @@
   }
 
   // Попросить знакомство через общего знакомого
-  function sheetIntro(id, catId, viaForced) {
+  function sheetIntro(id, catId, viaForced, fromReq) {
     const t = G.trust(id, catId);
     const chain = viaForced ? [S.me, viaForced, id] : t.chain;
     const via = chain[1];
-    const f = { text: '' };
+    // Если знакомство просят из своего запроса — задача уже описана, незачем писать заново
+    const req = fromReq ? S.requests.find((x) => x.id === fromReq && x.from === S.me) : null;
+    const f = { text: req ? req.text : '' };
     openSheet({
       F: f,
       valid: () => f.text.trim().length >= 10,
       render: () => `${sheetHead(null, 'Попросить знакомство', 'Через: ' + esc(U(via).name))}
         <div class="card" style="box-shadow:none;background:var(--card-2);margin-top:12px">${chainBig(chain, viaForced || t.via, catId)}</div>
-        <label class="field"><span>Коротко о задаче</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: нужен логотип и вывеска для кофейни, бюджет обсуждаем">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="10"></p></label>
+        <label class="field"><span>Коротко о задаче</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: нужен логотип и вывеска для кофейни, бюджет обсуждаем">${esc(f.text)}</textarea>${req ? '<p class="hint">Взяли из вашего запроса — поправьте, если нужно</p>' : '<p class="hint" data-count="text" data-min="10"></p>'}</label>
         <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(id).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitIntro" data-submit>${ic('hand')}Отправить просьбу</button></div>`,
       submit: () => {
@@ -1005,7 +1007,7 @@
     submitShare: () => SH.submit(),
     tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=p_${d.id}_from_${S.me}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
     tgSend: (d) => tgShareLink(d.url, d.text),
-    intro: (d) => sheetIntro(d.id, d.cat, d.via),
+    intro: (d) => sheetIntro(d.id, d.cat, d.via, d.q),
     submitIntro: () => SH.submit(),
     write: (d) => toast(tg ? 'Откроем чат в Telegram' : `В рабочей версии откроется чат с ${U(d.id).name.split(' ')[0]} в Telegram`),
     addConn: (d) => mutate(() => {
