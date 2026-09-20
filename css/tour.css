@@ -143,7 +143,7 @@
 .sc-ask .bubble svg { width: 14px; height: 14px; opacity: .7; }
 /* Кому ушёл вопрос — видно поимённо, а не безымянными точками.
    Тот, кто ответил, загорается синим. */
-.sc-ask .mates { position: absolute; left: 0; right: 0; top: 20%; display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.sc-ask .mates { position: absolute; left: 0; right: 0; top: 20%; display: flex; justify-content: center; gap: 16px; }
 .sc-ask .mate {
   display: flex; flex-direction: column; align-items: center; gap: 5px; font-style: normal;
   animation: rise 460ms var(--ease) backwards;
@@ -163,11 +163,8 @@
   0%, 60%, 100% { background: #eef3fb; color: var(--ink-3); box-shadow: inset 0 0 0 1.5px var(--line); }
   20%, 40% { background: var(--blue-soft); color: var(--blue); box-shadow: inset 0 0 0 2px var(--blue), var(--glow-blue); }
 }
-.sc-ask .mates-note {
-  flex: 1 0 100%; text-align: center; margin-top: 9px; text-decoration: none;
-  font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-3);
-  animation: rise 460ms var(--ease) 900ms backwards;
-}
+.sc-ask .mate.more { animation-delay: 920ms; }
+.sc-ask .mate.more b { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--ink-4); }
 .sc-ask .answer-card {
   position: absolute; left: 50%; bottom: 0; width: 272px; margin-left: -136px; padding: var(--s-4);
   display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; text-align: left;

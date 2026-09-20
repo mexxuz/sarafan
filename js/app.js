@@ -1607,7 +1607,7 @@
           <i class="mate m1"><b>АК</b><s>Азиз</s></i>
           <i class="mate m2"><b>ЭС</b><s>Эстелла</s></i>
           <i class="mate m3"><b>УХ</b><s>Улугбек</s></i>
-          <u class="mates-note">вопрос ушёл шести знакомым</u></div>
+          <i class="mate more"><b>+3</b><s>ещё</s></i></div>
         <div class="answer-card">
           <span class="av-n">НА</span>
           <div class="who"><b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s></div>
