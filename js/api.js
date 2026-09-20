@@ -65,6 +65,7 @@ window.API = (function () {
     claimCode: async (code) => saveSession((await call('/auth/claim', { code })).session),
     // кнопка «Войти через Telegram» на сайте
     loginTelegram: async (data) => saveSession((await call('/auth/telegram', { data })).session),
+    telegramReady: () => call('/auth/telegram/ready'),
     // получить ключ для этого браузера, когда человек уже внутри Telegram
     keepMeIn: async () => { const r = await call('/auth/session', {}); saveSession(r.session); },
     // код для переноса на компьютер

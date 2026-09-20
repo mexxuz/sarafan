@@ -752,7 +752,7 @@
         <button class="btn block" id="wclaim">Продолжить</button>`)}
 
       ${box('tg', 'Открыть в Telegram', 'Если вам удобнее в телефоне',
-    `<a class="btn ghost block" href="https://t.me/${bot}" target="_blank" rel="noopener">Перейти к боту</a>`)}
+    `<div id="tglogin"></div><a class="btn ghost block" href="https://t.me/${bot}" target="_blank" rel="noopener">Перейти к боту</a>`)}
 
       <p style="text-align:center;margin-top:22px"><button class="btn ghost sm" id="wdemo">Посмотреть, как всё устроено</button></p>
     </div>`;
@@ -782,6 +782,26 @@
     };
 
     $('#wdemo').onclick = () => { location.href = location.pathname + '?demo=1'; };
+
+    // Кнопка «Войти через Telegram» появляется сама, когда домен сайта привязан к боту
+    window.sarafanTgAuth = async (user) => {
+      try { await window.API.loginTelegram(user); location.href = location.pathname; }
+      catch (e) { toast(e.message); }
+    };
+    window.API.telegramReady().then((r) => {
+      if (!r.ready) return;
+      const sc = document.createElement('script');
+      sc.src = 'https://telegram.org/js/telegram-widget.js?22';
+      sc.async = true;
+      sc.setAttribute('data-telegram-login', bot);
+      sc.setAttribute('data-size', 'large');
+      sc.setAttribute('data-radius', '14');
+      sc.setAttribute('data-userpic', 'false');
+      sc.setAttribute('data-onauth', 'sarafanTgAuth(user)');
+      const box = $('#tglogin');
+      box.style.cssText = 'display:flex;justify-content:center;margin-bottom:10px';
+      box.appendChild(sc);
+    }).catch(() => {});
   }
 
   // ——— Первый вход ———
