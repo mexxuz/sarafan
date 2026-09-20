@@ -54,42 +54,50 @@
 /* Площадка сцены */
 .tour .sc { position: relative; width: 100%; max-width: 330px; height: 268px; margin: 0 auto; }
 
-/* ——— 1. Ваш круг: имена слетаются к вам по нитям ——— */
+/* ——— 1. Ваш круг: маленькое облако сети, как на главной ——— */
 .sc-write .web { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sc-write .web path {
-  fill: none; stroke: rgba(47, 123, 255, .3); stroke-width: 1.4; stroke-linecap: round;
-  stroke-dasharray: 220; stroke-dashoffset: 220; animation: dash 560ms var(--ease) forwards;
+  fill: none; stroke: rgba(47, 123, 255, .34); stroke-width: 1.3; stroke-linecap: round;
+  stroke-dasharray: 220; stroke-dashoffset: 220; animation: dash 620ms var(--ease) forwards;
 }
 @keyframes dash { to { stroke-dashoffset: 0; } }
-.sc-write .w1 { animation-delay: 260ms; }
-.sc-write .w2 { animation-delay: 580ms; }
-.sc-write .w3 { animation-delay: 900ms; }
-.sc-write .w4 { animation-delay: 1220ms; }
+.sc-write .w1 { animation-delay: 240ms; }
+.sc-write .w2 { animation-delay: 560ms; }
+.sc-write .w3 { animation-delay: 880ms; }
+.sc-write .w4 { animation-delay: 1200ms; }
+
 .sc-write .me {
-  position: absolute; left: 50%; top: 50%; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%;
+  position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%;
   display: grid; place-items: center; background: var(--grad-blue); color: #fff;
-  box-shadow: var(--sh-blue), 0 0 0 8px rgba(47, 123, 255, .08); animation: pop-in 520ms var(--ease) backwards;
+  box-shadow: var(--sh-blue), 0 0 0 9px rgba(47, 123, 255, .08); animation: pop-in 520ms var(--ease) backwards;
 }
 .sc-write .me b { font: 700 var(--fs-sm)/1 var(--t); }
-.sc-write .card-n {
-  position: absolute; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 9px; border-radius: 14px;
-  background: var(--paper); box-shadow: var(--sh-2); text-align: left; font-style: normal;
-  animation: fly 620ms cubic-bezier(.22, 1, .36, 1) backwards;
+
+/* точка человека: кружок с инициалами и подписью — как узлы в облаке */
+.sc-write .dot {
+  position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-style: normal; text-align: center; animation: pop-in 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-write .card-n svg { width: 15px; height: 15px; color: var(--blue); flex: none; }
-.sc-write .card-n b { display: block; font: 700 var(--fs-xs)/1.2 var(--t); }
-.sc-write .card-n s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--ink-3); }
-.sc-write .n1 { left: 0; top: 10%; animation-delay: 420ms; --fx: -22px; --fy: -14px; }
-.sc-write .n2 { right: 0; top: 18%; animation-delay: 740ms; --fx: 22px; --fy: -12px; }
-.sc-write .n3 { left: 2%; bottom: 14%; animation-delay: 1060ms; --fx: -20px; --fy: 16px; }
-.sc-write .n4 { right: 0; bottom: 20%; animation-delay: 1380ms; --fx: 22px; --fy: 14px; }
+.sc-write .dot em {
+  width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-style: normal;
+  background: #dbe8ff; color: var(--blue); font: 700 var(--fs-xxs)/1 var(--t);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px rgba(47, 123, 255, .45), 0 4px 12px rgba(47, 123, 255, .16);
+}
+.sc-write .dot b { font: 700 10.5px/1 var(--t); color: var(--ink-2); }
+.sc-write .dot s { text-decoration: none; font: 500 10px/1 var(--t); color: var(--ink-4); }
+.sc-write .d1 { left: 23%; top: 34%; animation-delay: 420ms; }
+.sc-write .d2 { left: 77.5%; top: 37%; animation-delay: 740ms; }
+.sc-write .d3 { left: 25.5%; top: 71%; animation-delay: 1060ms; }
+.sc-write .d4 { left: 76%; top: 69.5%; animation-delay: 1380ms; }
+
 .sc-write .count {
-  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); white-space: nowrap; font-style: normal;
+  position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); white-space: nowrap; font-style: normal;
   padding: 6px 13px; border-radius: 999px; background: var(--blue-soft); color: var(--blue);
   font: 700 var(--fs-xxs)/1 var(--t); animation: rise 460ms var(--ease) 1700ms backwards;
 }
-@keyframes fly { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.92); } }
-@keyframes pop-in { from { opacity: 0; transform: scale(.72); } }
+@keyframes pop-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.72); } }
+.sc-write .me { animation-name: pop-in-center; }
+@keyframes pop-in-center { from { opacity: 0; transform: scale(.72); } }
 
 /* ——— 2. Позовите знакомого: нить тянется, его круг распускается ——— */
 .sc-invite .p {

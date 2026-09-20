@@ -1571,16 +1571,16 @@
       title: 'Запишите своих проверенных',
       gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
       scene: `<div class="sc sc-write">
-        <svg class="web" viewBox="0 0 330 250" aria-hidden="true">
-          <path class="w1" d="M165 125C142 116 118 100 84 80"/>
-          <path class="w2" d="M165 125C193 115 220 101 250 86"/>
-          <path class="w3" d="M165 125C140 140 116 162 88 182"/>
-          <path class="w4" d="M165 125C196 141 222 160 248 178"/></svg>
+        <svg class="web" viewBox="0 0 330 268" aria-hidden="true">
+          <path class="w1" d="M165 134C142 122 112 106 76 92"/>
+          <path class="w2" d="M165 134C196 124 226 110 256 100"/>
+          <path class="w3" d="M165 134C142 152 116 170 84 190"/>
+          <path class="w4" d="M165 134C196 152 222 168 250 186"/></svg>
         <span class="me"><b>вы</b></span>
-        <i class="card-n n1">${ic('user')}<span><b>Рустам</b><s>часовщик</s></span></i>
-        <i class="card-n n2">${ic('user')}<span><b>Нигора</b><s>педиатр</s></span></i>
-        <i class="card-n n3">${ic('user')}<span><b>Улугбек</b><s>электрик</s></span></i>
-        <i class="card-n n4">${ic('user')}<span><b>Азиз</b><s>юрист</s></span></i>
+        <i class="dot d1"><em>РТ</em><b>Рустам</b><s>часовщик</s></i>
+        <i class="dot d2"><em>НА</em><b>Нигора</b><s>педиатр</s></i>
+        <i class="dot d3"><em>УХ</em><b>Улугбек</b><s>электрик</s></i>
+        <i class="dot d4"><em>АК</em><b>Азиз</b><s>юрист</s></i>
         <i class="count">4 проверенных</i></div>`,
     },
     {
