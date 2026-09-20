@@ -354,11 +354,17 @@
 .node-ic.company { background: linear-gradient(170deg, #eef3ff, #e2e9ff); }
 .node-ic.big { width: 64px; height: 64px; border-radius: var(--r-lg); }
 .node-ic.big svg { width: 30px; height: 30px; }
-/* Со снимком значок садится на его край — половиной на кадр, половиной на страницу */
+/* Значок и подпись «Место · Кухня» стоят в одну строку на краю снимка */
+/* подпись прижата к низу значка — так она лежит на странице, а не на снимке */
+.node-line { display: flex; align-items: flex-end; gap: var(--s-3); }
+.node-line .who { font-size: var(--fs-xs); color: var(--ink-3); padding-bottom: 5px; }
+/* Со снимком значок садится на его край — больше половиной на кадр */
 .node-ic.big.lift {
-  margin-top: -32px; position: relative; z-index: 1; background: var(--paper);
-  box-shadow: 0 0 0 4px var(--paper), 0 6px 18px rgba(16, 22, 40, .14);
+  width: 46px; height: 46px; border-radius: var(--r-md);
+  margin-top: -44px; position: relative; z-index: 1; background: var(--paper);
+  box-shadow: 0 0 0 3px var(--paper), 0 6px 18px rgba(16, 22, 40, .14);
 }
+.node-ic.big.lift svg { width: 22px; height: 22px; }
 .node-ic.big.lift::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--blue-soft);
 }
