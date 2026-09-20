@@ -428,3 +428,9 @@
 .cloud-home svg { width: 16px; height: 16px; }
 .cloud-home:active { transform: scale(.94); }
 @media (hover: hover) { .cloud-home:hover { opacity: 1; } }
+
+/* Снимок места */
+.node-photo { margin: 0 calc(-1 * var(--s-5)) var(--s-4); height: 190px; overflow: hidden; }
+.node-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.node-cover { margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) var(--s-3); height: 104px; overflow: hidden; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.node-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }

@@ -282,6 +282,8 @@
     if (hashChanged) window.scrollTo(0, 0);
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }
     if (hashChanged) countUp(app);
+    const np = $('#nodephoto', app);
+    if (np) np.onchange = () => uploadPlacePhoto(np.files && np.files[0], np.dataset.node);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
     if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
@@ -750,6 +752,19 @@
   // ——— Места и фирмы ———
   // Такой же узел сети, как человек, только приглашать никого не нужно.
   const NODE_KIND = { place: 'Место', company: 'Фирма' };
+  // Ссылка на карту: по координатам точнее, по адресу — как получится
+  const mapLink = (n) => (n.lat && n.lng
+    ? `https://maps.google.com/?q=${n.lat},${n.lng}`
+    : n.address ? `https://maps.google.com/?q=${encodeURIComponent(n.address + ', ' + (n.city || 'Ташкент'))}` : '');
+  const askWhere = (onOk) => {
+    if (!navigator.geolocation) { toast('Телефон не даёт определить место'); return; }
+    toast('Определяем, где вы…');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => onOk(+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6)),
+      () => toast('Не получилось: разрешите доступ к местоположению'),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  };
   const FACT_KIND = { service: 'Что делают', hours: 'Когда работают', price: 'Сколько стоит',
     contact: 'Как связаться', who: 'К кому подходить', note: 'Просто знание' };
   const nodesAll = () => Object.values(S.nodes || {});
@@ -770,7 +785,8 @@
       : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' ручается')
         : esc(first(n.by)) + ' записал';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
-      <div class="head"><span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+      ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
+      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>`}
         <div class="grow"><div class="name ellip">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         <span class="tag ${n.closed ? 'warm' : ''}">${n.closed ? 'закрылось' : NODE_KIND[n.kind]}</span></div>
@@ -792,11 +808,13 @@
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
         <div class="grow"></div>
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
+      ${n.photo ? `<div class="node-photo"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}"></div>` : ''}
       <div class="p-head"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
         <div><div class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div>
           <h1 class="h1" style="margin-top:4px">${esc(n.name)}</h1></div>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
         ${n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
+        ${mapLink(n) ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}<span class="grow">Посмотреть на карте${n.lat ? ' · построить маршрут' : ''}</span>${ic('arrow')}</a>` : ''}
         ${n.link ? `<a class="link-row" href="${esc(n.link.startsWith('http') ? n.link : 'https://' + n.link)}" target="_blank" rel="noopener">${ic('link')}<span class="grow ellip">${esc(n.link.replace(/^https?:\/\//, ''))}</span>${ic('arrow')}</a>` : ''}</div>
 
       <div class="stat-grid" style="margin-top:18px">
@@ -820,6 +838,8 @@
         <p class="txt">${esc(r.text)}</p></div>`).join('')}</div>` : ''}
 
       ${n.by === S.me || mine ? `<div style="display:flex;gap:8px;justify-content:center;margin:22px 0 96px;flex-wrap:wrap">
+        <label class="btn ghost xs" style="cursor:pointer">${n.photo ? 'Заменить снимок' : 'Добавить снимок'}
+          <input type="file" accept="image/*" id="nodephoto" data-node="${n.id}" hidden></label>
         ${n.by === S.me ? `<button class="btn ghost xs" data-act="editNode" data-id="${n.id}">Поправить карточку</button>` : ''}
         <button class="btn ghost xs" data-act="closeNode" data-id="${n.id}" data-v="${n.closed ? '' : '1'}">${n.closed ? 'Снова работает' : 'Закрылось или переехало'}</button></div>` : ''}
       <div class="actions"><div class="inner">
@@ -829,7 +849,7 @@
 
   // Записать место или фирму
   function sheetNewNode(kind) {
-    const f = { kind: kind || 'place', name: '', cat: '', address: '', link: '', text: '' };
+    const f = { kind: kind || 'place', name: '', cat: '', address: '', link: '', lat: null, lng: null, text: '' };
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 2,
@@ -842,13 +862,18 @@
           ${f.allCats ? `<div class="chips" style="margin-top:8px">${S.cats.slice(10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}</div>
         <label class="field"><span>Адрес — если это место</span><input class="input" data-bind="address" maxlength="160" placeholder="Мирабад, 12" value="${esc(f.address)}"></label>
         <label class="field"><span>Ссылка — сайт, канал, карта</span><input class="input" data-bind="link" maxlength="200" placeholder="remstroy.uz" value="${esc(f.link)}"></label>
+        <div class="field"><span>Точка на карте</span>
+          ${f.lat ? `<div class="note" style="margin-top:0">${ic('pin')} Точка сохранена · ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}
+            <button class="btn ghost xs" style="margin-top:8px" data-act="dropWhere">Убрать</button></div>`
+    : `<button class="btn block" data-act="takeWhere">${ic('pin')}Взять моё местоположение</button>
+             <p class="hint">Если вы сейчас в этом месте — координаты сохранятся, и знакомые смогут построить маршрут</p>`}</div>
         <label class="field"><span>За что советуете — по желанию</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Например: плов только до обеда, зато настоящий — ходим семьёй третий год">${esc(f.text)}</textarea></label>
         <div class="note">Приглашать никого не нужно: карточка появится сразу, и её увидят ваши знакомые.</div>
         <p class="why">${ic('spark')}Через полгода вы не вспомните название — а здесь оно останется, и знакомые найдут его по сфере</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitNode" data-submit>${ic('plus')}Записать</button></div>`,
       submit: async () => {
         const body = { kind: f.kind, name: f.name.trim(), cat: f.cat, address: f.address.trim(),
-          link: f.link.trim(), text: f.text.trim() };
+          link: f.link.trim(), lat: f.lat || null, lng: f.lng || null, text: f.text.trim() };
         closeSheet();
         if (!LIVE) { toast('В демо места не записываются'); return; }
         try {
@@ -864,7 +889,8 @@
   // Поправить карточку места: адрес меняется, ссылка тоже
   function sheetEditNode(id) {
     const n = nodeById(id);
-    const f = { name: n.name, cat: n.cat || '', address: n.address || '', link: n.link || '', allCats: false };
+    const f = { name: n.name, cat: n.cat || '', address: n.address || '', link: n.link || '',
+      lat: n.lat || null, lng: n.lng || null, allCats: false };
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 2,
@@ -875,9 +901,14 @@
           ${f.allCats ? `<div class="chips" style="margin-top:8px">${S.cats.slice(10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}</div>
         <label class="field"><span>Адрес</span><input class="input" data-bind="address" maxlength="160" value="${esc(f.address)}"></label>
         <label class="field"><span>Ссылка</span><input class="input" data-bind="link" maxlength="200" value="${esc(f.link)}"></label>
+        <div class="field"><span>Точка на карте</span>
+          ${f.lat ? `<div class="note" style="margin-top:0">${ic('pin')} ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}
+            <button class="btn ghost xs" style="margin-top:8px" data-act="dropWhere">Убрать</button></div>`
+    : `<button class="btn block" data-act="takeWhere">${ic('pin')}Взять моё местоположение</button>`}</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitEditNode" data-id="${id}" data-submit>Сохранить</button></div>`,
       submit: () => {
-        const body = { id, name: f.name.trim(), cat: f.cat, address: f.address.trim(), link: f.link.trim() };
+        const body = { id, name: f.name.trim(), cat: f.cat, address: f.address.trim(), link: f.link.trim(),
+          lat: f.lat || null, lng: f.lng || null };
         closeSheet();
         mutate(() => Object.assign(nodeById(id), { name: body.name, cat: body.cat, address: body.address, link: body.link }),
           '/nodes/edit', body, 'Поправили');
@@ -1780,6 +1811,18 @@
     }, 60);
   }
 
+  // Снимок места: показывает, куда человек придёт, лучше любого описания
+  async function uploadPlacePhoto(file, node) {
+    if (!file) return;
+    if (!LIVE) { toast('В демо снимки не загружаются'); return; }
+    toast('Загружаем…');
+    try {
+      await window.API.upload('/nodes/photo', file, { node });
+      await refresh();
+      toast('Снимок добавлен');
+    } catch (e) { toast(e.message); }
+  }
+
   async function uploadWork(file) {
     if (!file) return;
     if (!LIVE) { toast('В демо работы не загружаются'); return; }
@@ -1953,6 +1996,8 @@
     cloudHome: () => { if (cloud) cloud.home(); },
     newNode: (d) => sheetNewNode(d.v),
     submitNode: () => SH.submit(),
+    takeWhere: () => askWhere((lat, lng) => { SH.F.lat = lat; SH.F.lng = lng; drawSheet(); toast('Точка сохранена'); }),
+    dropWhere: () => { SH.F.lat = null; SH.F.lng = null; drawSheet(); },
     editNode: (d) => sheetEditNode(d.id),
     submitEditNode: () => SH.submit(),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
