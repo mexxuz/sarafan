@@ -45,7 +45,6 @@ window.Cloud = function (canvas, opts) {
 
   function load(src) {
     const im = new Image();
-    im.crossOrigin = 'anonymous';
     im.onload = () => { imgs[src] = im; };
     im.onerror = () => { imgs[src] = null; };
     imgs[src] = undefined;
@@ -63,9 +62,9 @@ window.Cloud = function (canvas, opts) {
         let dx = b.x - a.x, dy = b.y - a.y;
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = rnd(1); dy = rnd(1); d2 = 1; }
-        const min = (a.r + b.r + 18) ** 2;
-        if (d2 > 42000) continue;                       // далёкие друг друга не трогают
-        const f = (min / d2) * 0.9;
+        const min = (a.r + b.r + 26) ** 2;
+        if (d2 > 56000) continue;                       // далёкие друг друга не трогают
+        const f = (min / d2) * 1.35;
         const d = Math.sqrt(d2);
         const ux = dx / d, uy = dy / d;
         if (!b.self) { b.vx += ux * f; b.vy += uy * f; }
@@ -76,7 +75,7 @@ window.Cloud = function (canvas, opts) {
       const a = byId[e.a], b = byId[e.b];
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.max(1, Math.hypot(dx, dy));
-      const want = e.len || 78;
+      const want = e.len || 92;
       const f = (d - want) * 0.008 * (e.kind === 'vouch' ? 1.25 : 1);
       const ux = dx / d, uy = dy / d;
       if (!a.self) { a.vx += ux * f; a.vy += uy * f; }
@@ -87,7 +86,7 @@ window.Cloud = function (canvas, opts) {
       // своё кольцо: ближний круг держится ближе к центру, дальний — дальше
       const dx = n.x - cx, dy = n.y - cy;
       const d = Math.max(1, Math.hypot(dx, dy));
-      const want = 58 + n.ring * 46;
+      const want = 72 + n.ring * 62;
       const pull = (want - d) * 0.006;
       n.vx += (dx / d) * pull;
       n.vy += (dy / d) * pull;

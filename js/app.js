@@ -269,7 +269,7 @@
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }
     if (hashChanged) countUp(app);
     if (cloud) { cloud.stop(); cloud = null; }
-    if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true);
+    if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
     if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
   }
 
@@ -558,9 +558,16 @@
 
   // ——— Облако сети ———
   // Кого показываем: вы, ваши контакты, их знакомые, места и фирмы вокруг них.
-  function cloudData(limitRing, withPlaces) {
+  function cloudData(limitRing, withPlaces, maxFar) {
     const ring = (id) => (id === S.me ? 0 : Math.min(G.dist[id] ?? 9, 9));
-    const people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
+    let people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
+    if (maxFar) {
+      // на маленьком полотне показываем не всех: сначала тех, за кого ручаются
+      const far = people.filter((id) => ring(id) === 2)
+        .sort((a, b) => G.recsTo(b).length - G.recsTo(a).length).slice(0, maxFar);
+      const keep = new Set([...people.filter((id) => ring(id) <= 1), ...far]);
+      people = people.filter((id) => keep.has(id));
+    }
     const nodes = people.map((id) => ({
       id, ring: ring(id), self: id === S.me,
       r: id === S.me ? 21 : ring(id) === 1 ? 15 : 10,
@@ -591,13 +598,13 @@
 
   // Облако живёт, пока экран открыт: при уходе с экрана его останавливаем
   let cloud = null;
-  function mountCloud(id, limitRing, withPlaces) {
+  function mountCloud(id, limitRing, withPlaces, maxFar) {
     setTimeout(() => {
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
       cloud = window.Cloud(el, { onPick: (n) => go(n.go) });
-      cloud.setData(cloudData(limitRing, withPlaces));
+      cloud.setData(cloudData(limitRing, withPlaces, maxFar));
       cloud.start();
     }, 30);
   }
