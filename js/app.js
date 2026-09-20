@@ -1603,7 +1603,11 @@
       gain: 'Вместо сорока вариантов из поиска — одно имя — то, которое советует знакомый',
       scene: `<div class="sc sc-ask">
         <span class="bubble">Нужен педиатр${ic('ask')}</span>
-        <i class="hop h1"></i><i class="hop h2"></i><i class="hop h3"></i>
+        <div class="mates">
+          <i class="mate m1"><b>АК</b><s>Азиз</s></i>
+          <i class="mate m2"><b>ЭС</b><s>Эстелла</s></i>
+          <i class="mate m3"><b>УХ</b><s>Улугбек</s></i>
+          <u class="mates-note">вопрос ушёл шести знакомым</u></div>
         <div class="answer-card">
           <span class="av-n">НА</span>
           <div class="who"><b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s></div>

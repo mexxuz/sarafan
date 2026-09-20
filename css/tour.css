@@ -141,16 +141,32 @@
   animation: rise 500ms var(--ease) backwards;
 }
 .sc-ask .bubble svg { width: 14px; height: 14px; opacity: .7; }
-.sc-ask .hop {
-  position: absolute; top: 30%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
-  box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .5); animation: blink 1.8s var(--ease) infinite;
+/* Кому ушёл вопрос — видно поимённо, а не безымянными точками.
+   Тот, кто ответил, загорается синим. */
+.sc-ask .mates { position: absolute; left: 0; right: 0; top: 26%; display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.sc-ask .mate {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; font-style: normal;
+  animation: rise 460ms var(--ease) backwards;
 }
-.sc-ask .h1 { left: 26%; animation-delay: 500ms; }
-.sc-ask .h2 { left: 50%; animation-delay: 800ms; }
-.sc-ask .h3 { left: 74%; animation-delay: 1100ms; }
-@keyframes blink {
-  0%, 100% { transform: scale(1); background: #dbe8ff; }
-  18% { transform: scale(1.5); background: var(--blue); }
+.sc-ask .mate b {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  background: #eef3fb; color: var(--ink-3); font: 700 var(--fs-xxs)/1 var(--t);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.sc-ask .mate s { text-decoration: none; font: 600 10px/1 var(--t); color: var(--ink-4); }
+.sc-ask .m1 { animation-delay: 500ms; }
+.sc-ask .m2 { animation-delay: 640ms; }
+.sc-ask .m3 { animation-delay: 780ms; }
+/* ответивший подсвечивается — от него и придёт имя */
+.sc-ask .m1 b { animation: answered 2.4s var(--ease) 1100ms infinite; }
+@keyframes answered {
+  0%, 60%, 100% { background: #eef3fb; color: var(--ink-3); box-shadow: inset 0 0 0 1.5px var(--line); }
+  20%, 40% { background: var(--blue-soft); color: var(--blue); box-shadow: inset 0 0 0 2px var(--blue), var(--glow-blue); }
+}
+.sc-ask .mates-note {
+  flex: 1 0 100%; text-align: center; margin-top: 12px; text-decoration: none;
+  font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-3);
+  animation: rise 460ms var(--ease) 900ms backwards;
 }
 .sc-ask .answer-card {
   position: absolute; left: 50%; bottom: 2%; width: 272px; margin-left: -136px; padding: var(--s-4);
