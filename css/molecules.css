@@ -120,3 +120,17 @@
 .count-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: var(--s-5) 0 var(--s-3); }
 .count-line b { font: 800 var(--fs-md)/1 var(--t); }
 .group-label { font: 700 var(--fs-xs)/1 var(--t); color: var(--ink-3); margin: var(--s-6) 0 var(--s-3); }
+
+/* «Зачем это» — короткая строка смысла рядом с действием */
+.why {
+  display: flex; align-items: flex-start; gap: 7px; margin: var(--s-3) 0 0;
+  font: 500 var(--fs-xxs)/1.45 var(--t); color: var(--blue);
+}
+.why svg { width: 13px; height: 13px; flex: none; margin-top: 1px; opacity: .8; }
+
+/* Что сеть даёт прямо сейчас — под облаком */
+.cloud-gain {
+  position: relative; z-index: 1; margin: 6px auto 0; max-width: 300px; text-align: center;
+  font: 500 var(--fs-xs)/1.45 var(--t); color: var(--ink-3);
+}
+.cloud-gain b { color: var(--ink); font-weight: 700; }

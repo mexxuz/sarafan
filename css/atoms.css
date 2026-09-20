@@ -16,7 +16,7 @@ p { text-wrap: pretty; }
 
 /* Знак */
 .logo { display: flex; align-items: center; gap: var(--s-2); font: 800 var(--fs-xl)/1 var(--t); letter-spacing: -.035em; }
-.logo-mark { width: 26px; height: 26px; flex: none; }
+.logo-mark { width: 26px; height: 26px; flex: none; align-self: center; }
 
 /* Портрет */
 .av {

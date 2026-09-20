@@ -193,11 +193,12 @@
     link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>',
     pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
+    spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
     hand: '<path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V11M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.1L4 15.5a1.5 1.5 0 0 1 2.2-2L7 14.3"/>',
   };
   const ic = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
   // Тот же знак, что на значке приложения и на аватарке бота: вы в центре, трое вокруг
-  const logoMark = `<svg class="logo-mark" viewBox="0 0 120 120" aria-hidden="true" fill="none">
+  const logoMark = `<svg class="logo-mark" viewBox="0 -8 120 120" aria-hidden="true" fill="none">
     <g stroke="var(--blue)" stroke-opacity=".38" stroke-width="7" stroke-linecap="round">
       <path d="M60 45V31"/><path d="M47.6 68.5 35.4 76.9"/><path d="M72.4 68.5 84.6 76.9"/></g>
     <circle cx="60" cy="60" r="16" fill="var(--blue)"/>
@@ -547,6 +548,9 @@
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
       <div class="cloud-where">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div>
+      <p class="cloud-gain">${op.total1
+    ? `Через ${pl(op.total1, 'знакомого', 'знакомых', 'знакомых')} вам открыто <b>${pl(op.total2, 'человек', 'человека', 'человек')}</b>, которых вы не знаете лично${nodesAll().length ? ` и <b>${pl(nodesAll().length, 'проверенное место', 'проверенных места', 'проверенных мест')}</b>` : ''}`
+    : 'Позовите первого знакомого — и его книжка откроется вам целиком'}</p>
       <div class="cloud-legend">
         <span><i class="lg-me"></i>вы</span>
         <span><i class="lg-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span>
@@ -832,6 +836,7 @@
         <label class="field"><span>Ссылка — сайт, канал, карта</span><input class="input" data-bind="link" maxlength="200" placeholder="remstroy.uz" value="${esc(f.link)}"></label>
         <label class="field"><span>За что советуете — по желанию</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Например: плов только до обеда, зато настоящий — ходим семьёй третий год">${esc(f.text)}</textarea></label>
         <div class="note">Приглашать никого не нужно: карточка появится сразу, и её увидят ваши знакомые.</div>
+        <p class="why">${ic('spark')}Через полгода вы не вспомните название — а здесь оно останется, и знакомые найдут его по сфере</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitNode" data-submit>${ic('plus')}Записать</button></div>`,
       submit: async () => {
         const body = { kind: f.kind, name: f.name.trim(), cat: f.cat, address: f.address.trim(),
@@ -909,6 +914,7 @@
         <label class="field"><span>Своими словами</span>
           <textarea class="textarea" data-bind="text" maxlength="300" placeholder="Например: по понедельникам закрыто, а после семи лучше звонить заранее">${esc(f.text)}</textarea></label>
         <div class="note">Рядом будет ваше имя: знакомые увидят, чьё это знание.</div>
+        <p class="why">${ic('spark')}Одно уточнение экономит знакомому поездку впустую — часы работы и цены устаревают быстрее всего</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitFact" data-id="${id}" data-submit>Добавить</button></div>`,
       submit: () => {
         const body = { node: id, kind: f.kind, text: f.text.trim() };
@@ -1213,6 +1219,7 @@
         <div class="eyebrow">сильное приглашение</div>
         <h2 class="h2" style="margin:6px 0 8px">Позовите и сразу поручитесь</h2>
         <p class="small" style="margin:0 0 4px;color:rgba(255,255,255,.88)">Напишите рекомендацию заранее — человек войдёт по вашей ссылке, и она уже будет ждать у него в профиле. Так сеть с первого дня наполняется доверием, а не просто людьми.</p>
+        <p class="small" style="margin:8px 0 0;color:rgba(255,255,255,.72)">Каждый приглашённый открывает вам свой список проверенных — и списки его знакомых.</p>
         <button class="btn primary block" style="margin-top:14px" data-act="outsider">${ic('seal')}Написать рекомендацию</button>
       </div>
 
@@ -1391,9 +1398,11 @@
       <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен часовщик, педиатр, юрист? Знакомые посмотрят у себя и посоветуют того, за кого ручаются. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
-        ${rule('seal', 'Записать — не то же, что поручиться', 'Человек может быть в вашей книжке просто как знакомый. Рекомендация — отдельное действие, и она подписана вашим именем.')}
-        ${rule('net', 'Видно, чья это запись', 'У каждого человека цепочка: Вы → Иван → Алексей. Понятно, кому верить.')}
-        ${rule('ask', 'Нет в книжках — спросите', 'Знакомые посмотрят у себя и посоветуют того, кому доверяют сами.')}
+        ${rule('net', 'Вам уже открыта чужая книжка', inviter
+      ? `${esc(first(inviter))} пригласил вас — значит, вам видно всех, кого ${esc(first(inviter))} проверил на себе, и тех, кого проверили его знакомые.`
+      : 'Каждый знакомый открывает вам свой список проверенных людей и мест — и списки его знакомых.')}
+        ${rule('ask', 'Спросить дешевле, чем искать', 'Опишите задачу — вопрос уйдёт вашему кругу. Вместо сорока вариантов из интернета вы получите одно имя, за которое ручаются.')}
+        ${rule('seal', 'Ваша запись работает на вас', 'Записывая своих проверенных, вы не отдаёте их — вы делаете так, что знакомые перестают спрашивать одно и то же, а вам открываются их находки.')}
       </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
@@ -1510,6 +1519,7 @@
           <div class="note">${f.priv
             ? 'Пока запись только ваша. Её можно открыть кругу в любой момент — тогда она станет рекомендацией с вашим именем.'
             : 'Рекомендация подписана вашим именем, и её видят знакомые. Звёзд здесь нет — только ваши слова.'}</div>
+          <p class="why">${ic('spark')}${f.priv ? 'Личная запись работает на вас: через год вы вспомните, за что советовали этого человека' : `Такие записи и делают сеть полезной: за ${esc(first(id))} придут к вам, а не будут искать вслепую`}</p>
           <div class="s-foot"><button class="btn primary block" data-act="submitRec" data-id="${id}" data-submit>${ic('seal')}${e ? 'Сохранить изменения' : 'Отправить рекомендацию'}</button></div>`;
       },
       submit: () => {
