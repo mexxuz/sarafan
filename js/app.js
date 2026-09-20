@@ -1457,6 +1457,7 @@
           <div class="chips">${S.cats.map((c) => `<button class="chip ${F.cats.includes(c.id) ? 'on' : ''}" data-act="toggleCat" data-v="${c.id}">${esc(c.who)}</button>`).join('')}</div>
           <p class="hint">Можно пропустить: в чём вы сильны, решат рекомендации знакомых</p></div>
         <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${F.name.trim() ? '' : 'disabled'}>Войти в сеть</button>
+        <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tryDemo">Сначала посмотреть, как всё устроено</button></p>
       </div></div>`;
   }
 
@@ -2028,6 +2029,7 @@
     },
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
+    tryDemo: () => { location.href = location.pathname + '?demo=1'; },
     resetDemo: () => {
       if (LIVE) { refresh(); toast('Обновлено'); return; }
       try { localStorage.removeItem(KEY); } catch (e) { /* */ }
@@ -2107,8 +2109,13 @@
         return;
       }
       if (e.status === 401 && !window.API.inTelegram) { webEntrance(); return; }
-      $('#app').innerHTML = `<div class="empty" style="padding-top:26vh"><h2 class="h2">${e.status === 403 ? 'Сюда только по приглашению' : 'Не получилось открыть сеть'}</h2>`
-        + `<p>${esc(e.message)}</p><button class="btn primary" onclick="location.reload()">Попробовать снова</button></div>`;
+      $('#app').innerHTML = `<div class="empty" style="padding-top:22vh"><h2 class="h2">${e.status === 403 ? 'Сюда только по приглашению' : 'Не получилось открыть сеть'}</h2>`
+        + `<p>${e.status === 403
+      ? 'Сарафан открывается ссылкой от того, кто уже внутри. Пока её нет — посмотрите на выдуманной сети, как всё устроено.'
+      : esc(e.message)}</p>`
+        + `<div class="btn-row" style="max-width:320px;margin:0 auto">
+             <button class="btn ghost" onclick="location.reload()">Ещё раз</button>
+             <button class="btn primary" data-act="tryDemo">${ic('net')}Посмотреть демо</button></div></div>`;
     });
   } else if (!window.API.inTelegram && !qs.has('demo') && !qs.has('dev')) {
     webEntrance();   // открыли в обычном браузере — предлагаем войти
