@@ -789,7 +789,9 @@
       catch (e) { toast(e.message); }
     };
     window.API.telegramReady().then((r) => {
-      if (!r.ready) return;
+      // Кнопка работает только на том адресе, который привязан к боту.
+      // На своём компьютере её не показываем — там она выдала бы ошибку
+      if (!r.ready || (r.site && r.site !== location.origin)) return;
       const sc = document.createElement('script');
       sc.src = 'https://telegram.org/js/telegram-widget.js?22';
       sc.async = true;
