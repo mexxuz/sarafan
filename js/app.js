@@ -1617,7 +1617,7 @@
       gain: 'Куда ходят свои: с часами работы, ценами и именем того, кто это проверил',
       scene: `<div class="sc sc-places">
         <div class="place-card">
-          <div class="sc-cover"><span class="pin">${ic('pin')}</span><i class="shine"></i></div>
+          <div class="sc-cover"><i class="shine"></i></div><span class="pin">${ic('pin')}</span>
           <b>Чайхана Центральная</b><s>кухня и торты · Мирабад</s>
           <i class="fact f1"><u>когда</u>Плов до 14:00, потом шашлык</i>
           <i class="fact f2"><u>к кому</u>Спросить Дилю, она держит столы</i>
