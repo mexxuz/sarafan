@@ -854,10 +854,11 @@
         : esc(first(n.by)) + ' записал';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
-      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}
+      <div class="head">
+        <span class="node-ic ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}" title="${NODE_KIND[n.kind]}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
         <div class="grow"><div class="name ellip">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
-        <span class="tag ${n.closed ? 'warm' : ''}">${n.closed ? 'закрылось' : NODE_KIND[n.kind]}</span></div>
+        ${n.closed ? '<span class="tag warm">закрылось</span>' : ''}</div>
       <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : 'пока только запись'}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p><div class="by ellip">${esc(full(best.from))}</div>`
     : `<p class="quote empty">${n.address ? esc(n.address) : 'Никто пока не рассказал об этом месте'}</p>`}
