@@ -55,22 +55,22 @@
   animation: pop-in 460ms var(--ease) backwards;
 }
 .sc-invite .p.a { left: 8%; background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue); }
-.sc-invite .p.b { right: 8%; background: #dbe8ff; color: var(--blue); box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgba(47, 123, 255, .5); animation-delay: 520ms; }
+.sc-invite .p.b { right: 20%; background: #dbe8ff; color: var(--blue); box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgba(47, 123, 255, .5); animation-delay: 520ms; }
 .sc-invite .thread {
-  position: absolute; left: calc(8% + 62px); right: calc(8% + 62px); top: 50%; height: 2px; border-radius: 2px;
+  position: absolute; left: calc(8% + 62px); right: calc(20% + 62px); top: 50%; height: 2px; border-radius: 2px;
   background: linear-gradient(90deg, var(--blue), rgba(47, 123, 255, .45));
   transform-origin: left center; animation: draw-x 620ms var(--ease) 300ms backwards;
 }
 @keyframes draw-x { from { transform: scaleX(0); } }
 .sc-invite .spark {
-  position: absolute; right: 8%; top: 50%; width: 13px; height: 13px; margin: -6px -6px 0 0; border-radius: 50%;
+  position: absolute; right: 20%; top: 50%; width: 13px; height: 13px; margin: -6px -6px 0 0; border-radius: 50%;
   background: #eaf1ff; box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .55);
   transform: translate(var(--tx), var(--ty));
   animation: fan 700ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-invite .s1 { animation-delay: 900ms; --tx: 30px; --ty: -62px; }
-.sc-invite .s2 { animation-delay: 1050ms; --tx: 60px; --ty: -18px; }
-.sc-invite .s3 { animation-delay: 1200ms; --tx: 52px; --ty: 40px; }
+.sc-invite .s1 { animation-delay: 900ms; --tx: 26px; --ty: -58px; }
+.sc-invite .s2 { animation-delay: 1050ms; --tx: 48px; --ty: -14px; }
+.sc-invite .s3 { animation-delay: 1200ms; --tx: 44px; --ty: 38px; }
 .sc-invite .s4 { animation-delay: 1350ms; --tx: 4px; --ty: 66px; }
 .sc-invite .s5 { animation-delay: 1500ms; --tx: -34px; --ty: -58px; }
 @keyframes fan { from { opacity: 0; transform: none; } }
@@ -87,7 +87,7 @@
   animation: rise 500ms var(--ease) backwards;
 }
 .sc-ask .hop {
-  position: absolute; top: 44%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
+  position: absolute; top: 34%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
   box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .5); animation: blink 1.8s var(--ease) infinite;
 }
 .sc-ask .h1 { left: 22%; animation-delay: 500ms; }
@@ -98,7 +98,7 @@
   18% { transform: scale(1.5); background: var(--blue); }
 }
 .sc-ask .answer-card {
-  position: absolute; left: 50%; bottom: 12%; width: 264px; margin-left: -132px; padding: var(--s-4);
+  position: absolute; left: 50%; bottom: 6%; width: 264px; margin-left: -132px; padding: var(--s-4);
   display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; text-align: left;
   border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3);
   animation: rise 620ms cubic-bezier(.22, 1, .36, 1) 1500ms backwards;
