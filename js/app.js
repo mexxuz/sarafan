@@ -426,15 +426,30 @@
   const srvUrl = (u) => (u.startsWith('http') ? u : (window.SARAFAN_SERVER || '').replace(/\/$/, '') + u);
   const lines = (t) => (t || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
+  // Картинки работ одного направления
+  const workStrip = (list) => (list.length
+    ? `<div class="works">${list.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="${esc(w.title)}" loading="lazy">
+        ${w.title || w.note ? `<figcaption>${w.title ? `<b>${esc(w.title)}</b>` : ''}${w.note ? `<span>${esc(w.note)}</span>` : ''}</figcaption>` : ''}</figure>`).join('')}</div>`
+    : '');
+
   function showcaseView(id) {
     const sc = (S.showcases || {})[id];
     if (!sc) return '';
     const works = sc.works || [];
-    const has = sc.story || sc.services || sc.prices || lines(sc.links).length || works.length;
+    const dirs = sc.dirs || [];
+    const has = sc.story || sc.services || sc.prices || lines(sc.links).length || works.length || dirs.length;
     if (!has) return '';
+    const loose = works.filter((w) => !w.dir || !dirs.some((d) => d.id === w.dir));
     return `<div class="sec-title"><h2 class="h2">О работе</h2>${id === S.me ? '<button class="btn sm" data-act="editShowcase">Изменить</button>' : ''}</div>
-      ${works.length ? `<div class="works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="${esc(w.title)}" loading="lazy">
-        ${w.title || w.note ? `<figcaption>${w.title ? `<b>${esc(w.title)}</b>` : ''}${w.note ? `<span>${esc(w.note)}</span>` : ''}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+      ${dirs.map((d) => {
+      const mine = works.filter((w) => w.dir === d.id);
+      return `<div class="dir">
+        <div class="dir-head"><h3 class="h3">${esc(d.title)}</h3>${mine.length ? `<span class="tag">${pl(mine.length, 'работа', 'работы', 'работ')}</span>` : ''}</div>
+        ${d.story ? `<p class="small" style="margin:6px 0 0;color:var(--ink-2);line-height:1.55">${esc(d.story).split('\n').join('<br>')}</p>` : ''}
+        ${d.prices ? `<p class="dir-price">${esc(d.prices)}</p>` : ''}
+        ${workStrip(mine)}</div>`;
+    }).join('')}
+      ${workStrip(loose)}
       <div class="card">
         ${sc.headline ? `<div class="h3" style="margin-bottom:8px">${esc(sc.headline)}</div>` : ''}
         ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
@@ -2042,6 +2057,32 @@
     });
   }
 
+  // Направление витрины: отдельное занятие со своим рассказом и ценами
+  function sheetDir(id) {
+    const box = (S.showcases || {})[S.me] || {};
+    const was = (box.dirs || []).find((d) => d.id === id);
+    const f = { id: id || '', title: was ? was.title : '', story: was ? was.story : '', prices: was ? was.prices : '' };
+    openSheet({
+      F: f,
+      valid: () => f.title.trim().length >= 2,
+      render: () => `${sheetHead(null, was ? 'Направление' : 'Новое направление')}
+        <label class="field" style="margin-top:0"><span>Как называете это занятие</span>
+          <input class="input" data-bind="title" maxlength="80" placeholder="Например: свадебная съёмка" value="${esc(f.title)}"></label>
+        <label class="field"><span>Что именно делаете</span>
+          <textarea class="textarea" data-bind="story" maxlength="1200" placeholder="Как работаете, сколько это занимает, что получает человек на выходе">${esc(f.story)}</textarea></label>
+        <label class="field"><span>Про деньги в этом направлении</span>
+          <textarea class="textarea" data-bind="prices" maxlength="400" placeholder="Например: съёмочный день — от 4 млн, обработка входит">${esc(f.prices)}</textarea></label>
+        <p class="why">${ic('spark')}Разные занятия не мешают друг другу: за съёмкой придут одни, за ремонтом — другие</p>
+        ${was ? `<button class="btn ghost block" style="margin-top:12px" data-act="delDir" data-id="${was.id}">Убрать направление</button>` : ''}
+        <div class="s-foot"><button class="btn primary block" data-act="submitDir" data-submit>${was ? 'Сохранить' : 'Завести'}</button></div>`,
+      submit: () => {
+        const body = { id: f.id, title: f.title.trim(), story: f.story.trim(), prices: f.prices.trim() };
+        closeSheet();
+        mutate(null, '/showcase/dir', body, was ? 'Сохранили' : 'Направление заведено');
+      },
+    });
+  }
+
   // Правка витрины: текстом о себе и картинками работ
   function sheetShowcase() {
     const sc = (S.showcases || {})[S.me] || { headline: '', story: '', services: '', prices: '', links: '', works: [] };
@@ -2050,7 +2091,10 @@
       F: f,
       valid: () => true,
       render: () => {
-        const works = ((S.showcases || {})[S.me] || {}).works || [];
+        const box = (S.showcases || {})[S.me] || {};
+        const works = box.works || [];
+        const dirs = box.dirs || [];
+        const loose = works.filter((w) => !w.dir || !dirs.some((d) => d.id === w.dir));
         return `${sheetHead(null, 'Витрина')}
           <label class="field" style="margin-top:0"><span>Строка под именем</span>
             <input class="input" data-bind="headline" maxlength="120" placeholder="Айдентика и упаковка для локальных брендов" value="${esc(f.headline)}"></label>
@@ -2062,12 +2106,26 @@
             <textarea class="textarea" data-bind="prices" maxlength="600" placeholder="Например: логотип от 3 млн, обсуждаем после разговора о задаче">${esc(f.prices)}</textarea></label>
           <label class="field"><span>Ссылки — по одной на строку</span>
             <textarea class="textarea" data-bind="links" maxlength="600" placeholder="behance.net/вы&#10;t.me/ваш_канал">${esc(f.links)}</textarea></label>
-          <div class="field"><span>Работы ${works.length ? `· ${works.length} из 12` : ''}</span>
-            ${works.length ? `<div class="works small-works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
+          <div class="field"><span>Направления ${dirs.length ? `· ${dirs.length} из 8` : ''}</span>
+            <p class="hint" style="margin:0 0 8px">Занимаетесь разным? Заведите направление на каждое: у него свой рассказ, свои цены и свои работы.</p>
+            ${dirs.map((d) => {
+      const mine = works.filter((w) => w.dir === d.id);
+      return `<div class="dir-edit">
+              <div class="row"><b class="grow">${esc(d.title)}</b>
+                <button class="btn ghost xs" data-act="editDir" data-id="${d.id}">Править</button></div>
+              ${mine.length ? `<div class="works small-works">${mine.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
+                <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
+              <label class="btn ghost xs" style="margin-top:8px;cursor:pointer">${ic('plus')}Картинка сюда
+                <input type="file" accept="image/*" class="workfile" data-dir="${d.id}" hidden></label></div>`;
+    }).join('')}
+            <button class="btn block" style="margin-top:10px" data-act="editDir" data-id="">${ic('plus')}Добавить направление</button></div>
+
+          <div class="field"><span>Работы без направления ${loose.length ? `· ${loose.length}` : ''}</span>
+            ${loose.length ? `<div class="works small-works">${loose.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
               <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
             <label class="btn block" style="margin-top:10px;cursor:pointer">${ic('plus')}Добавить картинку
-              <input type="file" accept="image/*" id="workfile" hidden></label>
-            <p class="hint">JPG, PNG или WebP до 6 МБ. Первая картинка — главная.</p></div>
+              <input type="file" accept="image/*" class="workfile" data-dir="" hidden></label>
+            <p class="hint">JPG, PNG или WebP до 6 МБ. Всего до 12 работ.</p></div>
           <div class="s-foot"><button class="btn primary block" data-act="submitShowcase" data-submit>Сохранить</button></div>`;
       },
       submit: () => {
@@ -2078,11 +2136,8 @@
         }, '/showcase', { ...f }, 'Витрина сохранена');
       },
     });
-    // загрузка картинки — сразу после выбора файла
-    setTimeout(() => {
-      const inp = $('#workfile');
-      if (inp) inp.onchange = () => uploadWork(inp.files && inp.files[0]);
-    }, 60);
+    // загрузка картинки — сразу после выбора файла, в то направление, где нажали
+    wireWorkInputs();
   }
 
   // Снимок места: показывает, куда человек придёт, лучше любого описания
@@ -2097,14 +2152,22 @@
     } catch (e) { toast(e.message); }
   }
 
-  async function uploadWork(file) {
+  function wireWorkInputs() {
+    setTimeout(() => {
+      $('#sheet').querySelectorAll('.workfile').forEach((inp) => {
+        inp.onchange = () => uploadWork(inp.files && inp.files[0], inp.dataset.dir || '');
+      });
+    }, 60);
+  }
+
+  async function uploadWork(file, dir) {
     if (!file) return;
     if (!LIVE) { toast('В демо работы не загружаются'); return; }
     toast('Загружаем…');
     try {
-      await window.API.upload('/works', file);
+      await window.API.upload('/works', file, dir ? { dir } : {});
       await refresh();
-      if (SH) drawSheet();
+      if (SH) { drawSheet(); wireWorkInputs(); }
       toast('Работа добавлена');
     } catch (e) { toast(e.message); }
   }
@@ -2291,6 +2354,9 @@
     shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=o_${d.id}`,
       `${n.name} — советую, посмотри в Сарафане:`); },
     editShowcase: () => sheetShowcase(),
+    editDir: (d) => sheetDir(d.id || ''),
+    submitDir: () => SH.submit(),
+    delDir: (d) => { closeSheet(); mutate(null, '/showcase/dir/delete', { id: d.id }, 'Направление убрано'); },
     submitShowcase: () => SH.submit(),
     delWork: (d) => mutate(() => {
       const box = (S.showcases || {})[S.me];
