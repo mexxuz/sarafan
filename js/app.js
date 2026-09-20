@@ -205,6 +205,7 @@
   let F = {}; // состояние форм на странице
   let lastHash = null;
 
+  let navBack = false;   // человек нажал «Назад» — экран должен уехать в другую сторону
   function render() {
     const { path, params } = route();
     const hashChanged = location.hash !== lastHash;
@@ -223,7 +224,10 @@
     else if (name === 'me') { html = Me(params); active = 'me'; }
     else { html = Home(); active = 'home'; }
     const app = $('#app');
-    app.innerHTML = `<div class="${hashChanged ? 'fade-in' : ''}">${html}</div>`;
+    // Вперёд экран приходит снизу, назад — уходит вправо: видно, куда двигаешься
+    const enter = hashChanged ? (navBack ? 'fade-back' : 'fade-in') : '';
+    navBack = false;
+    app.innerHTML = `<div class="${enter}">${html}</div>`;
     app.classList.toggle('no-nav', !nav);
     drawNav(nav, active);
     if (hashChanged) window.scrollTo(0, 0);
@@ -1159,7 +1163,7 @@
   // ——— Действия ———
   const ACT = {
     goto: (d) => go(d.h),
-    back: () => (history.length > 1 ? history.back() : go('#/')),
+    back: () => { navBack = true; return history.length > 1 ? history.back() : go('#/'); },
     closeSheet: (d) => { const s = SH; closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
     peek: (d) => sheetPeek(d.id),
     set: (d) => {

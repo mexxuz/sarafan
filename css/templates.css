@@ -45,6 +45,9 @@
 /* ——— Движение: только вход, до 320 мс ——— */
 .fade-in { animation: fade var(--base) var(--ease) both; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* Назад — экран приходит с той стороны, куда ушёл предыдущий */
+.fade-back { animation: fade-back 280ms var(--ease) both; }
+@keyframes fade-back { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
 .orb { animation: pop 320ms var(--ease) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes pop { from { opacity: 0; transform: rotate(var(--a)) translate(calc(var(--r) * .75)) rotate(calc(-1 * var(--a))) translate(-50%, -50%) scale(.85); } }
 .rail .step { animation: fade 300ms var(--ease) both; animation-delay: calc(var(--k, 0) * 90ms); }
