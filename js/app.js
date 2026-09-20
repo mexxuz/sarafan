@@ -303,6 +303,49 @@
     return ev.sort((a, b) => b.at - a.at).slice(0, 14);
   };
 
+  // Пока сеть маленькая — главный экран объясняет, что делать, а не показывает пустоту
+  const starter = () => {
+    const c1 = myContacts();
+    const myRecs = G.recsFrom(S.me).length;
+    const asked = S.requests.filter((q) => q.from === S.me).length;
+    const steps = [
+      {
+        done: c1.length > 0, num: 1,
+        title: 'Позовите тех, кому доверяете',
+        text: c1.length ? `В вашей сети ${pl(c1.length, 'человек', 'человека', 'человек')}. Чем больше знакомых, тем чаще сеть выручает.`
+          : 'Сарафан работает только через ваших знакомых. Начните с трёх-пяти человек: коллеги, друзья, родственники.',
+        btn: c1.length ? 'Позвать ещё' : 'Позвать знакомых', act: 'sendInvite',
+      },
+      {
+        done: myRecs > 0, num: 2,
+        title: 'Поручитесь за тех, кого знаете',
+        text: c1.length
+          ? (myRecs ? `Вы поручились за ${pl(myRecs, 'человека', 'человек', 'человек')}. Так вас находят через ваших знакомых.`
+            : 'Напишите, за что вы ручаетесь: «делал мне сайт», «лечил зуб». Это и есть рекомендация, из них растёт сеть.')
+          : 'Станет доступно, когда в сети появится хотя бы один знакомый.',
+        btn: c1.length ? 'Кого рекомендовать' : '', act: 'goto', href: '#/net',
+      },
+      {
+        done: asked > 0, num: 3,
+        title: 'Спросите сеть, когда нужен мастер',
+        text: c1.length
+          ? 'Опишите задачу — знакомые посоветуют своих, и вы увидите, кто за кого ручается.'
+          : 'Запрос уходит вашему кругу. Пока круга нет, спрашивать некого.',
+        btn: c1.length ? 'Спросить сеть' : '', act: 'goto', href: '#/ask',
+      },
+    ];
+    return `<div class="card starter">
+      <div class="eyebrow">с чего начать</div>
+      <h2 class="h2" style="margin:6px 0 4px">Сеть начинается с людей</h2>
+      <p class="small muted" style="margin:0 0 4px">Здесь ищут мастеров не по рейтингу, а через знакомых: видно, кто за человека ручается и через кого вы на него вышли.</p>
+      ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
+        <span class="mark">${st.done ? ic('check') : st.num}</span>
+        <div class="grow"><div class="h3">${st.title}</div><div class="small muted" style="margin-top:2px">${st.text}</div>
+        ${st.btn ? `<button class="btn ${st.done ? 'soft' : 'primary'} sm" style="margin-top:10px" data-act="${st.act}" ${st.href ? `data-h="${st.href}"` : ''}>${st.btn}</button>` : ''}</div>
+      </div>`).join('')}
+    </div>`;
+  };
+
   // ——— Главная ———
   function Home() {
     const c1 = myContacts();
@@ -320,22 +363,24 @@
     const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
     const ev = feed();
     const op = orbitPeople(6, 8);
+    const small = op.total1 < 3;
     return `
       <div class="place"><a href="#/me" aria-label="Профиль">${av(S.me, '', 'r1')}</a>
         <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <button class="icon-btn bell" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
-      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: 320 })}</a>
+      ${small ? starter() : ''}
+      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 240 : 320 })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Дизайнер, врач, юрист…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
-      <div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>
+      ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
       ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
       ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><a class="link" href="#/ask">Все</a></div><div class="stack">${inc.map((q, i) => requestCard(q, false, i === 0)).join('')}</div>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}
       <div class="sec-title"><h2 class="h2">В вашей сети</h2></div>
-      <div class="card">${ev.length ? ev.map((e) => `<div class="feed-item" data-act="goto" data-h="${e.link}" role="link" tabindex="0">${av(e.who, 's')}<div class="grow" style="min-width:0">${e.html}<div class="when">${when(e.at)}</div></div></div>`).join('') : '<p class="muted">Пока тихо. Пригласите знакомых — здесь появятся их рекомендации.</p>'}</div>`;
+      <div class="card">${ev.length ? ev.map((e) => `<div class="feed-item" data-act="goto" data-h="${e.link}" role="link" tabindex="0">${av(e.who, 's')}<div class="grow" style="min-width:0">${e.html}<div class="when">${when(e.at)}</div></div></div>`).join('') : `<div class="empty" style="padding:var(--s-4) 0"><p style="margin:0">Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кто чем поделился.<br><b style="color:var(--ink)">Пока вы один — начните с приглашения.</b></p></div>`}</div>`;
   }
 
   const connRequestCard = (c) => {

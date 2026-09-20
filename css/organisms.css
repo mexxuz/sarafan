@@ -192,3 +192,16 @@
 .onb .rule b { color: var(--ink); display: block; font: 700 var(--fs-md)/1.3 var(--t); margin-bottom: 2px; }
 .onb .rule .ic { width: 34px; height: 34px; border-radius: var(--r-xs); background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; flex: none; }
 .onb .rule .ic svg { width: 17px; height: 17px; }
+
+
+/* ——— «С чего начать»: путь для новичка ——— */
+.starter { padding: var(--s-5); }
+.step-row { display: flex; gap: var(--s-3); padding: var(--s-4) 0 0; margin-top: var(--s-4); border-top: 1px solid var(--line); }
+.step-row .mark {
+  width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  font: 700 var(--fs-xs)/1 var(--t); background: var(--blue-soft); color: var(--blue);
+}
+.step-row .mark svg { width: 15px; height: 15px; }
+.step-row.done .mark { background: var(--good-soft); color: var(--good); }
+.step-row.locked { opacity: .55; }
+.step-row .grow { flex: 1; min-width: 0; }

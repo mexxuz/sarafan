@@ -3,8 +3,10 @@ window.API = (function () {
   const qs = new URLSearchParams(location.search);
   const tg = window.Telegram && window.Telegram.WebApp;
 
-  // адрес сервера: тот же, откуда открыто приложение; иначе — из настройки
-  const base = (window.SARAFAN_SERVER || location.origin).replace(/\/$/, '');
+  // Если приложение отдаёт сам сервер (свой компьютер) — работаем с ним напрямую.
+  // Если открыто с постоянного адреса — берём адрес сервера из настройки.
+  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const base = (local ? location.origin : (window.SARAFAN_SERVER || location.origin)).replace(/\/$/, '');
 
   // в Telegram — подпись от Telegram; при проверке на компьютере — режим разработки
   const who = () => {
