@@ -47,7 +47,11 @@ window.Cloud = function (canvas, opts) {
     nodes = data.nodes.map((n, i) => {
       const was = keep[n.id];
       const a = Math.random() * Math.PI * 2;
-      const r = n.self ? 0 : 60 + n.ring * 40 + rnd(30);
+      // стартовый радиус считаем так же, как рабочий, — облако сразу похоже на себя
+      const cy0 = H * (opts.centerY || 0.5);
+      const k0 = Math.max(0.62, Math.min(2.2, (Math.min(cy0, H - cy0) - 26) / 186));
+      const wide0 = Math.max(0.8, Math.min(1.7, W / H));
+      const r = n.self ? 0 : (70 + n.ring * 58) * k0 + rnd(16);
       return Object.assign({
         vx: 0, vy: 0,
         // появление: узел всплывает, ближние раньше дальних
@@ -56,8 +60,8 @@ window.Cloud = function (canvas, opts) {
         // своя фаза качания: узлы дышат вразнобой, а не строем
         ph: was ? was.ph : Math.random() * Math.PI * 2,
         sp: was ? was.sp : 0.6 + Math.random() * 0.8,
-        x: was ? was.x : W / 2 + Math.cos(a) * r,
-        y: was ? was.y : H / 2 + Math.sin(a) * r,
+        x: was ? was.x : W / 2 + Math.cos(a) * r * wide0,
+        y: was ? was.y : cy0 + Math.sin(a) * r,
       }, n);
     });
     byId = {};
