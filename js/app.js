@@ -21,11 +21,43 @@
   const commit = () => { G = window.Graph(S); save(); render(); };
 
   // Настоящие данные: забираем состояние сети с сервера
+  let lastPulse = '', pulseTimer = null, missedWhileBusy = false;
+
   const refresh = async () => {
     S = await window.API.bootstrap();
     S.pendingInvites = S.pendingInvites || [];
     G = window.Graph(S);
     render();
+    lastPulse = '';   // только что всё перечитали — отпечаток запомним заново
+  };
+
+  // ——— Само обновляется ———
+  // Раз в несколько секунд спрашиваем у сервера короткий отпечаток состояния сети.
+  // Изменился — перечитываем всё. Человеку не нужно дёргать страницу руками.
+  const busyNow = () => {
+    if (document.hidden) return true;
+    if (SH) return true;                                   // открыта шторка — человек пишет
+    const el = document.activeElement;
+    return !!(el && el.matches && el.matches('input, textarea'));
+  };
+
+  const checkPulse = async () => {
+    if (!LIVE) return;
+    if (busyNow()) { missedWhileBusy = true; return; }
+    try {
+      const r = await window.API.pulse();
+      if (!lastPulse) { lastPulse = r.v; return; }
+      if (r.v !== lastPulse) { lastPulse = r.v; await refresh(); }
+    } catch (e) { /* сервер недоступен — попробуем в следующий раз */ }
+  };
+
+  const watchLive = () => {
+    if (!LIVE) return;
+    clearInterval(pulseTimer);
+    pulseTimer = setInterval(checkPulse, 7000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checkPulse(); });
+    window.addEventListener('focus', checkPulse);
+    checkPulse();
   };
   // Действие: в демо меняем данные на месте, вживую — просим сервер и перечитываем
   const mutate = async (demoFn, path, body, okMsg) => {
@@ -903,10 +935,14 @@
     p.scrollTop = st;
     syncForm();
   }
+  // Пока была открыта шторка, сеть могла измениться — догоняем сразу после закрытия
+  const catchUp = () => { if (missedWhileBusy) { missedWhileBusy = false; setTimeout(checkPulse, 400); } };
+
   function closeSheet() {
     const el = $('#sheet'); el.classList.remove('open');
     setTimeout(() => { if (!el.classList.contains('open')) { el.hidden = true; el.innerHTML = ''; } }, 300);
     SH = null;
+    catchUp();
   }
   function syncForm() {
     const scope = SH ? $('#sheet') : $('#app');
@@ -1410,6 +1446,7 @@
     refresh().then(() => {
       // В Telegram сразу оставляем ключ для браузера: потом можно работать и без Telegram
       if (window.API.inTelegram && !window.API.hasSession()) window.API.keepMeIn().catch(() => {});
+      watchLive();
     }).catch((e) => {
       if (!e.status) {  // сервера нет рядом — показываем демо, чтобы ссылка не была мёртвой
         S = load(); G = window.Graph(S); S.onboarded = true; render();

@@ -56,6 +56,7 @@ window.API = (function () {
     inTelegram: !!(tg && tg.initData),
     hasSession: () => !!session,
     bootstrap: () => call('/bootstrap'),
+    pulse: () => call('/pulse'),
     post: (path, body) => call(path, body || {}),
 
     // ——— вход в браузере ———
