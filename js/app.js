@@ -855,7 +855,7 @@
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
       <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}
-        <div class="grow"><div class="name ellip">${esc(n.name)}</div>
+        <div class="grow"><div class="name two">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         ${n.closed ? '<span class="tag warm">закрылось</span>'
       : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}</div>
