@@ -298,7 +298,7 @@
     syncBackButton(active, nav);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
-    if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
+    if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
 
@@ -683,7 +683,7 @@
 
   // ——— Облако сети ———
   // Кого показываем: вы, ваши контакты, их знакомые, места и фирмы вокруг них.
-  function cloudData(limitRing, withPlaces, maxFar) {
+  function cloudData(limitRing, withPlaces, maxFar, onlyPlaces) {
     const ring = (id) => (id === S.me ? 0 : Math.min(G.dist[id] ?? 9, 9));
     let people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
     if (maxFar) {
@@ -733,6 +733,14 @@
           go: '#/o/' + n.id });
         voices.forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
       });
+    }
+    if (onlyPlaces) {
+      // срез «только места»: сами места и те, кто их советует, — остальные люди уходят
+      const keep = new Set([S.me]);
+      edges.forEach((e) => { if (String(e.b).startsWith('o')) { keep.add(e.a); keep.add(e.b); } });
+      const kept = nodes.filter((n) => keep.has(n.id));
+      const ids = new Set(kept.map((n) => n.id));
+      return { nodes: kept, edges: edges.filter((e) => ids.has(e.a) && ids.has(e.b)) };
     }
     return { nodes, edges };
   }
@@ -802,14 +810,14 @@
 
   // Облако живёт, пока экран открыт: при уходе с экрана его останавливаем
   let cloud = null;
-  function mountCloud(id, limitRing, withPlaces, maxFar) {
+  function mountCloud(id, limitRing, withPlaces, maxFar, onlyPlaces) {
     setTimeout(() => {
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
       cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5,
         safeTop: id === 'homecloud' ? 92 : 0 });
-      cloud.setData(cloudData(limitRing, withPlaces, maxFar));
+      cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces));
       cloud.start();
     }, 30);
   }
@@ -825,7 +833,7 @@
         <h1 class="h2 grow">Облако сети</h1>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="chips" style="margin-bottom:10px">
-        ${[['all', 'Всё'], ['people', 'Только люди'], ['near', 'Только ваши контакты']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
+        ${[['all', 'Всё'], ['people', 'Только люди'], ['places', 'Только места']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
       <div class="cloud-legend" style="margin-top:10px">
         <span><i class="lg-me"></i>вы</span>
