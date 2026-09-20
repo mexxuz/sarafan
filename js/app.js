@@ -387,6 +387,7 @@
       .slice(0, 6);
     const mine = S.requests.filter((q) => q.from === S.me && !q.closed).sort((a, b) => b.at - a.at).slice(0, 2);
     const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
+    const asks = S.intros.filter((i) => i.via === S.me && i.status === 'wait');
     const ev = feed();
     const op = orbitPeople(6, 8);
     const small = op.total1 < 3;
@@ -403,12 +404,22 @@
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
+      ${asks.length ? `<div class="sec-title"><h2 class="h2">Просят познакомить</h2><span class="badge">${asks.length}</span></div>${asks.map(introAskCard).join('')}` : ''}
       ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
       ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><a class="link" href="#/ask">Все</a></div><div class="stack">${inc.map((q, i) => requestCard(q, false, i === 0)).join('')}</div>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}
       <div class="sec-title"><h2 class="h2">В вашей сети</h2></div>
       <div class="card">${ev.length ? ev.map((e) => `<div class="feed-item" data-act="goto" data-h="${e.link}" role="link" tabindex="0">${av(e.who, 's')}<div class="grow" style="min-width:0">${e.html}<div class="when">${when(e.at)}</div></div></div>`).join('') : `<div class="empty" style="padding:var(--s-4) 0"><p style="margin:0">Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кто чем поделился.<br><b style="color:var(--ink)">Пока вы один — начните с приглашения.</b></p></div>`}</div>`;
   }
+
+  // Просьба познакомить: решает посредник, и только он
+  const introAskCard = (i) => `<div class="card accent">
+    <div class="row">${av(i.from, 's')}<div class="grow"><div class="h3">${esc(full(i.from))}</div>
+      <div class="tiny" style="opacity:.85">просит познакомить · ${when(i.at)}</div></div></div>
+    <div style="margin:12px 0"><div class="stitch"><b>${esc(first(i.from))}</b><span class="thr"></span><span class="you">Вы</span><span class="thr"></span><b>${esc(first(i.to))}</b></div></div>
+    <p class="q" style="margin:0 0 12px">«${esc(i.text)}»</p>
+    <div class="small" style="opacity:.85;margin-bottom:12px">${esc(full(i.to))} ничего не узнает, пока вы не согласитесь.</div>
+    <div class="btn-row"><button class="btn primary sm" data-act="introYes" data-id="${i.id}">Познакомить</button><button class="btn sm" data-act="introNo" data-id="${i.id}">Не сейчас</button></div></div>`;
 
   const connRequestCard = (c) => {
     const common = [...(G.adj[c.a] || [])].filter((x) => G.connected(x, S.me));
@@ -957,6 +968,10 @@
       S.conns.push({ a: S.me, b: d.id, status: 'pending', at: Date.now() });
       setTimeout(() => { const c = S.conns.find((x) => x.a === S.me && x.b === d.id); if (c) { c.status = 'ok'; commit(); toast(U(d.id).name + ' теперь в вашей сети'); } }, 4000);
     }, '/connections/ask', { user: d.id }, 'Заявка отправлена'),
+    introYes: (d) => mutate(() => { const i = S.intros.find((x) => x.id === d.id); if (i) i.status = 'ok'; },
+      '/intros/decide', { id: d.id, ok: true }, 'Знакомство состоялось — оба получат уведомление'),
+    introNo: (d) => mutate(() => { const i = S.intros.find((x) => x.id === d.id); if (i) i.status = 'no'; },
+      '/intros/decide', { id: d.id, ok: false }, 'Отказали. Человек об этом не узнает'),
     acceptConn: (d) => mutate(() => { const c = S.conns.find((x) => x.a === d.id && x.b === S.me); c.status = 'ok'; c.at = Date.now(); },
       '/connections/accept', { user: d.id }, U(d.id).name + ' теперь в вашей сети'),
     declineConn: (d) => mutate(() => { S.conns = S.conns.filter((x) => !(x.a === d.id && x.b === S.me && x.status === 'pending')); },
