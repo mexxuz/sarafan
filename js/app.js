@@ -495,6 +495,7 @@
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
+      ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
@@ -503,6 +504,25 @@
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
+  }
+
+  // ——— Свой список проверенных ———
+  // Пока сеть мала, искать в ней некого. Но у каждого уже есть люди, которых он советует
+  // знакомым: часовщик, педиатр, электрик. Записать их — польза с первой минуты,
+  // а сеть вырастает сама: запись станет первой рекомендацией, когда человек войдёт.
+  function myList() {
+    const waiting = S.pendingInvites || [];
+    const mineRecs = G.recsFrom(S.me);
+    if (mineRecs.length >= 5 && waiting.length === 0) return '';   // сеть уже живая
+    return `<div class="card" style="margin-top:18px">
+      <div class="eyebrow">ваш список</div>
+      <h2 class="h2" style="margin:6px 0 6px">Люди, которых вы и так советуете</h2>
+      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик, юрист — те, чьи имена вы диктуете знакомым по памяти. Запишите их здесь: список останется у вас под рукой, а когда человек войдёт по вашей ссылке, ваша запись станет его первой рекомендацией.</p>
+      ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
+        <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)} · записан ${when(p.at)}</div></div>
+        <button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button></div>`).join('')}</div>` : ''}
+      <button class="btn primary block" data-act="outsider">${ic('seal')}${waiting.length ? 'Записать ещё человека' : 'Записать первого человека'}</button>
+      ${waiting.length ? '' : '<p class="tiny muted" style="text-align:center;margin:10px 0 0">Достаточно имени и пары слов — за что вы его советуете</p>'}</div>`;
   }
 
   // ——— Новое: всё, что произошло и что просит ответа ———
@@ -1372,6 +1392,8 @@
       toast('Сфера добавлена');
     },
     askOwn: () => { F.own = true; $('#askcats').innerHTML = askCats(); },
+    callPending: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${d.code}`,
+      `${d.name}, я записал вас в Сарафан — сети рекомендаций по знакомым. Моя рекомендация уже ждёт в вашем профиле:`),
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
     // «Не показывайте меня этому человеку»: перестают видеть друг друга, он не узнаёт
