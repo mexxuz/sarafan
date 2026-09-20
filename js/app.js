@@ -14,10 +14,30 @@
     if (qs.has('demo')) s.onboarded = true;
     return s;
   };
-  let S = load();
-  let G = window.Graph(S);
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* пусть живёт в памяти */ } };
+  const LIVE = window.API && window.API.live && !qs.has('demo');
+  let S = LIVE ? null : load();
+  let G = LIVE ? null : window.Graph(S);
+  const save = () => { if (LIVE) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* пусть живёт в памяти */ } };
   const commit = () => { G = window.Graph(S); save(); render(); };
+
+  // Настоящие данные: забираем состояние сети с сервера
+  const refresh = async () => {
+    S = await window.API.bootstrap();
+    S.pendingInvites = S.pendingInvites || [];
+    G = window.Graph(S);
+    render();
+  };
+  // Действие: в демо меняем данные на месте, вживую — просим сервер и перечитываем
+  const mutate = async (demoFn, path, body, okMsg) => {
+    if (!LIVE) { demoFn && demoFn(); commit(); if (okMsg) toast(okMsg); return; }
+    try {
+      await window.API.post(path, body);
+      await refresh();
+      if (okMsg) toast(okMsg);
+    } catch (e) {
+      toast(e.message);
+    }
+  };
 
   // ——— Мелочи ———
   const $ = (s, r = document) => r.querySelector(s);
@@ -46,8 +66,10 @@
   // Фото-заглушки: пока нет настоящих аватаров из Telegram, берём портреты randomuser.me
   const FEM = ['гузаль', 'айгуль', 'нигора'];
   const isFem = (id) => { const n = U(id).name.split(' ')[0].toLowerCase(); return /[ая]$/.test(n) || FEM.includes(n); };
-  const photo = (id) => `https://randomuser.me/api/portraits/${isFem(id) ? 'women' : 'men'}/${hue(id) % 100}.jpg`;
-  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()"></span>`;
+  const photo = (id) => (U(id) && U(id).photo)
+    ? U(id).photo
+    : (LIVE ? '' : `https://randomuser.me/api/portraits/${isFem(id) ? 'women' : 'men'}/${hue(id) % 100}.jpg`);
+  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
   const ringOf = (id) => { const d = G.dist[id]; return d === 1 ? 'r1' : d === 2 ? 'r2' : d === undefined ? '' : 'r3'; };
 
   // ——— Орбита: вы в центре, 1-й круг рядом, 2-й круг дальше ———
@@ -481,7 +503,7 @@
     const c2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2).sort((a, b) => U(a).name.localeCompare(U(b).name));
     const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
     const inv = S.invite;
-    const link = `t.me/sarafan_bot?start=${inv.code}`;
+    const link = `t.me/${S.bot || 'sarafanibot'}?start=${inv.code}`;
     const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
     const list = F.tab === 'c1'
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
@@ -527,16 +549,16 @@
 
   // ——— Первый вход ———
   function Onboarding() {
-    const inviter = U(S.me).invitedBy || 'u1';
+    const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
     if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = [...U(S.me).cats]; }
-    const ring = [inviter, ...[...(G.adj[inviter] || [])].filter((x) => x !== S.me)];
+    const ring = inviter ? [inviter, ...[...(G.adj[inviter] || [])].filter((x) => x !== S.me)] : [...(G.adj[S.me] || [])];
     const rule = (icon, t, d) => `<div class="rule"><span class="ic">${ic(icon)}</span><div><b>${t}</b>${d}</div></div>`;
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
       <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Специалисты,<br>за которых ручаются</h1>
       <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">Вы видите не рейтинг, а живую цепочку: кто из ваших знакомых знает этого человека.</p>
-      <div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>
+      ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
         ${rule('seal', 'Знакомство — ещё не рекомендация', 'Добавить человека в сеть и поручиться за него — два разных действия.')}
         ${rule('net', 'Видно, кто ручается', 'У каждого специалиста — цепочка: Вы → Иван → Алексей.')}
@@ -616,10 +638,12 @@
       },
       submit: () => {
         const e = existing();
-        if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.edited = true; }
-        else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), at: Date.now(), confirmed: false });
-        closeSheet(); commit();
-        toast(e ? 'Рекомендация обновлена' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
+        closeSheet();
+        mutate(() => {
+          if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.edited = true; }
+          else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), at: Date.now(), confirmed: false });
+        }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim() },
+          e ? 'Рекомендация обновлена' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
       },
     });
   }
@@ -636,9 +660,11 @@
         <div class="note">Получатель увидит, что контакт прислали вы, и цепочку до этого человека.</div>
         <div class="s-foot"><div class="btn-row"><button class="btn ghost" data-act="tgShare" data-id="${id}">${ic('send')}В Telegram</button><button class="btn primary" data-act="submitShare" data-submit>Отправить</button></div></div>`,
       submit: () => {
-        f.to.forEach((to) => S.shares.push({ id: 's' + uid(), from: S.me, to, person: id, note: f.note.trim(), at: Date.now() }));
-        closeSheet(); commit();
-        toast(f.to.length === 1 ? `Отправлено: ${U(f.to[0]).name}` : `Отправлено ${pl(f.to.length, 'человеку', 'людям', 'людям')}`);
+        const to = [...f.to];
+        closeSheet();
+        mutate(() => to.forEach((x) => S.shares.push({ id: 's' + uid(), from: S.me, to: x, person: id, note: f.note.trim(), at: Date.now() })),
+          '/shares', { person: id, to, note: f.note.trim() },
+          to.length === 1 ? `Отправлено: ${U(to[0]).name}` : `Отправлено ${pl(to.length, 'человеку', 'людям', 'людям')}`);
       },
     });
   }
@@ -658,15 +684,13 @@
         <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(id).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitIntro" data-submit>${ic('hand')}Отправить просьбу</button></div>`,
       submit: () => {
-        const x = { id: 'i' + uid(), from: S.me, via, to: id, cat: catId, text: f.text.trim(), status: 'wait', at: Date.now() };
-        S.intros.push(x);
-        closeSheet(); commit();
-        toast('Просьба отправлена: ' + U(via).name);
-        // В демо знакомый соглашается сам через несколько секунд
-        setTimeout(() => {
-          x.status = 'ok'; commit();
-          toast('Знакомство одобрено — можно написать: ' + U(id).name.split(' ')[0]);
-        }, 5000);
+        const text = f.text.trim();
+        closeSheet();
+        mutate(() => {
+          const x = { id: 'i' + uid(), from: S.me, via, to: id, cat: catId, text, status: 'wait', at: Date.now() };
+          S.intros.push(x);
+          setTimeout(() => { x.status = 'ok'; commit(); toast('Знакомство одобрено — можно написать: ' + U(id).name.split(' ')[0]); }, 5000);
+        }, '/intros', { to: id, via, cat: catId || null, text }, 'Просьба отправлена: ' + U(via).name);
       },
     });
   }
@@ -693,12 +717,14 @@
           <div class="s-foot"><button class="btn primary block" data-act="submitAnswer" data-submit>${ic('send')}Отправить ответ</button></div>`;
       },
       submit: () => {
-        q.answers.push({ from: S.me, person: f.person, text: f.text.trim(), at: Date.now() });
-        const c = cands.find((x) => x.id === f.person);
-        if (f.asRec && c && !c.mine && f.text.trim().length >= 20)
-          S.recs.push({ id: 'r' + uid(), from: S.me, to: f.person, cat: q.cat, rel: 'other', text: f.text.trim(), at: Date.now(), confirmed: false });
-        closeSheet(); commit();
-        toast('Ответ отправлен: ' + U(q.from).name);
+        const person = f.person, text = f.text.trim(), asRec = !!f.asRec;
+        const c = cands.find((x) => x.id === person);
+        closeSheet();
+        mutate(() => {
+          q.answers.push({ from: S.me, person, text, at: Date.now() });
+          if (asRec && c && !c.mine && text.length >= 20)
+            S.recs.push({ id: 'r' + uid(), from: S.me, to: person, cat: q.cat, rel: 'other', text, at: Date.now(), confirmed: false });
+        }, '/answers', { request: q.id, person, text, as_rec: asRec }, 'Ответ отправлен: ' + U(q.from).name);
       },
     });
   }
@@ -711,7 +737,7 @@
       valid: () => f.name.trim().length >= 2 && f.cat && f.rel && f.text.trim().length >= MIN_TEXT,
       render: () => {
         if (f.done) {
-          const link = `t.me/sarafan_bot?start=${f.done.code}`;
+          const link = `t.me/${S.bot || 'sarafanibot'}?start=${f.done.code}`;
           return `${sheetHead(null, 'Осталось отправить ссылку', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
             <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где специалистов ищут через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
@@ -724,9 +750,16 @@
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что человек сделал и почему вы ему доверяете">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>Получить ссылку-приглашение</button></div>`;
       },
-      submit: () => {
+      submit: async () => {
         const p = { id: 'p' + uid(), name: f.name.trim(), cat: f.cat, rel: f.rel, text: f.text.trim(), code: 'r-' + uid(), at: Date.now() };
-        S.pendingInvites.push(p); save();
+        if (LIVE) {
+          try {
+            const res = await window.API.post('/recommendations/outside', { name: p.name, cat: p.cat, rel: p.rel, text: p.text });
+            p.code = res.code;
+          } catch (e) { toast(e.message); return; }
+        } else {
+          S.pendingInvites.push(p); save();
+        }
         f.done = p; drawSheet();
       },
       onClose: () => commit(),
@@ -769,8 +802,10 @@
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
         <div class="s-foot"><button class="btn primary block" data-act="submitEdit" data-submit>Сохранить</button></div>`,
       submit: () => {
-        Object.assign(me, { name: f.name.trim(), about: f.about.trim(), cats: f.role === 'client' ? [] : f.cats, role: f.role });
-        closeSheet(); commit(); toast('Сохранено');
+        const body = { name: f.name.trim(), about: f.about.trim(), role: f.role, cats: f.role === 'client' ? [] : f.cats };
+        closeSheet();
+        mutate(() => Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role }),
+          '/profile', body, 'Сохранено');
       },
     });
   }
@@ -808,22 +843,33 @@
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
     submitShare: () => SH.submit(),
-    tgShare: (d) => tgShareLink(`https://t.me/sarafan_bot/app?startapp=p_${d.id}_from_${S.me}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
+    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=p_${d.id}_from_${S.me}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
     tgSend: (d) => tgShareLink(d.url, d.text),
     intro: (d) => sheetIntro(d.id, d.cat, d.via),
     submitIntro: () => SH.submit(),
     write: (d) => toast(tg ? 'Откроем чат в Telegram' : `В рабочей версии откроется чат с ${U(d.id).name.split(' ')[0]} в Telegram`),
-    addConn: (d) => {
-      S.conns.push({ a: S.me, b: d.id, status: 'pending', at: Date.now() }); commit();
-      toast('Заявка отправлена');
+    addConn: (d) => mutate(() => {
+      S.conns.push({ a: S.me, b: d.id, status: 'pending', at: Date.now() });
       setTimeout(() => { const c = S.conns.find((x) => x.a === S.me && x.b === d.id); if (c) { c.status = 'ok'; commit(); toast(U(d.id).name + ' теперь в вашей сети'); } }, 4000);
-    },
-    acceptConn: (d) => { const c = S.conns.find((x) => x.a === d.id && x.b === S.me); c.status = 'ok'; c.at = Date.now(); commit(); toast(U(d.id).name + ' теперь в вашей сети'); },
-    declineConn: (d) => { S.conns = S.conns.filter((x) => !(x.a === d.id && x.b === S.me && x.status === 'pending')); commit(); toast('Заявка отклонена. Человек об этом не узнает'); },
+    }, '/connections/ask', { user: d.id }, 'Заявка отправлена'),
+    acceptConn: (d) => mutate(() => { const c = S.conns.find((x) => x.a === d.id && x.b === S.me); c.status = 'ok'; c.at = Date.now(); },
+      '/connections/accept', { user: d.id }, U(d.id).name + ' теперь в вашей сети'),
+    declineConn: (d) => mutate(() => { S.conns = S.conns.filter((x) => !(x.a === d.id && x.b === S.me && x.status === 'pending')); },
+      '/connections/decline', { user: d.id }, 'Заявка отклонена. Человек об этом не узнает'),
     // Запросы
     askCat: (d) => { F.cat = d.v; F.catTouched = true; F.allCats = false; $('#askcats').innerHTML = askCats(); syncForm(); },
     askAllCats: () => { F.allCats = true; $('#askcats').innerHTML = askCats(); },
-    postAsk: () => {
+    postAsk: async () => {
+      const text = F.t.trim(), cat = F.cat;
+      if (LIVE) {
+        try {
+          const res = await window.API.post('/requests', { text, cat });
+          await refresh();
+          go('#/q/' + res.id);
+          toast('Запрос отправлен ' + pl(myContacts().length, 'человеку', 'людям', 'людям'));
+        } catch (e) { toast(e.message); }
+        return;
+      }
       const q = { id: 'q' + uid(), from: S.me, cat: F.cat, text: F.t.trim(), at: Date.now(), answers: [] };
       S.requests.push(q); commit(); go('#/q/' + q.id);
       toast('Запрос отправлен ' + pl(myContacts().length, 'человеку', 'людям', 'людям'));
@@ -836,23 +882,33 @@
     },
     answer: (d) => sheetAnswer(d.id),
     submitAnswer: () => SH.submit(),
-    skipReq: (d) => { const q = S.requests.find((x) => x.id === d.id); (q.skip = q.skip || []).push(S.me); commit(); toast('Скрыли. Спасибо, что честно'); },
-    thank: (d) => { const q = S.requests.find((x) => x.id === d.q); q.answers[+d.i].thanked = true; commit(); toast('Спасибо отправлено — это укрепит репутацию советчика'); },
-    closeReq: (d) => { S.requests.find((x) => x.id === d.id).closed = true; commit(); toast('Запрос закрыт'); },
+    skipReq: (d) => mutate(() => { const q = S.requests.find((x) => x.id === d.id); (q.skip = q.skip || []).push(S.me); },
+      '/requests/skip', { request: d.id }, 'Скрыли. Спасибо, что честно'),
+    thank: (d) => mutate(() => { const q = S.requests.find((x) => x.id === d.q); q.answers[+d.i].thanked = true; },
+      '/answers/thank', { request: d.q, index: +d.i }, 'Спасибо отправлено — это укрепит репутацию советчика'),
+    closeReq: (d) => mutate(() => { S.requests.find((x) => x.id === d.id).closed = true; },
+      '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
     tab: (d) => { F.tab = d.v; render(); },
-    sendInvite: () => tgShareLink(`https://t.me/sarafan_bot?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь ищут специалистов через знакомых.'),
+    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь ищут специалистов через знакомых.'),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
-    resetDemo: () => { try { localStorage.removeItem(KEY); } catch (e) { /* */ } S = window.buildSeed(); G = window.Graph(S); location.hash = '#/'; render(); toast('Демо начато заново'); },
+    resetDemo: () => {
+      if (LIVE) { refresh(); toast('Обновлено'); return; }
+      try { localStorage.removeItem(KEY); } catch (e) { /* */ }
+      S = window.buildSeed(); G = window.Graph(S); location.hash = '#/'; render(); toast('Демо начато заново');
+    },
     // Первый вход
     toggleCat: (d) => { const i = F.cats.indexOf(d.v); i < 0 ? F.cats.push(d.v) : F.cats.splice(i, 1); render(); },
     finishOnb: () => {
-      const me = U(S.me); me.name = F.name.trim(); me.cats = F.cats; S.onboarded = true;
-      commit(); go('#/'); toast(U(me.invitedBy).name + ' — ваш первый контакт');
+      const me = U(S.me);
+      const body = { name: F.name.trim(), about: me.about || '', role: F.cats.length ? 'both' : 'client', cats: F.cats };
+      const hello = me.invitedBy ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
+      mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
+        .then(() => go('#/'));
     },
   };
 
@@ -882,5 +938,19 @@
     syncForm();
   });
   window.addEventListener('hashchange', () => { if (SH) closeSheet(); render(); });
-  render();
+
+  if (LIVE) {
+    $('#app').innerHTML = '<div class="empty" style="padding-top:38vh"><p class="muted">Открываем вашу сеть…</p></div>';
+    refresh().catch((e) => {
+      if (!e.status) {  // сервера нет рядом — показываем демо, чтобы ссылка не была мёртвой
+        S = load(); G = window.Graph(S); S.onboarded = true; render();
+        toast('Сервер недоступен — показываю демо на выдуманных людях');
+        return;
+      }
+      $('#app').innerHTML = `<div class="empty" style="padding-top:26vh"><h2 class="h2">${e.status === 403 ? 'Сюда только по приглашению' : 'Не получилось открыть сеть'}</h2>`
+        + `<p>${esc(e.message)}</p><button class="btn primary" onclick="location.reload()">Попробовать снова</button></div>`;
+    });
+  } else {
+    render();
+  }
 })();
