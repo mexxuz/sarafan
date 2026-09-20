@@ -1623,11 +1623,13 @@
           <i class="mate m2"><b>ЭС</b><s>Эстелла</s></i>
           <i class="mate m3"><b>УХ</b><s>Улугбек</s></i>
           <i class="mate more"><b>+3</b><s>ещё</s></i></div>
-        <div class="answer-card">
-          <span class="av-n">НА</span>
-          <div class="who"><b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s></div>
-          <em class="vouch">${ic('seal')}Азиз рекомендует</em>
-          <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div></div>`,
+        <div class="reply">
+          <span class="from">АК</span>
+          <div class="bubble-in">
+            <b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s>
+            <em>${ic('seal')}рекомендую, сам вожу дочку</em></div>
+        </div>
+        <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div>`,
     },
     {
       key: 'places',
