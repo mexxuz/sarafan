@@ -223,3 +223,16 @@
 .orbit .spin.slow .ghost-av { animation: orbit-spin 80s linear infinite reverse; }
 .orbit .spin.rev .ghost-av { animation: orbit-spin 120s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .orbit .spin, .orbit .spin .ghost-av { animation: none !important; } }
+
+
+/* Второй способ позвать — внутри той же карточки приглашения */
+.invite-extra {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%; text-align: left; color: var(--paper);
+  margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid rgba(255, 255, 255, .16);
+  transition: opacity var(--fast) var(--ease);
+}
+.invite-extra b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); }
+.invite-extra span span { display: block; font-size: var(--fs-xs); color: rgba(255, 255, 255, .7); margin-top: 2px; }
+.invite-extra svg { width: 18px; height: 18px; flex: none; opacity: .6; }
+.invite-extra:active { opacity: .7; }
+@media (hover: hover) { .invite-extra:hover { opacity: .85; } }

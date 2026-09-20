@@ -231,7 +231,7 @@
 
   const repRows = (id, onlyCat) => {
     const cats = G.catsOf(id).filter((c) => !onlyCat || c === onlyCat);
-    if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Специалистом здесь становятся, когда за человека ручаются другие.</p>';
+    if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда за человека ручаются другие.</p>';
     return cats.map((c) => {
       const r = G.reputation(id, c);
       const nearOthers = r.near.filter((a) => a !== S.me);
@@ -345,9 +345,9 @@
       },
       {
         done: asked > 0, num: 3,
-        title: 'Спросите сеть, когда нужен мастер',
+        title: 'Спросите сеть, когда нужен человек',
         text: c1.length
-          ? 'Опишите задачу — знакомые посоветуют своих, и вы увидите, кто за кого ручается.'
+          ? 'Юрист, врач, бухгалтер, автосервис, репетитор — опишите задачу, и знакомые посоветуют тех, кому доверяют сами.'
           : 'Запрос уходит вашему кругу. Пока круга нет, спрашивать некого.',
         btn: c1.length ? 'Спросить сеть' : '', act: 'goto', href: '#/ask',
       },
@@ -355,7 +355,7 @@
     return `<div class="card starter">
       <div class="eyebrow">с чего начать</div>
       <h2 class="h2" style="margin:6px 0 4px">Сеть начинается с людей</h2>
-      <p class="small muted" style="margin:0 0 4px">Здесь ищут мастеров не по рейтингу, а через знакомых: видно, кто за человека ручается и через кого вы на него вышли.</p>
+      <p class="small muted" style="margin:0 0 4px">Здесь находят людей, которые в чём-то разбираются, — не по рейтингу, а через знакомых: видно, кто за человека ручается и через кого вы на него вышли.</p>
       ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
         <span class="mark">${st.done ? ic('check') : st.num}</span>
         <div class="grow"><div class="h3">${st.title}</div><div class="small muted" style="margin-top:2px">${st.text}</div>
@@ -390,7 +390,7 @@
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 260 : 320, ghost: small ? { inner: 6, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
-      <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Дизайнер, врач, юрист…</span></a>
+      <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
@@ -413,7 +413,7 @@
   function Search(params) {
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
     return `<div class="top"><h1 class="h1 grow">Поиск</h1></div>
-      <label class="search">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Дизайнер, врач, юрист…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
+      <label class="search">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
       <div id="results">${searchResults()}</div>`;
   }
   function searchResults() {
@@ -438,9 +438,9 @@
     const catsFound = F.c ? [F.c] : G.matchCats(q);
     const filt = `<div class="chips scroll" style="margin-top:12px">${F.c ? `<button class="chip on" data-act="clearCat">${esc(cat(F.c).name)} ${ic('x').replace('<svg', '<svg style="width:14px;height:14px"')}</button>` : ''}${FILTERS.map(([k, l]) => `<button class="chip ${F.f === k ? 'on' : ''}" data-act="filter" data-v="${k}" ${counts[k] ? '' : 'disabled style="opacity:.45"'}>${l}<span class="n">${counts[k]}</span></button>`).join('')}</div>`;
     const askPrefill = encodeURIComponent(q || (F.c ? cat(F.c).who : ''));
-    const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Хотите мнение знакомых?' : 'Через вашу сеть пока никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — они посоветуют своих.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить сеть</a></div>`;
+    const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Хотите мнение знакомых?' : 'Через вашу сеть пока никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — посоветуют тех, кому доверяют сами.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить сеть</a></div>`;
     if (!all.length) {
-      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В этой области пока нет людей с рекомендациями.' : 'Попробуйте иначе: «дизайнер», «стоматолог», «ремонт часов».'}</p></div>` + askCard;
+      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В этой области пока нет людей с рекомендациями.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + askCard;
     }
     const groups = [['1', 'Ваши контакты'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
     let html = filt + `<div class="count-line"><b>${pl(list.length, 'человек найден', 'человека найдено', 'человек найдено')}</b>${F.f !== 'all' ? '<button class="link" data-act="filter" data-v="all">Показать всех</button>' : ''}</div>`;
@@ -513,7 +513,7 @@
     const inc = incomingRequests();
     return `<div class="top"><h1 class="h1 grow">Спросить сеть</h1></div>
       <div class="card">
-        <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен хороший мастер по ремонту часов, встал механизм у старых Seiko" maxlength="300">${esc(F.t)}</textarea></label>
+        <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен юрист по трудовому спору — уволили, хочу разобраться" maxlength="300">${esc(F.t)}</textarea></label>
         <div id="askcats">${askCats()}</div>
         <div class="row" style="margin-top:14px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">Получат ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>
         <button class="btn primary block" style="margin-top:14px" data-act="postAsk" data-submit ${askValid() ? '' : 'disabled'}>${ic('send')}Отправить запрос</button>
@@ -582,6 +582,10 @@
       <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
       <div class="small" style="margin-top:14px">Осталось мест: ${left} из ${inv.max}</div>
       <div class="dots">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
+      <button class="invite-extra" data-act="outsider">
+        <span class="grow"><b>Позвать и сразу поручиться</b>
+        <span>Напишете рекомендацию заранее — человек войдёт, и она уже будет ждать в его профиле</span></span>
+        ${ic('chev')}</button>
     </div>`;
 
     const howto = `<div class="card" style="margin-top:10px">
@@ -595,12 +599,6 @@
             <span class="body"><span class="grow"><span class="who">${t}</span><span class="role">${d}</span></span></span></div>`).join('')}
       </div></div>`;
 
-    const outsider = `<button class="card tap" style="width:100%;text-align:left;margin-top:10px;display:flex;gap:12px;align-items:center" data-act="outsider">
-      <span class="av" style="background:var(--blue-soft);color:var(--blue)">${ic('seal').replace('<svg', '<svg style="width:21px;height:21px"')}</span>
-      <span class="grow"><span class="h3" style="display:block">Рекомендовать того, кого здесь нет</span>
-      <span class="small muted">Мастер получит ссылку, а ваша рекомендация будет ждать его в профиле</span></span>
-      ${ic('chev').replace('<svg', '<svg style="width:18px;height:18px;color:var(--ink-4);flex:none"')}</button>`;
-
     const people = F.tab === 'c1'
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
@@ -610,7 +608,6 @@
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
       ${empty ? howto : ''}
-      ${outsider}
       ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
       ${empty ? '' : `
       <div class="sec-title"><h2 class="h2">Круги знакомых</h2></div>
@@ -652,19 +649,19 @@
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
-      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Специалисты,<br>за которых ручаются</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">Вы видите не рейтинг, а живую цепочку: кто из ваших знакомых знает этого человека.</p>
+      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Люди, за которых<br>ручаются знакомые</h1>
+      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">Юрист, врач, бухгалтер, репетитор, автомеханик — кто угодно, в чём-то разбирающийся. Вы видите не рейтинг, а живую цепочку: кто из ваших знакомых его знает.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
         ${rule('seal', 'Знакомство — ещё не рекомендация', 'Добавить человека в сеть и поручиться за него — два разных действия.')}
-        ${rule('net', 'Видно, кто ручается', 'У каждого специалиста — цепочка: Вы → Иван → Алексей.')}
+        ${rule('net', 'Видно, кто ручается', 'У каждого человека — цепочка: Вы → Иван → Алексей.')}
         ${rule('ask', 'Сначала спросите сеть', 'Не нашли — знакомые посоветуют своих.')}
       </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
         <div class="field"><span>Чем занимаетесь</span>
           <div class="chips">${S.cats.map((c) => `<button class="chip ${F.cats.includes(c.id) ? 'on' : ''}" data-act="toggleCat" data-v="${c.id}">${esc(c.who)}</button>`).join('')}</div>
-          <p class="hint">Можно пропустить: специалистом вас сделают рекомендации знакомых</p></div>
+          <p class="hint">Можно пропустить: в чём вы сильны, решат рекомендации знакомых</p></div>
         <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${F.name.trim() ? '' : 'disabled'}>Войти в сеть</button>
       </div></div>`;
   }
@@ -836,11 +833,11 @@
           const link = `t.me/${S.bot || 'sarafanibot'}?start=${f.done.code}`;
           return `${sheetHead(null, 'Осталось отправить ссылку', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
-            <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где специалистов ищут через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
+            <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
             <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым контактом, а рекомендация появится в профиле.</div>
             <div class="s-foot"><button class="btn ghost block" data-act="closeSheet">Готово</button></div>`;
         }
-        return `${sheetHead(null, 'Рекомендовать того, кого здесь нет', 'Например, мастера, который про Сарафан не знает')}
+        return `${sheetHead(null, 'Рекомендовать того, кого здесь нет', 'Например, человека, который про Сарафан ещё не знает')}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
           ${catChips(f, [])}${relChips(f)}
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что человек сделал и почему вы ему доверяете">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
@@ -893,7 +890,7 @@
       valid: () => f.name.trim().length >= 2,
       render: () => `${sheetHead(null, 'Профиль')}
         <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" value="${esc(f.name)}"></label>
-        <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу специалистов'], ['pro', 'Специалист'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
+        <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${f.role === 'client' ? '' : `<div class="field"><span>Чем занимаетесь</span><div class="chips">${S.cats.map((c) => `<button class="chip ${f.cats.includes(c.id) ? 'on' : ''}" data-act="toggle" data-k="cats" data-v="${c.id}">${esc(c.who)}</button>`).join('')}</div></div>`}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
         <div class="s-foot"><button class="btn primary block" data-act="submitEdit" data-submit>Сохранить</button></div>`,
@@ -986,7 +983,7 @@
       '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
     tab: (d) => { F.tab = d.v; render(); },
-    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь ищут специалистов через знакомых.'),
+    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь находят нужных людей через знакомых.'),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
