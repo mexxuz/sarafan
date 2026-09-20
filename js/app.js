@@ -268,6 +268,9 @@
     if (hashChanged) window.scrollTo(0, 0);
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }
     if (hashChanged) countUp(app);
+    if (cloud) { cloud.stop(); cloud = null; }
+    if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true);
+    if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
   }
 
   // Числа в профиле набегают от нуля — видно, что за ними живые люди
@@ -517,8 +520,9 @@
         <div class="grow"><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
-      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
-      <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} в их книжках</span></div>
+      <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
+        <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
+      <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} в их книжках</span><span><i class="dot-n"></i>${pl(nodesAll().length, 'место', 'места', 'мест')} и фирм</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
@@ -552,82 +556,70 @@
       ${waiting.length ? '' : '<p class="tiny muted" style="text-align:center;margin:10px 0 0">Достаточно имени и пары слов — за что вы его советуете</p>'}</div>`;
   }
 
+  // ——— Облако сети ———
+  // Кого показываем: вы, ваши контакты, их знакомые, места и фирмы вокруг них.
+  function cloudData(limitRing, withPlaces) {
+    const ring = (id) => (id === S.me ? 0 : Math.min(G.dist[id] ?? 9, 9));
+    const people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
+    const nodes = people.map((id) => ({
+      id, ring: ring(id), self: id === S.me,
+      r: id === S.me ? 21 : ring(id) === 1 ? 15 : 10,
+      photo: U(id).photo || null,
+      initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
+      label: id === S.me ? 'вы' : ring(id) <= 1 ? first(id) : '',
+      go: id === S.me ? '#/me' : '#/p/' + id,
+    }));
+    const edges = [];
+    const known = new Set(people);
+    S.conns.filter((c) => c.status === 'ok' && known.has(c.a) && known.has(c.b))
+      .forEach((c) => edges.push({ a: c.a, b: c.b, kind: 'know' }));
+    S.recs.filter((r) => !r.private && known.has(r.from) && known.has(r.to))
+      .forEach((r) => edges.push({ a: r.from, b: r.to, kind: 'vouch', len: 64 }));
+
+    if (withPlaces) {
+      nodesAll().forEach((n) => {
+        const voices = [...new Set([...nodeRecs(n).map((r) => r.from), n.by])].filter((id) => known.has(id));
+        if (!voices.length) return;
+        const id = 'o' + n.id;
+        nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company', r: 8,
+          label: '', go: '#/o/' + n.id });
+        voices.forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
+      });
+    }
+    return { nodes, edges };
+  }
+
+  // Облако живёт, пока экран открыт: при уходе с экрана его останавливаем
+  let cloud = null;
+  function mountCloud(id, limitRing, withPlaces) {
+    setTimeout(() => {
+      const el = $('#' + id);
+      if (!el) return;
+      if (cloud) cloud.stop();
+      cloud = window.Cloud(el, { onPick: (n) => go(n.go) });
+      cloud.setData(cloudData(limitRing, withPlaces));
+      cloud.start();
+    }, 30);
+  }
+
   // ——— Карта сети ———
   // Вы в центре, вокруг кольцами — знакомые и знакомые знакомых, дальше места и фирмы.
   // Линии показывают, что кого держит: серая — знакомство, синяя — поручительство.
   function Map() {
     if (F.show === undefined) F.show = 'all';
-    const W = 340, H = 340, cx = W / 2, cy = H / 2;
     const ring1 = myContacts();
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
-    const showPeople = F.show !== 'places';
-    const showPlaces = F.show !== 'people';
-
-    const pos = { [S.me]: { x: cx, y: cy, r: 17, kind: 'me' } };
-    const place = (ids, radius, size, kind) => ids.forEach((id, i) => {
-      const a = (-90 + (360 / Math.max(ids.length, 1)) * i) * Math.PI / 180;
-      pos[id] = { x: cx + Math.cos(a) * radius, y: cy + Math.sin(a) * radius, r: size, kind };
-    });
-    place(ring1, 74, 13, 'c1');
-    place(ring2.slice(0, 16), 132, 9, 'c2');
-
-    // места ставим рядом с тем, кто их знает
-    const nodes = showPlaces ? nodesAll() : [];
-    nodes.forEach((n, i) => {
-      const near = (nodeRecs(n)[0] || {}).from || n.by;
-      const base = pos[near] || pos[S.me];
-      const a = (i * 47) * Math.PI / 180;
-      pos['o' + n.id] = { x: base.x + Math.cos(a) * 26, y: base.y + Math.sin(a) * 26, r: 7, kind: 'node' };
-    });
-
-    const line = (a, b, cls) => {
-      const p1 = pos[a], p2 = pos[b];
-      if (!p1 || !p2) return '';
-      return `<line class="${cls}" x1="${p1.x.toFixed(1)}" y1="${p1.y.toFixed(1)}" x2="${p2.x.toFixed(1)}" y2="${p2.y.toFixed(1)}"/>`;
-    };
-
-    let edges = '';
-    if (showPeople) {
-      S.conns.filter((c) => c.status === 'ok').forEach((c) => { edges += line(c.a, c.b, 'know'); });
-      S.recs.filter((r) => !r.private).forEach((r) => { edges += line(r.from, r.to, 'vouch'); });
-    }
-    if (showPlaces) nodes.forEach((n) => {
-      nodeRecs(n).forEach((r) => { edges += line(r.from, 'o' + n.id, 'vouch'); });
-      edges += line(n.by, 'o' + n.id, 'know');
-    });
-
-    const dot = (id, p) => {
-      if (p.kind === 'node') {
-        const n = nodeById(id.slice(1));
-        return `<g class="mp node" data-act="goto" data-h="#/o/${n.id}" role="link" tabindex="0">
-          <rect x="${(p.x - p.r).toFixed(1)}" y="${(p.y - p.r).toFixed(1)}" width="${p.r * 2}" height="${p.r * 2}" rx="3"/>
-          <title>${esc(n.name)}</title></g>`;
-      }
-      const u = U(id);
-      if (!u) return '';
-      return `<g class="mp ${p.kind}" data-act="goto" data-h="${id === S.me ? '#/me' : '#/p/' + id}" role="link" tabindex="0">
-        <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r}"/>
-        ${p.r >= 13 ? `<text x="${p.x.toFixed(1)}" y="${(p.y + p.r + 11).toFixed(1)}">${esc(id === S.me ? 'вы' : first(id))}</text>` : ''}
-        <title>${esc(u.name)}</title></g>`;
-    };
-
-    const dots = Object.entries(pos)
-      .filter(([id, p]) => (p.kind === 'node' ? showPlaces : showPeople || id === S.me))
-      .map(([id, p]) => dot(id, p)).join('');
-
-    const counts = { people: ring1.length + ring2.length, places: nodes.length };
-    return `<div class="top"><h1 class="h1 grow">Карта сети</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
-      <p class="small muted" style="margin:0 0 14px">Вы в центре. Рядом — ваши контакты, дальше их знакомые, квадратами — места и фирмы. Серая нить значит «знакомы», синяя — «ручается».</p>
-      <div class="chips" style="margin-bottom:12px">
-        ${[['all', 'Всё'], ['people', 'Только люди'], ['places', 'Места и фирмы']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
-      <div class="card" style="padding:10px">
-        <svg class="netmap" viewBox="0 0 ${W} ${H}" role="img" aria-label="Карта вашей сети">
-          <g class="edges">${edges}</g>${dots}</svg></div>
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
+        <h1 class="h2 grow">Облако сети</h1>
+        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+      <div class="chips" style="margin-bottom:10px">
+        ${[['all', 'Всё'], ['people', 'Только люди'], ['near', 'Ближний круг']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
+      <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
       <div class="orbit-legend" style="margin-top:10px">
         <span><i class="dot-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
         <span><i class="dot-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
-        <span><i class="dot-n"></i>${pl(counts.places, 'место', 'места', 'мест')} и фирм</span></div>
-      <p class="tiny muted" style="text-align:center;margin-top:12px">Нажмите на точку, чтобы открыть карточку</p>`;
+        <span><i class="dot-n"></i>${pl(nodesAll().length, 'место', 'места', 'мест')} и фирм</span></div>
+      <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — ручается. Точку можно тянуть, нажатие открывает карточку.</p>`;
   }
 
   // ——— Места и фирмы ———
