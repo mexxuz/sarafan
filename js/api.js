@@ -56,6 +56,21 @@ window.API = (function () {
     inTelegram: !!(tg && tg.initData),
     hasSession: () => !!session,
     bootstrap: () => call('/bootstrap'),
+    // картинка работы уходит файлом, а не текстом
+    upload: async (path, file, fields) => {
+      const form = new FormData();
+      form.append('file', file);
+      Object.entries(fields || {}).forEach(([k, v]) => form.append(k, v));
+      const r = await fetch(base + '/api' + path, {
+        method: 'POST',
+        headers: { 'X-Init-Data': who(), 'X-Session': session },
+        body: form,
+      });
+      let data = null;
+      try { data = await r.json(); } catch (e) { /* пусто */ }
+      if (!r.ok) throw new Error((data && (data.detail || data.message)) || 'Картинка не загрузилась');
+      return data;
+    },
     pulse: () => call('/pulse'),
     post: (path, body) => call(path, body || {}),
 

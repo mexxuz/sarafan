@@ -321,6 +321,29 @@
   // ——— Общие куски ———
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
 
+  // Витрина: то, что человек рассказывает о себе сам. Рекомендации — то, что о нём
+  // говорят другие. Первое не заменяет второе и стоит ниже по весу.
+  const srvUrl = (u) => (u.startsWith('http') ? u : (window.SARAFAN_SERVER || '').replace(/\/$/, '') + u);
+  const lines = (t) => (t || '').split('\n').map((x) => x.trim()).filter(Boolean);
+
+  function showcaseView(id) {
+    const sc = (S.showcases || {})[id];
+    if (!sc) return '';
+    const works = sc.works || [];
+    const has = sc.story || sc.services || sc.prices || lines(sc.links).length || works.length;
+    if (!has) return '';
+    return `<div class="sec-title"><h2 class="h2">О работе</h2>${id === S.me ? '<button class="btn sm" data-act="editShowcase">Изменить</button>' : ''}</div>
+      ${works.length ? `<div class="works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="${esc(w.title)}" loading="lazy">
+        ${w.title || w.note ? `<figcaption>${w.title ? `<b>${esc(w.title)}</b>` : ''}${w.note ? `<span>${esc(w.note)}</span>` : ''}</figcaption>` : ''}</figure>`).join('')}</div>` : ''}
+      <div class="card">
+        ${sc.headline ? `<div class="h3" style="margin-bottom:8px">${esc(sc.headline)}</div>` : ''}
+        ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
+        ${lines(sc.services).length ? `<div class="field" style="margin-top:0"><span>Что делает</span><div class="chips">${lines(sc.services).map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div></div>` : ''}
+        ${sc.prices ? `<div class="field"><span>Про деньги</span><p class="small" style="margin:0;color:var(--ink-2)">${esc(sc.prices)}</p></div>` : ''}
+        ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span><div class="stack">${lines(sc.links).map((x) => `<a class="link-row" href="${esc(x.startsWith('http') ? x : 'https://' + x)}" target="_blank" rel="noopener">${ic('link')}<span class="grow ellip">${esc(x.replace(/^https?:\/\//, ''))}</span>${ic('arrow')}</a>`).join('')}</div></div>` : ''}
+      </div>`;
+  }
+
   const repRows = (id, onlyCat) => {
     const cats = G.catsOf(id).filter((c) => !onlyCat || c === onlyCat);
     if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда за человека ручаются другие.</p>';
@@ -678,6 +701,7 @@
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${showcaseView(id)}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
       <div class="card">${repRows(id)}</div>
       ${allRecs.length ? `<div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
@@ -846,6 +870,14 @@
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="btn sm" data-act="editMe">Изменить</button></div>
       <div class="p-head">${av(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1></div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
+      ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
+        <h2 class="h2" style="margin:6px 0 6px">Расскажите о работе</h2>
+        <p class="small muted" style="margin:0 0 12px">Что вы делаете, как считаете деньги, где посмотреть работы. Витрину видят все, кто открывает вашу карточку.</p>
+        <button class="btn primary block" data-act="editShowcase">${ic('seal')}Заполнить витрину</button></div>`
+    : `<div class="card" style="margin-top:18px"><div class="eyebrow">витрина</div>
+        <h2 class="h2" style="margin:6px 0 6px">Показать свои работы</h2>
+        <p class="small muted" style="margin:0 0 12px">Обычная карточка с рекомендациями есть у всех и всегда бесплатна. Витрина — для тех, кому сеть приносит работу: рассказ о себе, услуги, цены, ссылки и до 12 примеров работ.</p>
+        <button class="btn block" data-act="openShowcase">Открыть витрину</button></div>`}
       <div class="sec-title"><h2 class="h2">Вас рекомендуют</h2></div>
       <div class="card">${repRows(S.me)}</div>
       <div class="sec-title"><h2 class="h2">Вы как рекомендатель</h2></div>
@@ -1274,6 +1306,61 @@
     });
   }
 
+  // Правка витрины: текстом о себе и картинками работ
+  function sheetShowcase() {
+    const sc = (S.showcases || {})[S.me] || { headline: '', story: '', services: '', prices: '', links: '', works: [] };
+    const f = { headline: sc.headline, story: sc.story, services: sc.services, prices: sc.prices, links: sc.links };
+    openSheet({
+      F: f,
+      valid: () => true,
+      render: () => {
+        const works = ((S.showcases || {})[S.me] || {}).works || [];
+        return `${sheetHead(null, 'Витрина')}
+          <label class="field" style="margin-top:0"><span>Строка под именем</span>
+            <input class="input" data-bind="headline" maxlength="120" placeholder="Айдентика и упаковка для локальных брендов" value="${esc(f.headline)}"></label>
+          <label class="field"><span>О работе</span>
+            <textarea class="textarea" data-bind="story" maxlength="2000" placeholder="Чем занимаетесь, с кем работаете, что для вас важно в работе">${esc(f.story)}</textarea></label>
+          <label class="field"><span>Что делаете — по строке на услугу</span>
+            <textarea class="textarea" data-bind="services" maxlength="1200" placeholder="Логотип и фирменный стиль&#10;Упаковка&#10;Оформление соцсетей">${esc(f.services)}</textarea></label>
+          <label class="field"><span>Про деньги</span>
+            <textarea class="textarea" data-bind="prices" maxlength="600" placeholder="Например: логотип от 3 млн, обсуждаем после разговора о задаче">${esc(f.prices)}</textarea></label>
+          <label class="field"><span>Ссылки — по одной на строку</span>
+            <textarea class="textarea" data-bind="links" maxlength="600" placeholder="behance.net/вы&#10;t.me/ваш_канал">${esc(f.links)}</textarea></label>
+          <div class="field"><span>Работы ${works.length ? `· ${works.length} из 12` : ''}</span>
+            ${works.length ? `<div class="works small-works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
+              <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
+            <label class="btn block" style="margin-top:10px;cursor:pointer">${ic('plus')}Добавить картинку
+              <input type="file" accept="image/*" id="workfile" hidden></label>
+            <p class="hint">JPG, PNG или WebP до 6 МБ. Первая картинка — главная.</p></div>
+          <div class="s-foot"><button class="btn primary block" data-act="submitShowcase" data-submit>Сохранить</button></div>`;
+      },
+      submit: () => {
+        closeSheet();
+        mutate(() => {
+          S.showcases = S.showcases || {};
+          S.showcases[S.me] = Object.assign({ works: [] }, S.showcases[S.me], f);
+        }, '/showcase', { ...f }, 'Витрина сохранена');
+      },
+    });
+    // загрузка картинки — сразу после выбора файла
+    setTimeout(() => {
+      const inp = $('#workfile');
+      if (inp) inp.onchange = () => uploadWork(inp.files && inp.files[0]);
+    }, 60);
+  }
+
+  async function uploadWork(file) {
+    if (!file) return;
+    if (!LIVE) { toast('В демо работы не загружаются'); return; }
+    toast('Загружаем…');
+    try {
+      await window.API.upload('/works', file);
+      await refresh();
+      if (SH) drawSheet();
+      toast('Работа добавлена');
+    } catch (e) { toast(e.message); }
+  }
+
   // ——— Всплывашка ———
   let toastT;
   function toast(t) {
@@ -1431,6 +1518,21 @@
       } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
     },
     hideStarter: () => { try { localStorage.setItem(STARTER_KEY, '1'); } catch (e) { /* */ } render(); toast('Убрали. Всё это есть в разделах ниже'); },
+    editShowcase: () => sheetShowcase(),
+    submitShowcase: () => SH.submit(),
+    delWork: (d) => mutate(() => {
+      const box = (S.showcases || {})[S.me];
+      if (box) box.works = box.works.filter((w) => w.id !== d.id);
+    }, '/works/delete', { id: d.id }, 'Работа убрана'),
+    openShowcase: async () => {
+      if (!LIVE) { toast('В демо витрина не открывается'); return; }
+      try {
+        await window.API.post('/showcase/open', {});
+        await refresh();
+        toast('Витрина открыта');
+        sheetShowcase();
+      } catch (e) { toast(e.message); }
+    },
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
     resetDemo: () => {

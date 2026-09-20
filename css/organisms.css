@@ -307,3 +307,23 @@
 /* Живые люди на орбите кликабельны, хотя весь круг плывёт */
 .orbit .spin { pointer-events: none; }
 .orb { pointer-events: auto; }
+
+/* Витрина: работы сеткой, подписи под картинкой */
+.works { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-2); margin-top: var(--s-2); }
+.works .work { position: relative; margin: 0; border-radius: var(--r-md); overflow: hidden; background: var(--mist); box-shadow: var(--sh-1); }
+.works .work img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.works .work figcaption { padding: var(--s-3); display: grid; gap: 3px; }
+.works .work figcaption b { font: 700 var(--fs-xs)/1.3 var(--t); }
+.works .work figcaption span { font-size: var(--fs-xxs); color: var(--ink-3); }
+.works.small-works { grid-template-columns: repeat(3, 1fr); }
+.works.small-works .work img { aspect-ratio: 1; }
+.work-x {
+  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(18, 20, 26, .62); color: #fff; display: grid; place-items: center; backdrop-filter: blur(6px);
+}
+.work-x svg { width: 14px; height: 14px; }
+
+/* Строка со ссылкой */
+.link-row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-sm); background: var(--mist); color: var(--ink); font-size: var(--fs-sm); }
+.link-row svg { width: 16px; height: 16px; color: var(--ink-4); flex: none; }
+.link-row:active { background: var(--mist-2); }
