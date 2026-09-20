@@ -72,6 +72,11 @@
   const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
   const ringOf = (id) => { const d = G.dist[id]; return d === 1 ? 'r1' : d === 2 ? 'r2' : d === undefined ? '' : 'r3'; };
 
+  // Примеры занятий на свободных местах орбиты — показывают, кого тут находят
+  const GHOST_IN = ['Юрист', 'Педиатр', 'Бухгалтер', 'Репетитор', 'Психолог', 'Программист'];
+  const GHOST_OUT = ['Стоматолог', 'Фотограф', 'Риелтор', 'Автомеханик', 'Дизайнер', 'Кардиолог',
+                     'Маркетолог', 'Электрик', 'Кондитер'];
+
   // ——— Орбита: вы в центре, 1-й круг рядом, 2-й круг дальше ———
   const orbit = (o) => {
     const box = Math.min(o.size || 320, window.innerWidth - (o.big ? 76 : 44), 400);
@@ -83,14 +88,17 @@
       const via = '';
       return `<button class="orb ${cls} ${o.dim && o.dim !== cls ? 'dim' : ''}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px;--i:${k++}" data-act="peek" data-id="${id}" aria-label="${esc(U(id).name)}">${av(id, size, cls === 'in' ? 'r1' : 'r2')}${label ? `<i>${esc(first(id))}${via}</i>` : ''}</button>`;
     }).join('');
-    // Пустые места на орбите: медленно вращаются, показывают, как сеть будет выглядеть
+    // Пустые места на орбите: медленно вращаются, показывают, как сеть будет выглядеть.
+    // У каждого — пример занятия, чтобы было понятно, кого тут находят.
     const ghosts = (count, rPct, size, cls) => {
       if (!count) return '';
+      const roles = cls === 'in' ? GHOST_IN : GHOST_OUT;
       const step = 360 / count;
       return Array.from({ length: count }, (_, i) => {
         const a = -90 + step * i + (cls === 'out' ? step / 2 : 0);
-        return `<span class="orb ghost ${cls}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px" aria-hidden="true">
-          <span class="ghost-av ${size}">${ic('user')}</span></span>`;
+        return `<span class="orb ghost ${cls}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px">
+          <span class="ghost-in"><span class="ghost-av ${size}">${ic('user')}</span>
+          <i class="ghost-tip">${esc(roles[i % roles.length])}</i></span></span>`;
       }).join('');
     };
     const gIn = Math.max(0, (o.ghost ? o.ghost.inner : 0) - inner.length);
@@ -387,7 +395,7 @@
         <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <button class="icon-btn bell" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
       ${small ? starter() : ''}
-      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 260 : 320, ghost: small ? { inner: 6, outer: 9 } : null })}</a>
+      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
@@ -574,19 +582,23 @@
     const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
     const dim = F.tab === 'c1' ? 'in' : F.tab === 'c2' ? 'out' : null;
 
-    const invite = `<div class="invite-card">
-      <div class="eyebrow" style="color:rgba(255,255,255,.7)">ваша личная ссылка</div>
-      <div class="h2" style="margin:6px 0 8px">${empty ? 'Позовите знакомых' : 'Пригласить в сеть'}</div>
-      <div class="small">Кто войдёт по ней — сразу станет вашим контактом. Приглашение не значит, что вы за человека ручаетесь: это отдельное действие.</div>
-      <div class="link-box">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.7"')}<span>${link}</span></div>
-      <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
-      <div class="small" style="margin-top:14px">Осталось мест: ${left} из ${inv.max}</div>
-      <div class="dots">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
-      <button class="invite-extra" data-act="outsider">
-        <span class="grow"><b>Позвать и сразу поручиться</b>
-        <span>Напишете рекомендацию заранее — человек войдёт, и она уже будет ждать в его профиле</span></span>
-        ${ic('chev')}</button>
-    </div>`;
+    const invite = `
+      <div class="card accent invite-strong">
+        <div class="eyebrow">сильное приглашение</div>
+        <h2 class="h2" style="margin:6px 0 8px">Позовите и сразу поручитесь</h2>
+        <p class="small" style="margin:0 0 4px;color:rgba(255,255,255,.88)">Напишите рекомендацию заранее — человек войдёт по вашей ссылке, и она уже будет ждать у него в профиле. Так сеть с первого дня наполняется доверием, а не просто людьми.</p>
+        <button class="btn primary block" style="margin-top:14px" data-act="outsider">${ic('seal')}Написать рекомендацию</button>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <div class="eyebrow">просто позвать</div>
+        <div class="row" style="margin-top:8px"><div class="grow"><div class="h3">Ваша личная ссылка</div>
+          <div class="small muted" style="margin-top:2px">Осталось мест: ${left} из ${inv.max}</div></div></div>
+        <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
+        <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
+        <div class="dots plain">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
+        <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы за человека ручаетесь: это отдельное действие.</p>
+      </div>`;
 
     const howto = `<div class="card" style="margin-top:10px">
       <div class="eyebrow">как это работает</div>

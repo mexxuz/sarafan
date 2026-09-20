@@ -220,8 +220,8 @@
 }
 .ghost-av.xs { width: 26px; height: 26px; }
 .ghost-av svg { width: 55%; height: 55%; }
-.orbit .spin.slow .ghost-av { animation: orbit-spin 80s linear infinite reverse; }
-.orbit .spin.rev .ghost-av { animation: orbit-spin 120s linear infinite; }
+.orbit .spin.slow .ghost-in { animation: orbit-spin 80s linear infinite reverse; }
+.orbit .spin.rev .ghost-in { animation: orbit-spin 120s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .orbit .spin, .orbit .spin .ghost-av { animation: none !important; } }
 
 
@@ -236,3 +236,27 @@
 .invite-extra svg { width: 18px; height: 18px; flex: none; opacity: .6; }
 .invite-extra:active { opacity: .7; }
 @media (hover: hover) { .invite-extra:hover { opacity: .85; } }
+
+
+/* Подпись у свободного места: пример занятия */
+.orb.ghost { pointer-events: auto; }
+.ghost-in { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ghost-tip {
+  font: 600 var(--fs-xxs)/1 var(--t); font-style: normal; color: var(--ink-3); white-space: nowrap;
+  background: var(--paper); padding: 4px 8px; border-radius: 999px; box-shadow: var(--sh-1);
+  transition: color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), opacity var(--base) var(--ease);
+}
+.orb.ghost.out .ghost-tip { opacity: 0; }
+.orb.ghost:hover .ghost-av { box-shadow: inset 0 0 0 1px var(--blue); color: var(--blue); }
+.orb.ghost:hover .ghost-tip { opacity: 1; color: var(--blue); box-shadow: var(--sh-2); }
+@media (max-width: 420px) {
+  .orb.ghost.out .ghost-tip { display: none; }
+  .ghost-tip { padding: 3px 7px; }
+}
+
+
+/* Сильное приглашение — с рекомендацией; обычная ссылка живёт отдельно и тише */
+.invite-strong .eyebrow { color: rgba(255, 255, 255, .75); }
+.link-box.plain { background: var(--mist); color: var(--ink-2); }
+.dots.plain i { background: var(--mist-2); }
+.dots.plain i.on { background: var(--blue); }
