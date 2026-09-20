@@ -168,7 +168,8 @@
     ? `<span class="trust">${ic('seal')}надёжно</span>` : '');
 
   const REL = { client: 'Опыт клиента', together: 'Работали вместе', colleague: 'Коллеги по цеху', friend: 'Знаю лично', other: 'Другое' };
-  const circleName = (c) => (c === 0 ? 'Это вы' : c === 1 ? 'Ваш контакт' : c === 2 ? '2-й круг' : c === 3 ? '3-й круг' : 'Вне вашей сети');
+  const circleName = (c) => (c === 0 ? 'Это вы' : c === 1 ? 'Ваш контакт'
+    : c === 2 ? 'Через вашего знакомого' : c === 3 ? 'В двух шагах от вас' : 'Вне вашей сети');
   const circleTag = (c) => `<span class="tag circle-${Math.min(c, 3)}">${circleName(c)}</span>`;
   const myContacts = () => [...(G.adj[S.me] || [])].sort((a, b) => U(a).name.localeCompare(U(b).name));
 
@@ -733,7 +734,7 @@
         <h1 class="h2 grow">Облако сети</h1>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="chips" style="margin-bottom:10px">
-        ${[['all', 'Всё'], ['people', 'Только люди'], ['near', 'Ближний круг']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
+        ${[['all', 'Всё'], ['people', 'Только люди'], ['near', 'Только ваши контакты']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
       <div class="cloud-legend" style="margin-top:10px">
         <span><i class="lg-me"></i>вы</span>
@@ -995,7 +996,7 @@
   };
 
   // ——— Поиск ———
-  const FILTERS = [['all', 'Все'], ['1', '1-й круг'], ['2', '2-й круг'], ['far', 'Дальше']];
+  const FILTERS = [['all', 'Все'], ['1', 'Ваши контакты'], ['2', 'Через знакомых'], ['far', 'Дальше']];
   function Search(params) {
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
     return `<div class="top"><h1 class="h1 grow">Поиск</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
