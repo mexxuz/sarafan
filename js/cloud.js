@@ -257,37 +257,43 @@ window.Cloud = function (canvas, opts) {
     }
   }
 
+  // Места и фирмы узнаются по значку внутри кружка, а не по форме маркера:
+  // капля — место, дом — фирма. Так же, как в карточках по всему приложению.
+  const ICON = {
+    place: new Path2D('M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z'),
+    placeDot: new Path2D('M12 7.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z'),
+    company: new Path2D('M4 21V9.5L12 4l8 5.5V21M9.5 21v-5h5v5'),
+  };
+
   function drawPlace(n) {
     const c = n.company ? COLOR.company : COLOR.place;
-    const r = n.r;
+    const r = n.r * 1.18;
+
     ctx.beginPath();
-    if (n.company) {
-      // фирма — ромб: издалека не спутать с местом
-      ctx.moveTo(n.x, n.y - r * 1.15);
-      ctx.lineTo(n.x + r * 1.15, n.y);
-      ctx.lineTo(n.x, n.y + r * 1.15);
-      ctx.lineTo(n.x - r * 1.15, n.y);
-      ctx.closePath();
-    } else {
-      // место — квадрат с меткой внутри
-      const x = n.x - r, y = n.y - r, s = r * 2, rad = 3;
-      ctx.moveTo(x + rad, y);
-      ctx.arcTo(x + s, y, x + s, y + s, rad);
-      ctx.arcTo(x + s, y + s, x, y + s, rad);
-      ctx.arcTo(x, y + s, x, y, rad);
-      ctx.arcTo(x, y, x + s, y, rad);
-      ctx.closePath();
-    }
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
     ctx.fillStyle = c.fill;
     ctx.fill();
     ctx.strokeStyle = c.line;
-    ctx.lineWidth = 1.1;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, Math.max(1.4, r * 0.26), 0, Math.PI * 2);
-    ctx.fillStyle = c.dot;
-    ctx.fill();
+    // значок рисуем в своей системе координат: 24×24 масштабируем под узел
+    const k = (r * 1.32) / 24;
+    ctx.save();
+    ctx.translate(n.x - 12 * k, n.y - 12 * k);
+    ctx.scale(k, k);
+    ctx.lineWidth = 2 / k * 0.9;
+    ctx.strokeStyle = c.dot;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    if (n.company) {
+      ctx.stroke(ICON.company);
+    } else {
+      ctx.stroke(ICON.place);
+      ctx.fillStyle = c.dot;
+      ctx.fill(ICON.placeDot);
+    }
+    ctx.restore();
   }
 
   // ——— жизнь ———
@@ -313,6 +319,12 @@ window.Cloud = function (canvas, opts) {
       if (Math.abs(cam.vx) < 0.02) cam.vx = 0;
       if (Math.abs(cam.vy) < 0.02) cam.vy = 0;
     }
+    // уехать можно далеко, но не насовсем: граф мягко возвращается в поле зрения
+    const limX = W * 0.65, limY = H * 0.65;
+    if (cam.x > limX) { cam.x += (limX - cam.x) * 0.12; cam.vx = 0; }
+    if (cam.x < -limX) { cam.x += (-limX - cam.x) * 0.12; cam.vx = 0; }
+    if (cam.y > limY) { cam.y += (limY - cam.y) * 0.12; cam.vy = 0; }
+    if (cam.y < -limY) { cam.y += (-limY - cam.y) * 0.12; cam.vy = 0; }
 
     draw();
     raf = requestAnimationFrame(tick);
