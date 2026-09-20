@@ -123,6 +123,17 @@ window.Cloud = function (canvas, opts) {
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
+
+    // Круги никуда не делись — они просто перестали быть расстановкой.
+    // Две еле видные окружности напоминают: ближе центра свои, дальше — через них.
+    const cx = W / 2, cy = H / 2;
+    ctx.strokeStyle = 'rgba(47,123,255,.07)';
+    ctx.lineWidth = 1;
+    [72 + 62, 72 + 124].forEach((r) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
     const lit = hover || held;
     const near = new Set();
     if (lit) { near.add(lit.id); edges.forEach((e) => { if (e.a === lit.id) near.add(e.b); if (e.b === lit.id) near.add(e.a); }); }
@@ -266,7 +277,7 @@ window.Cloud = function (canvas, opts) {
     held = find(p);
     moved = 0;
     pointer = { x: p.x, y: p.y, down: true, id: e.pointerId };
-    if (held) canvas.setPointerCapture(e.pointerId);
+    if (held) { try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* без захвата тоже works */ } }
   });
   canvas.addEventListener('pointermove', (e) => {
     const p = at(e);
