@@ -109,7 +109,7 @@
   const GHOST_OUT = ['Стоматолог', 'Фотограф', 'Риелтор', 'Автомеханик', 'Дизайнер', 'Кардиолог',
                      'Маркетолог', 'Электрик', 'Кондитер'];
 
-  // ——— Орбита: вы в центре, 1-й круг рядом, 2-й круг дальше ———
+  // ——— Орбита: вы в центре, ваши контакты рядом, их знакомые дальше ———
   // Живые люди и свободные места стоят на одном круге, поделённом поровну,
   // и плывут вместе: ближний круг в одну сторону, дальний — в другую.
   const orbit = (o) => {
@@ -1267,10 +1267,10 @@
       <p style="text-align:center;margin-top:14px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>
       ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
       ${empty ? '' : `
-      <div class="sec-title"><h2 class="h2">Круги знакомых</h2></div>
+      <div class="sec-title"><h2 class="h2">Кто рядом с вами</h2></div>
       ${orbit({ inner: c1.slice(0, 8), outer: c2.slice(0, 8), cap: 'вы', size: 360, big: true, dim })}
-      <div class="orbit-legend" style="margin-bottom:var(--s-5)"><span><i class="dot-1"></i>1-й круг</span><span><i class="dot-2"></i>2-й круг</span></div>
-      <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Мои контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">2-й круг · ${c2.length}</button></div>
+      <div class="orbit-legend" style="margin-bottom:var(--s-5)"><span><i class="dot-1"></i>ваши контакты</span><span><i class="dot-2"></i>через них</span></div>
+      <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Ваши контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них · ${c2.length}</button></div>
       <div class="card">${people || '<p class="muted small" style="margin:0">Здесь пока пусто</p>'}</div>`}`;
   }
 
@@ -1404,7 +1404,7 @@
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
       <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Спросите своих —<br>получите имя</h1>
       <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен часовщик, педиатр, юрист? Знакомые посмотрят у себя и посоветуют того, за кого ручаются. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
-      ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
+      ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
         ${rule('net', 'Вам уже открыта чужая книжка', inviter
       ? `${esc(first(inviter))} пригласил вас — значит, вам видно всех, кого ${esc(first(inviter))} проверил на себе, и тех, кого проверили его знакомые.`
