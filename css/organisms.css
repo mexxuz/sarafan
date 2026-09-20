@@ -344,3 +344,16 @@
 
 /* Значок внутри обычного текста держим размером со строку */
 .p-head .about svg, .card p svg, .small svg { width: 15px; height: 15px; vertical-align: -2px; color: var(--ink-4); }
+
+/* Карта сети */
+.netmap { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.netmap .edges line { stroke: var(--line); stroke-width: 1; }
+.netmap .edges line.vouch { stroke: rgba(47, 123, 255, .38); stroke-width: 1.4; }
+.netmap .mp { cursor: pointer; }
+.netmap .mp circle { fill: #fff; stroke: var(--blue); stroke-width: 2; transition: r 160ms var(--ease); }
+.netmap .mp.me circle { fill: var(--blue); stroke: var(--blue-deep); }
+.netmap .mp.c2 circle { stroke: rgba(47, 123, 255, .45); stroke-width: 1.6; }
+.netmap .mp.node rect { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.6; }
+.netmap .mp text { font: 600 8px var(--t); fill: var(--ink-2); text-anchor: middle; }
+@media (hover: hover) { .netmap .mp:hover circle { stroke-width: 3; } .netmap .mp:hover rect { fill: #dce8ff; } }
+.orbit-legend .dot-n { width: 8px; height: 8px; border-radius: 2px; background: var(--blue-soft); box-shadow: inset 0 0 0 1.5px var(--blue); display: inline-block; }
