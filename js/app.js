@@ -1579,11 +1579,11 @@
       title: 'Запишите своих проверенных',
       gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
       scene: `<div class="sc sc-write">
-        <svg class="web" viewBox="0 0 330 268" aria-hidden="true">
-          <path class="w1" d="M165 134C142 122 112 106 76 92"/>
-          <path class="w2" d="M165 134C196 124 226 110 256 100"/>
-          <path class="w3" d="M165 134C142 152 116 170 84 190"/>
-          <path class="w4" d="M165 134C196 152 222 168 250 186"/></svg>
+        <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
+          <path class="w1" d="M131 118L95 100"/>
+          <path class="w2" d="M200 120L236 107"/>
+          <path class="w3" d="M134 156L101 178"/>
+          <path class="w4" d="M198 154L233 175"/></svg>
         <span class="me"><b>вы</b></span>
         <i class="dot d1"><em>РТ</em><b>Рустам</b><s>часовщик</s></i>
         <i class="dot d2"><em>НА</em><b>Нигора</b><s>педиатр</s></i>
@@ -1597,12 +1597,12 @@
       title: 'Позовите знакомого',
       gain: 'Его проверенные становятся видны вам — и проверенные его знакомых. Один знакомый открывает целый круг',
       scene: `<div class="sc sc-invite">
-        <svg class="web" viewBox="0 0 330 268" aria-hidden="true">
-          <path class="join" d="M86 134H150"/>
-          <path class="t1" d="M190 122C210 104 226 92 246 82"/>
-          <path class="t2" d="M196 134C222 134 250 134 280 134"/>
-          <path class="t3" d="M190 148C210 166 226 178 246 190"/>
-          <path class="t4" d="M176 156C182 180 188 198 196 214"/></svg>
+        <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
+          <path class="join" d="M86 134H144"/>
+          <path class="t1" d="M194 117L231 91"/>
+          <path class="t2" d="M200 134H260"/>
+          <path class="t3" d="M194 151L231 180"/>
+          <path class="t4" d="M180 161L191 198"/></svg>
         <span class="p a"><b>вы</b></span>
         <span class="p b"><b>АК</b><s>Азиз</s></span>
         <i class="dot n1"><em>МХ</em><s>Мирсобит</s></i>

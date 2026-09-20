@@ -56,6 +56,7 @@
 
 /* ——— 1. Ваш круг: маленькое облако сети, как на главной ——— */
 .sc-write .web { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-write .web, .sc-invite .web { overflow: visible; }
 .sc-write .web path {
   fill: none; stroke: rgba(47, 123, 255, .34); stroke-width: 1.3; stroke-linecap: round;
   stroke-dasharray: 220; stroke-dashoffset: 220; animation: dash 620ms var(--ease) forwards;
@@ -75,16 +76,22 @@
 
 /* точка человека: кружок с инициалами и подписью — как узлы в облаке */
 .sc-write .dot {
-  position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-style: normal; text-align: center; animation: pop-in 560ms cubic-bezier(.22, 1, .36, 1) backwards;
+  position: absolute; transform: translate(-50%, -50%); font-style: normal; text-align: center;
+  animation: pop-in 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 .sc-write .dot em {
   width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-style: normal;
   background: #dbe8ff; color: var(--blue); font: 700 var(--fs-xxs)/1 var(--t);
   box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px rgba(47, 123, 255, .45), 0 4px 12px rgba(47, 123, 255, .16);
 }
-.sc-write .dot b { font: 700 10.5px/1 var(--t); color: var(--ink-2); }
-.sc-write .dot s { text-decoration: none; font: 500 10px/1 var(--t); color: var(--ink-4); }
+.sc-write .dot b {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 6px; white-space: nowrap;
+  font: 700 10.5px/1 var(--t); color: var(--ink-2);
+}
+.sc-write .dot s {
+  position: absolute; top: calc(100% + 17px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  text-decoration: none; font: 500 10px/1 var(--t); color: var(--ink-4);
+}
 .sc-write .d1 { left: 23%; top: 34%; animation-delay: 420ms; }
 .sc-write .d2 { left: 77.5%; top: 37%; animation-delay: 740ms; }
 .sc-write .d3 { left: 25.5%; top: 71%; animation-delay: 1060ms; }
@@ -112,14 +119,17 @@
 .sc-invite .t4 { animation-delay: 1390ms; }
 
 .sc-invite .p {
-  position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 5px;
+  position: absolute; transform: translate(-50%, -50%);
   animation: pop-in 480ms var(--ease) backwards;
 }
 .sc-invite .p b {
   width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
   font: 700 var(--fs-xs)/1 var(--t);
 }
-.sc-invite .p s { text-decoration: none; font: 600 10px/1 var(--t); color: var(--ink-3); }
+.sc-invite .p s {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 6px; white-space: nowrap;
+  text-decoration: none; font: 600 10px/1 var(--t); color: var(--ink-3);
+}
 .sc-invite .p.a { left: 17.5%; top: 50%; }
 .sc-invite .p.a b { background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue), 0 0 0 8px rgba(47, 123, 255, .08); }
 .sc-invite .p.b { left: 52%; top: 50%; animation-delay: 560ms; }
@@ -127,8 +137,8 @@
 
 /* его проверенные: маленькие точки с именами, как в облаке */
 .sc-invite .dot {
-  position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-style: normal; animation: pop-in 520ms cubic-bezier(.22, 1, .36, 1) backwards;
+  position: absolute; transform: translate(-50%, -50%); font-style: normal;
+  animation: pop-in 520ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 .sc-invite .dot em {
   width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-style: normal;
@@ -136,7 +146,10 @@
   box-shadow: inset 0 0 0 1.5px rgba(47, 123, 255, .45);
 }
 .sc-invite .dot em svg { width: 15px; height: 15px; }
-.sc-invite .dot s { text-decoration: none; font: 600 9.5px/1 var(--t); color: var(--ink-4); }
+.sc-invite .dot s {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 5px; white-space: nowrap;
+  text-decoration: none; font: 600 9.5px/1 var(--t); color: var(--ink-4);
+}
 .sc-invite .n1 { left: 74%; top: 30%; animation-delay: 1180ms; }
 .sc-invite .n2 { left: 84%; top: 50%; animation-delay: 1310ms; }
 .sc-invite .n3 { left: 74%; top: 71%; animation-delay: 1440ms; }
