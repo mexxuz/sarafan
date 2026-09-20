@@ -837,11 +837,11 @@
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
       <div class="cloud-legend" style="margin-top:10px">
         <span><i class="lg-me"></i>вы</span>
-        <span><i class="lg-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
+        ${F.show === 'places' ? `<span><i class="lg-1"></i>кто советует</span>` : `<span><i class="lg-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
         <span><i class="lg-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
-        <span><i class="lg-far"></i>дальше</span>
-        <span><i class="lg-place"></i>места</span>
-        <span><i class="lg-co"></i>фирмы</span>
+        <span><i class="lg-far"></i>дальше</span>`}
+        ${F.show === 'people' ? '' : `<span><i class="lg-place"></i>${pl(nodesAll().filter((n) => n.kind !== 'company').length, 'место', 'места', 'мест')}</span>
+        <span><i class="lg-co"></i>${pl(nodesAll().filter((n) => n.kind === 'company').length, 'фирма', 'фирмы', 'фирм')}</span>`}
         <span><i class="lg-trust"></i>надёжно</span></div>
       <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — рекомендует. Точку можно тянуть, нажатие открывает карточку.</p>`;
   }
