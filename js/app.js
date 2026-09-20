@@ -329,9 +329,9 @@
     // цитата — от самого близкого человека, его же имя под ней
     const best = (r.rep.recs || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
     let who1;
-    if (iRec) who1 = 'Вы ручаетесь' + (others.length ? ' и ещё ' + pl(others.length, 'человек', 'человека', 'человек') : '');
-    else if (others.length) who1 = 'Ручаются: ' + names(others.slice(0, 2));
-    else if (r.via) who1 = 'Ручается ' + esc(first(r.via));
+    if (iRec) who1 = others.length ? `Вы и ещё ${others.length}` : 'Вы ручаетесь';
+    else if (others.length) who1 = esc(first(others[0])) + (others.length > 1 ? ` и ещё ${others.length - 1}` : ' ручается');
+    else if (r.via) who1 = esc(first(r.via)) + ' ручается';
     else if (r.circle === 1) who1 = 'Ваш контакт';
     else who1 = 'Общих знакомых нет';
     const otherCats = G.catsOf(u.id).filter((c) => c !== r.cat).length;
