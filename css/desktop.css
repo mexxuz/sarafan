@@ -59,6 +59,8 @@
   .cloud-box.big { height: 600px; }
   .rail-x > * { flex: 0 0 300px; width: 300px; }
   .cat-grid { grid-template-columns: repeat(3, 1fr); }
+  .works { grid-template-columns: repeat(3, 1fr); }
+  .works.small-works { grid-template-columns: repeat(4, 1fr); }
   .stat-grid { gap: var(--s-6); }
   .node-photo.full { height: 320px; }
   .search { max-width: none; }
