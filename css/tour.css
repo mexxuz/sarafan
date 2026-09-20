@@ -178,23 +178,26 @@
 /* ——— 4. Места и фирмы: та же карточка, что в приложении ——— */
 .sc-places .place-card {
   position: absolute; left: 50%; top: 0; width: 280px; margin-left: -140px; padding: 0 var(--s-4) var(--s-4);
-  border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3); text-align: left; overflow: hidden;
+  border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3); text-align: left;
   animation: rise 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
+/* скругление живёт на самой обложке — карточка не обрезает значок на её краю */
 .sc-places .sc-cover {
-  position: relative; margin: 0 calc(-1 * var(--s-4)) 18px; height: 66px; overflow: hidden;
+  position: relative; margin: 0 calc(-1 * var(--s-4)) 18px; height: 66px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
   background: linear-gradient(140deg, #e8ac7c, #bd7549);
 }
+.sc-places .sc-cover .shine { border-radius: inherit; }
 /* по обложке проходит блик — снимок оживает */
 .sc-places .shine {
-  position: absolute; inset: 0 auto 0 -40%; width: 40%;
+  position: absolute; inset: 0 auto 0 -40%; width: 40%; overflow: hidden;
   background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .34), rgba(255, 255, 255, 0));
   animation: shine 2.8s var(--ease) 600ms infinite;
 }
 @keyframes shine { from { transform: translateX(0); } to { transform: translateX(400%); } }
 /* значок вида — справа на границе обложки, как в карточках приложения */
 .sc-places .pin {
-  position: absolute; right: var(--s-4); bottom: -14px; width: 30px; height: 30px; border-radius: 50%;
+  position: absolute; z-index: 2; right: var(--s-4); bottom: -14px; width: 30px; height: 30px; border-radius: 50%;
   display: grid; place-items: center; background: var(--paper); color: var(--blue); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
 }
 .sc-places .pin svg { width: 16px; height: 16px; }
