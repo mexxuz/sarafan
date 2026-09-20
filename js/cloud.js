@@ -53,13 +53,17 @@ window.Cloud = function (canvas, opts) {
         // появление: узел всплывает, ближние раньше дальних
         born: was ? 1 : 0, delay: was ? 0 : (n.self ? 0 : 6 + i * 1.6),
         glow: 0,
+        // своя фаза качания: узлы дышат вразнобой, а не строем
+        ph: was ? was.ph : Math.random() * Math.PI * 2,
+        sp: was ? was.sp : 0.6 + Math.random() * 0.8,
         x: was ? was.x : W / 2 + Math.cos(a) * r,
         y: was ? was.y : H / 2 + Math.sin(a) * r,
       }, n);
     });
     byId = {};
     nodes.forEach((n) => { byId[n.id] = n; });
-    edges = data.edges.filter((e) => byId[e.a] && byId[e.b]);
+    edges = data.edges.filter((e) => byId[e.a] && byId[e.b])
+      .map((e) => Object.assign({ seed: Math.random() * 1.6 }, e));   // огоньки бегут вразнобой
     nodes.forEach((n) => { if (n.photo && !imgs[n.photo]) load(n.photo); });
   }
 
@@ -72,6 +76,8 @@ window.Cloud = function (canvas, opts) {
   }
 
   // ——— физика ———
+  let now = 0;                                   // время жизни облака, миллисекунды
+
   function step(heat) {
     const cx = W / 2, cy = H * (opts.centerY || 0.5);
     for (let i = 0; i < nodes.length; i++) {
@@ -112,6 +118,12 @@ window.Cloud = function (canvas, opts) {
       n.vx += (dx / d) * pull;
       n.vy += (dy / d) * pull;
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
+      // медленное плавание: каждый узел ходит по своей маленькой петле
+      if (!calm) {
+        const t = now * 0.0004 * n.sp + n.ph;
+        n.vx += Math.cos(t) * 0.05;
+        n.vy += Math.sin(t * 1.17) * 0.05;
+      }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
       // Под шапкой с логотипом и портретом узел не достать — мягко выталкиваем оттуда
@@ -187,10 +199,27 @@ window.Cloud = function (canvas, opts) {
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const dx = b.x - a.x, dy = b.y - a.y;
       const bend = 0.08;
+      const kx = mx - dy * bend, ky = my + dx * bend;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
-      ctx.quadraticCurveTo(mx - dy * bend, my + dx * bend, b.x, b.y);
+      ctx.quadraticCurveTo(kx, ky, b.x, b.y);
       ctx.stroke();
+
+      // Огонёк проходит по нити от одного человека к другому: так видно,
+      // что доверие — это движение, а не просто линия на картинке.
+      if (calm || grow < 0.99) return;
+      const speed = e.kind === 'vouch' ? 0.00019 : 0.00012;
+      const t = ((now * speed + (e.seed || 0)) % 1.6);     // пауза между пробегами
+      if (t > 1) return;
+      const u = 1 - t, q = u * u, w = 2 * u * t, z = t * t;
+      const px = q * a.x + w * kx + z * b.x;
+      const py = q * a.y + w * ky + z * b.y;
+      const fade = Math.sin(t * Math.PI);                  // на концах гаснет
+      ctx.globalAlpha = (lit && !hot ? 0.2 : 0.85) * fade * grow;
+      ctx.fillStyle = e.kind === 'vouch' ? 'rgba(47,123,255,.95)' : 'rgba(126,146,178,.8)';
+      ctx.beginPath();
+      ctx.arc(px, py, e.kind === 'vouch' ? 2.2 : 1.6, 0, Math.PI * 2);
+      ctx.fill();
     });
     ctx.globalAlpha = 1;
 
@@ -321,6 +350,7 @@ window.Cloud = function (canvas, opts) {
   let frames = 0;
   function tick() {
     frames++;
+    now = performance.now();
     if (frames % 30 === 0) size();          // страховка: размер мог поменяться незаметно
     // симуляция остывает, как в настоящих графах: сначала расходятся, потом замирают
     // и лишь едва дрейфуют — движение есть, ряби нет
