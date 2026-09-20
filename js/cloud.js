@@ -20,11 +20,25 @@ window.Cloud = function (canvas, opts) {
 
   function size() {
     const box = canvas.getBoundingClientRect();
+    if (!box.width || !box.height) return false;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(box.width * dpr), h = Math.round(box.height * dpr);
+    if (canvas.width === w && canvas.height === h) return false;
     W = box.width; H = box.height;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
+    canvas.width = w;
+    canvas.height = h;
+    return true;
   }
+
+  // Полотно должно знать свою настоящую ширину. Если её изменили — появилась полоса
+  // прокрутки, повернули телефон, раздвинули окно, — картинку растягивает, и граф
+  // выглядит сплющенным. Поэтому следим за размером и пересчитываем сразу.
+  let watcher = null;
+  if (window.ResizeObserver) {
+    watcher = new ResizeObserver(() => { if (size() && calm) draw(); });
+    watcher.observe(canvas);
+  }
+  window.addEventListener('resize', () => { if (size() && calm) draw(); });
 
   // ——— данные ———
   function setData(data) {
@@ -307,6 +321,7 @@ window.Cloud = function (canvas, opts) {
   let frames = 0;
   function tick() {
     frames++;
+    if (frames % 30 === 0) size();          // страховка: размер мог поменяться незаметно
     // симуляция остывает, как в настоящих графах: сначала расходятся, потом замирают
     // и лишь едва дрейфуют — движение есть, ряби нет
     const heat = calm ? 0 : Math.max(0.012, 0.3 * Math.pow(0.975, frames));
@@ -343,7 +358,11 @@ window.Cloud = function (canvas, opts) {
     if (calm) { nodes.forEach((n) => { n.born = 1; n.delay = 0; }); for (let i = 0; i < 240; i++) step(0); draw(); return; }
     raf = requestAnimationFrame(tick);
   }
-  function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }
+  function stop() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    if (watcher) { watcher.disconnect(); watcher = null; }
+  }
 
   // ——— касания ———
   const at = (e) => {
