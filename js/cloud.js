@@ -27,12 +27,15 @@ window.Cloud = function (canvas, opts) {
   function setData(data) {
     const keep = {};
     nodes.forEach((n) => { keep[n.id] = n; });
-    nodes = data.nodes.map((n) => {
+    nodes = data.nodes.map((n, i) => {
       const was = keep[n.id];
       const a = Math.random() * Math.PI * 2;
       const r = n.self ? 0 : 60 + n.ring * 40 + rnd(30);
       return Object.assign({
         vx: 0, vy: 0,
+        // появление: узел всплывает, ближние раньше дальних
+        born: was ? 1 : 0, delay: was ? 0 : (n.self ? 0 : 6 + i * 1.6),
+        glow: 0,
         x: was ? was.x : W / 2 + Math.cos(a) * r,
         y: was ? was.y : H / 2 + Math.sin(a) * r,
       }, n);
@@ -107,10 +110,10 @@ window.Cloud = function (canvas, opts) {
   //   ромб      — фирма
   //   зелёная искра у кольца — за человека ручаются трое и больше
   const COLOR = {
-    know: 'rgba(120,140,170,.26)',
-    vouch: 'rgba(47,123,255,.4)',
-    knowHot: 'rgba(90,110,150,.55)',
-    vouchHot: 'rgba(47,123,255,.85)',
+    know: 'rgba(126,146,178,.16)',
+    vouch: 'rgba(47,123,255,.24)',
+    knowHot: 'rgba(96,116,150,.5)',
+    vouchHot: 'rgba(47,123,255,.8)',
     me: '#2f7bff',
     ring1: 'rgba(47,123,255,.95)',
     ring2: 'rgba(47,123,255,.42)',
@@ -127,7 +130,7 @@ window.Cloud = function (canvas, opts) {
     // Круги никуда не делись — они просто перестали быть расстановкой.
     // Две еле видные окружности напоминают: ближе центра свои, дальше — через них.
     const cx = W / 2, cy = H / 2;
-    ctx.strokeStyle = 'rgba(47,123,255,.07)';
+    ctx.strokeStyle = 'rgba(47,123,255,.045)';
     ctx.lineWidth = 1;
     [72 + 62, 72 + 124].forEach((r) => {
       ctx.beginPath();
@@ -138,30 +141,58 @@ window.Cloud = function (canvas, opts) {
     const near = new Set();
     if (lit) { near.add(lit.id); edges.forEach((e) => { if (e.a === lit.id) near.add(e.b); if (e.b === lit.id) near.add(e.a); }); }
 
+    ctx.lineCap = 'round';
     edges.forEach((e) => {
       const a = byId[e.a], b = byId[e.b];
+      const grow = Math.min(a.born, b.born);
+      if (grow <= 0.02) return;
       const hot = lit && (e.a === lit.id || e.b === lit.id);
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : COLOR[e.kind];
-      ctx.lineWidth = hot ? 1.8 : (e.kind === 'vouch' ? 1.2 : 1);
-      ctx.globalAlpha = lit && !hot ? 0.35 : 1;
+      ctx.lineWidth = hot ? 1.6 : (e.kind === 'vouch' ? 1.1 : 0.9);
+      ctx.globalAlpha = (lit && !hot ? 0.28 : 1) * grow;
+      // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const bend = 0.08;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
+      ctx.quadraticCurveTo(mx - dy * bend, my + dx * bend, b.x, b.y);
       ctx.stroke();
     });
     ctx.globalAlpha = 1;
 
     nodes.forEach((n) => {
+      if (n.born <= 0.02) return;
       const dim = lit && !near.has(n.id);
-      ctx.globalAlpha = dim ? 0.32 : 1;
+      const ease = n.born * n.born * (3 - 2 * n.born);      // мягкий вход
+      const R = n.r * (0.7 + 0.3 * ease) * (1 + n.glow * 0.12);
+      ctx.globalAlpha = (dim ? 0.24 : 1) * ease;
+
+      // ореол: свои светятся чуть заметнее — иерархия без лишних обводок
+      if (!dim && (n.self || n.ring <= 1 || n.glow > 0.02)) {
+        const halo = ctx.createRadialGradient(n.x, n.y, R * 0.6, n.x, n.y, R * (2.4 + n.glow));
+        const power = (n.self ? 0.2 : n.ring === 1 ? 0.12 : 0.06) + n.glow * 0.18;
+        halo.addColorStop(0, `rgba(47,123,255,${power})`);
+        halo.addColorStop(1, 'rgba(47,123,255,0)');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, R * (2.4 + n.glow), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const saved = n.r;
+      n.r = R;
       if (n.kind === 'node') drawPlace(n);
       else drawPerson(n);
-      if (n.label && (n.ring <= 1 || n === lit || near.has(n.id))) {
-        ctx.globalAlpha = dim ? 0.3 : 0.9;
-        ctx.fillStyle = '#5b6474';
-        ctx.font = '600 10px Manrope, system-ui, sans-serif';
+      n.r = saved;
+
+      const showLabel = n.label && (n.self || n.ring <= 1 || n === lit || near.has(n.id));
+      if (showLabel) {
+        ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.82 : 0.6) * ease;
+        ctx.fillStyle = '#6b7488';
+        ctx.font = `${n.self || n.ring <= 1 ? 600 : 500} 9.5px Manrope, system-ui, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(n.label, n.x, n.y + n.r + 12);
+        ctx.fillText(n.label, n.x, n.y + R + 12);
       }
     });
     ctx.globalAlpha = 1;
@@ -193,22 +224,23 @@ window.Cloud = function (canvas, opts) {
       ctx.textBaseline = 'alphabetic';
     }
 
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    ctx.strokeStyle = ringColor(n);
-    ctx.lineWidth = n.self ? 3 : n.ring === 1 ? 2.2 : n.ring === 2 ? 1.5 : 1;
-    if (far) ctx.setLineDash([2.5, 2.5]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // трое независимых — тихая зелёная искра на кольце
-    if (n.trusted) {
+    // кольцо тонкое: иерархию держат размер и свечение, а не толщина линий
+    if (!far || n === hover) {
       ctx.beginPath();
-      ctx.arc(n.x + n.r * 0.72, n.y - n.r * 0.72, 2.6, 0, Math.PI * 2);
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.strokeStyle = ringColor(n);
+      ctx.lineWidth = n.self ? 2.4 : n.ring === 1 ? 1.8 : 1.1;
+      ctx.stroke();
+    }
+
+    // трое независимых — крошечная зелёная искра, заметная только вблизи
+    if (n.trusted && n.r > 9) {
+      ctx.beginPath();
+      ctx.arc(n.x + n.r * 0.74, n.y - n.r * 0.74, 2.2, 0, Math.PI * 2);
       ctx.fillStyle = '#16a06a';
       ctx.fill();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.1;
       ctx.stroke();
     }
   }
@@ -237,11 +269,11 @@ window.Cloud = function (canvas, opts) {
     ctx.fillStyle = c.fill;
     ctx.fill();
     ctx.strokeStyle = c.line;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.1;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(n.x, n.y, Math.max(1.6, r * 0.28), 0, Math.PI * 2);
+    ctx.arc(n.x, n.y, Math.max(1.4, r * 0.26), 0, Math.PI * 2);
     ctx.fillStyle = c.dot;
     ctx.fill();
   }
@@ -250,9 +282,18 @@ window.Cloud = function (canvas, opts) {
   let frames = 0;
   function tick() {
     frames++;
-    // сначала граф раскладывается, потом еле заметно дышит
-    const heat = calm ? 0 : frames < 90 ? 0.25 : 0.035;
+    // симуляция остывает, как в настоящих графах: сначала расходятся, потом замирают
+    // и лишь едва дрейфуют — движение есть, ряби нет
+    const heat = calm ? 0 : Math.max(0.012, 0.3 * Math.pow(0.975, frames));
     step(heat);
+
+    nodes.forEach((n, i) => {
+      if (n.delay > 0) { n.delay -= 1; return; }
+      if (n.born < 1) n.born = Math.min(1, n.born + 0.055);
+      const want = (hover === n || held === n) ? 1 : 0;
+      n.glow += (want - n.glow) * 0.18;            // подсветка приходит плавно
+    });
+
     draw();
     raf = requestAnimationFrame(tick);
   }
@@ -260,7 +301,7 @@ window.Cloud = function (canvas, opts) {
   function start() {
     stop();
     frames = 0;
-    if (calm) { for (let i = 0; i < 240; i++) step(0); draw(); return; }
+    if (calm) { nodes.forEach((n) => { n.born = 1; n.delay = 0; }); for (let i = 0; i < 240; i++) step(0); draw(); return; }
     raf = requestAnimationFrame(tick);
   }
   function stop() { if (raf) cancelAnimationFrame(raf); raf = null; }

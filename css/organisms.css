@@ -365,17 +365,22 @@
 
 /* Облако сети: живой граф на главной и во весь экран */
 .cloud-box {
-  position: relative; margin: var(--s-2) calc(-1 * var(--s-2)) 0; height: 330px;
-  border-radius: var(--r-lg); overflow: hidden;
-  background: radial-gradient(120% 90% at 50% 40%, #ffffff 0%, rgba(232, 241, 250, .75) 60%, rgba(224, 236, 250, .55) 100%);
+  position: relative; margin: var(--s-3) calc(-1 * var(--s-4)) 0; height: 340px;
+  border-radius: var(--r-xl); overflow: hidden;
+  background:
+    radial-gradient(60% 46% at 50% 44%, rgba(47, 123, 255, .07) 0%, rgba(47, 123, 255, 0) 70%),
+    radial-gradient(120% 90% at 50% 35%, #ffffff 0%, rgba(240, 246, 253, .9) 55%, rgba(233, 241, 251, .7) 100%);
 }
 .cloud-box.big { height: 62vh; min-height: 380px; }
 .cloud-box canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 .cloud-full {
-  position: absolute; right: 10px; top: 10px; width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center; background: rgba(255, 255, 255, .86); color: var(--blue);
-  box-shadow: var(--sh-1); backdrop-filter: blur(8px);
+  position: absolute; right: 12px; top: 12px; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue);
+  box-shadow: 0 1px 4px rgba(23, 43, 77, .07); backdrop-filter: blur(10px);
+  opacity: .8; transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
+.cloud-full:active { transform: scale(.94); }
+@media (hover: hover) { .cloud-full:hover { opacity: 1; } }
 .cloud-full svg { width: 17px; height: 17px; }
 
 /* Легенда облака: что означает форма и цвет */
