@@ -1567,61 +1567,75 @@
   const TOUR = [
     {
       key: 'write',
+      eyebrow: 'ваш круг',
       title: 'Запишите своих проверенных',
       gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
       scene: `<div class="sc sc-write">
-        <span class="me">вы</span>
-        <i class="card-n n1"><b>Рустам</b><s>часовщик</s></i>
-        <i class="card-n n2"><b>Нигора</b><s>педиатр</s></i>
-        <i class="card-n n3"><b>Улугбек</b><s>электрик</s></i>
-        <i class="card-n n4"><b>Азиз</b><s>юрист</s></i></div>`,
+        <svg class="web" viewBox="0 0 330 250" aria-hidden="true">
+          <path class="w1" d="M165 125C142 116 118 100 84 80"/>
+          <path class="w2" d="M165 125C193 115 220 101 250 86"/>
+          <path class="w3" d="M165 125C140 140 116 162 88 182"/>
+          <path class="w4" d="M165 125C196 141 222 160 248 178"/></svg>
+        <span class="me"><b>вы</b></span>
+        <i class="card-n n1">${ic('user')}<span><b>Рустам</b><s>часовщик</s></span></i>
+        <i class="card-n n2">${ic('user')}<span><b>Нигора</b><s>педиатр</s></span></i>
+        <i class="card-n n3">${ic('user')}<span><b>Улугбек</b><s>электрик</s></span></i>
+        <i class="card-n n4">${ic('user')}<span><b>Азиз</b><s>юрист</s></span></i>
+        <i class="count">4 в вашем кругу</i></div>`,
     },
     {
       key: 'invite',
+      eyebrow: 'приглашение',
       title: 'Позовите знакомого',
       gain: 'Его проверенные становятся видны вам — и проверенные его знакомых. Один знакомый открывает целый круг',
       scene: `<div class="sc sc-invite">
-        <span class="p a">вы</span>
-        <span class="thread"></span>
-        <span class="p b">АК</span>
+        <span class="p a"><b>вы</b></span>
+        <span class="thread"><i class="pulse"></i></span>
+        <span class="p b"><b>АК</b></span>
         <i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>
-        <i class="spark s4"></i><i class="spark s5"></i>
-        <span class="lbl">круг Азиза открыт вам</span></div>`,
+        <i class="spark s4"></i><i class="spark s5"></i><i class="spark s6"></i>
+        <span class="lbl">${ic('check')}круг Азиза открыт вам</span></div>`,
     },
     {
       key: 'ask',
+      eyebrow: 'запрос',
       title: 'Спросите свой круг',
       gain: 'Вместо сорока вариантов из поиска — одно имя, за которое ручается знакомый',
       scene: `<div class="sc sc-ask">
-        <span class="bubble">Нужен педиатр</span>
+        <span class="bubble">Нужен педиатр${ic('ask')}</span>
         <i class="hop h1"></i><i class="hop h2"></i><i class="hop h3"></i>
         <div class="answer-card">
           <span class="av-n">НА</span>
-          <div><b>Нигора Ахмедова</b><s>педиатр</s></div>
-          <em>Азиз ручается</em></div></div>`,
+          <div class="who"><b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s></div>
+          <em class="vouch">${ic('seal')}Азиз ручается</em>
+          <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div></div>`,
     },
     {
       key: 'places',
-      title: 'Места и фирмы — так же',
+      eyebrow: 'места и фирмы',
+      title: 'Не только люди',
       gain: 'Куда ходят свои: с часами работы, ценами и именем того, кто это проверил',
       scene: `<div class="sc sc-places">
         <div class="place-card">
-          <div class="sc-cover"><span class="pin">${ic('pin')}</span></div>
-          <b>Чайхана Центральная</b><s>кухня и торты</s>
-          <i class="fact f1">Плов до 14:00, потом шашлык</i>
-          <i class="fact f2">Есть зал для большой компании</i>
-          <i class="fact f3">Эстелла и ещё двое ручаются</i></div></div>`,
+          <div class="sc-cover"><span class="pin">${ic('pin')}</span><i class="shine"></i></div>
+          <b>Чайхана Центральная</b><s>кухня и торты · Мирабад</s>
+          <i class="fact f1"><u>когда</u>Плов до 14:00, потом шашлык</i>
+          <i class="fact f2"><u>к кому</u>Спросить Дилю, она держит столы</i>
+          <i class="fact f3">${ic('seal')}Эстелла и ещё двое ручаются</i></div></div>`,
     },
   ];
 
   function Tour() {
     return `<div class="tour">
+      <div class="tour-top"><div class="logo">${logoMark}сарафан</div></div>
       <div class="bars">${TOUR.map((_, i) => `<i data-bar="${i}"><b></b></i>`).join('')}</div>
       <button class="tour-skip" data-act="tourEnd">Пропустить</button>
+      <div class="glow" aria-hidden="true"></div>
       <div class="scenes">${TOUR.map((t, i) => `<section class="scene" data-scene="${i}">
         ${t.scene}
-        <h2 class="h1">${t.title}</h2>
-        <p class="gain">${t.gain}</p></section>`).join('')}</div>
+        <div class="say"><span class="eyebrow">${t.eyebrow}</span>
+          <h2 class="h1">${t.title}</h2>
+          <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
         <button class="btn primary block" data-act="tourNext">Дальше</button>
       </div>

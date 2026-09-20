@@ -2,22 +2,48 @@
    Четыре сцены для новичка: что делаешь и что с этого получаешь.
    Каждая сцена разыгрывает себя сама, поэтому текста нужно немного. */
 
-.tour { position: relative; min-height: 100vh; display: flex; flex-direction: column; padding-top: calc(18px + env(safe-area-inset-top)); }
+.tour {
+  position: relative; min-height: 100vh; display: flex; flex-direction: column;
+  padding-top: calc(14px + env(safe-area-inset-top));
+}
+
+/* Знак сверху: человек с первого экрана понимает, куда попал */
+.tour-top { display: flex; align-items: center; height: 34px; }
+.tour-top .logo { font: 800 var(--fs-lg)/1 var(--t); letter-spacing: -.02em; display: flex; align-items: center; gap: 7px; }
+.tour-top .logo-mark { width: 22px; height: 22px; }
+
+/* Мягкое свечение за сценой — холст не выглядит пустым листом */
+.tour .glow {
+  position: absolute; left: 50%; top: 16%; width: 520px; height: 420px; margin-left: -260px; z-index: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(47, 123, 255, .16), rgba(47, 123, 255, 0) 72%);
+  animation: breathe-glow 9s ease-in-out infinite;
+}
+@keyframes breathe-glow {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50% { transform: scale(1.09); opacity: 1; }
+}
 
 /* Полоски сверху: сколько сцен и на которой мы сейчас */
-.tour .bars { display: flex; gap: 5px; }
-.tour .bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(47, 123, 255, .16); overflow: hidden; }
+.tour .bars { display: flex; gap: 5px; margin-top: 12px; }
+.tour .bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(47, 123, 255, .14); overflow: hidden; }
 .tour .bars i b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--blue); }
 .tour .bars i.done b { width: 100%; }
 .tour .bars i.run b { animation: bar 6.4s linear forwards; }
 @keyframes bar { from { width: 0; } to { width: 100%; } }
 
-.tour-skip { position: absolute; top: calc(30px + env(safe-area-inset-top)); right: 0; z-index: 3; padding: 8px 0 8px 12px; font: 600 var(--fs-xs)/1 var(--t); color: var(--ink-3); }
-.tour .scenes { flex: 1; position: relative; }
+.tour-skip {
+  position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 0; z-index: 4; padding: 8px 0 8px 12px;
+  font: 600 var(--fs-xs)/1 var(--t); color: var(--ink-3);
+}
+.tour .scenes { position: relative; flex: 1; z-index: 1; }
 .tour .scene { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; text-align: center; }
 .tour .scene.on { display: flex; }
-.tour .scene .h1 { font-size: var(--fs-2xl); margin-top: var(--s-6); animation: rise 420ms var(--ease) 120ms backwards; }
-.tour .gain { margin: var(--s-3) auto 0; max-width: 300px; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.5; animation: rise 460ms var(--ease) 240ms backwards; }
+
+/* Слова: ярлык, заголовок, польза — входят одной волной */
+.tour .say { margin-top: var(--s-6); }
+.tour .say .eyebrow { display: inline-block; letter-spacing: .06em; text-transform: uppercase; font-size: 10px; color: var(--blue); animation: rise 380ms var(--ease) 80ms backwards; }
+.tour .scene .h1 { font-size: var(--fs-2xl); line-height: 1.12; margin-top: 8px; animation: rise 460ms var(--ease) 160ms backwards; }
+.tour .gain { margin: var(--s-3) auto 0; max-width: 304px; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.5; animation: rise 520ms var(--ease) 280ms backwards; }
 .tour-foot { position: relative; z-index: 3; padding: var(--s-4) 0 calc(var(--s-6) + env(safe-area-inset-bottom)); }
 
 /* Половинки экрана: слева шаг назад, справа вперёд */
@@ -26,111 +52,160 @@
 .tour-tap.next { right: 0; width: 62%; }
 
 /* Площадка сцены */
-.tour .sc { position: relative; width: 100%; max-width: 330px; height: 260px; margin: 0 auto; }
+.tour .sc { position: relative; width: 100%; max-width: 330px; height: 250px; margin: 0 auto; }
 
-/* 1. Ваш круг: имена слетаются к вам */
-.sc-write .me {
-  position: absolute; left: 50%; top: 50%; width: 74px; height: 74px; margin: -37px 0 0 -37px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--grad-blue); color: #fff; font: 700 var(--fs-sm)/1 var(--t);
-  box-shadow: var(--sh-blue); animation: pop-in 520ms var(--ease) backwards;
+/* ——— 1. Ваш круг: имена слетаются к вам по нитям ——— */
+.sc-write .web { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-write .web path {
+  fill: none; stroke: rgba(47, 123, 255, .3); stroke-width: 1.4; stroke-linecap: round;
+  stroke-dasharray: 220; stroke-dashoffset: 220; animation: dash 560ms var(--ease) forwards;
 }
+@keyframes dash { to { stroke-dashoffset: 0; } }
+.sc-write .w1 { animation-delay: 260ms; }
+.sc-write .w2 { animation-delay: 580ms; }
+.sc-write .w3 { animation-delay: 900ms; }
+.sc-write .w4 { animation-delay: 1220ms; }
+.sc-write .me {
+  position: absolute; left: 50%; top: 50%; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--grad-blue); color: #fff;
+  box-shadow: var(--sh-blue), 0 0 0 8px rgba(47, 123, 255, .08); animation: pop-in 520ms var(--ease) backwards;
+}
+.sc-write .me b { font: 700 var(--fs-sm)/1 var(--t); }
 .sc-write .card-n {
-  position: absolute; display: flex; flex-direction: column; gap: 2px; padding: 9px 13px; border-radius: 14px;
+  position: absolute; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 9px; border-radius: 14px;
   background: var(--paper); box-shadow: var(--sh-2); text-align: left; font-style: normal;
   animation: fly 620ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-write .card-n b { font: 700 var(--fs-xs)/1.2 var(--t); }
-.sc-write .card-n s { text-decoration: none; font-size: var(--fs-xxs); color: var(--ink-3); }
-.sc-write .n1 { left: 2%; top: 12%; animation-delay: 300ms; --fx: -26px; --fy: -16px; }
-.sc-write .n2 { right: 2%; top: 20%; animation-delay: 620ms; --fx: 26px; --fy: -12px; }
-.sc-write .n3 { left: 6%; bottom: 14%; animation-delay: 940ms; --fx: -22px; --fy: 18px; }
-.sc-write .n4 { right: 4%; bottom: 20%; animation-delay: 1260ms; --fx: 24px; --fy: 16px; }
-@keyframes fly { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.9); } }
-@keyframes pop-in { from { opacity: 0; transform: scale(.7); } }
-
-/* 2. Позовите знакомого: нить тянется, и его круг распускается */
-.sc-invite .p {
-  position: absolute; top: 50%; width: 62px; height: 62px; margin-top: -31px; border-radius: 50%;
-  display: grid; place-items: center; font: 700 var(--fs-xs)/1 var(--t);
-  animation: pop-in 460ms var(--ease) backwards;
+.sc-write .card-n svg { width: 15px; height: 15px; color: var(--blue); flex: none; }
+.sc-write .card-n b { display: block; font: 700 var(--fs-xs)/1.2 var(--t); }
+.sc-write .card-n s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--ink-3); }
+.sc-write .n1 { left: 0; top: 10%; animation-delay: 420ms; --fx: -22px; --fy: -14px; }
+.sc-write .n2 { right: 0; top: 18%; animation-delay: 740ms; --fx: 22px; --fy: -12px; }
+.sc-write .n3 { left: 2%; bottom: 14%; animation-delay: 1060ms; --fx: -20px; --fy: 16px; }
+.sc-write .n4 { right: 0; bottom: 20%; animation-delay: 1380ms; --fx: 22px; --fy: 14px; }
+.sc-write .count {
+  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); white-space: nowrap; font-style: normal;
+  padding: 6px 13px; border-radius: 999px; background: var(--blue-soft); color: var(--blue);
+  font: 700 var(--fs-xxs)/1 var(--t); animation: rise 460ms var(--ease) 1700ms backwards;
 }
-.sc-invite .p.a { left: 8%; background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue); }
-.sc-invite .p.b { right: 20%; background: #dbe8ff; color: var(--blue); box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgba(47, 123, 255, .5); animation-delay: 520ms; }
+@keyframes fly { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.92); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.72); } }
+
+/* ——— 2. Позовите знакомого: нить тянется, его круг распускается ——— */
+.sc-invite .p {
+  position: absolute; top: 46%; width: 64px; height: 64px; margin-top: -32px; border-radius: 50%;
+  display: grid; place-items: center; animation: pop-in 460ms var(--ease) backwards;
+}
+.sc-invite .p b { font: 700 var(--fs-xs)/1 var(--t); }
+.sc-invite .p.a { left: 6%; background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue), 0 0 0 7px rgba(47, 123, 255, .08); }
+.sc-invite .p.b { right: 22%; background: #dbe8ff; color: var(--blue); box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgba(47, 123, 255, .5); animation-delay: 520ms; }
 .sc-invite .thread {
-  position: absolute; left: calc(8% + 62px); right: calc(20% + 62px); top: 50%; height: 2px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--blue), rgba(47, 123, 255, .45));
+  position: absolute; left: calc(6% + 64px); right: calc(22% + 64px); top: 46%; height: 2px; border-radius: 2px; overflow: hidden;
+  background: linear-gradient(90deg, rgba(47, 123, 255, .9), rgba(47, 123, 255, .35));
   transform-origin: left center; animation: draw-x 620ms var(--ease) 300ms backwards;
 }
+/* по готовой нити пробегает проблеск — та же повадка, что в облаке сети */
+.sc-invite .pulse {
+  position: absolute; inset: 0 auto 0 0; width: 46px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff, rgba(255, 255, 255, 0));
+  animation: run 2.6s var(--ease) 1200ms infinite;
+}
+@keyframes run { from { transform: translateX(-46px); } to { transform: translateX(240px); } }
 @keyframes draw-x { from { transform: scaleX(0); } }
 .sc-invite .spark {
-  position: absolute; right: 20%; top: 50%; width: 13px; height: 13px; margin: -6px -6px 0 0; border-radius: 50%;
+  position: absolute; right: 22%; top: 46%; width: 13px; height: 13px; margin: -6px -6px 0 0; border-radius: 50%;
   background: #eaf1ff; box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .55);
   transform: translate(var(--tx), var(--ty));
   animation: fan 700ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-invite .s1 { animation-delay: 900ms; --tx: 26px; --ty: -58px; }
-.sc-invite .s2 { animation-delay: 1050ms; --tx: 48px; --ty: -14px; }
-.sc-invite .s3 { animation-delay: 1200ms; --tx: 44px; --ty: 38px; }
-.sc-invite .s4 { animation-delay: 1350ms; --tx: 4px; --ty: 66px; }
-.sc-invite .s5 { animation-delay: 1500ms; --tx: -34px; --ty: -58px; }
+.sc-invite .s1 { animation-delay: 900ms; --tx: 24px; --ty: -58px; }
+.sc-invite .s2 { animation-delay: 1030ms; --tx: 52px; --ty: -22px; }
+.sc-invite .s3 { animation-delay: 1160ms; --tx: 48px; --ty: 30px; }
+.sc-invite .s4 { animation-delay: 1290ms; --tx: 12px; --ty: 62px; }
+.sc-invite .s5 { animation-delay: 1420ms; --tx: -30px; --ty: -56px; }
+.sc-invite .s6 { animation-delay: 1550ms; --tx: -28px; --ty: 54px; }
 @keyframes fan { from { opacity: 0; transform: none; } }
 .sc-invite .lbl {
-  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap;
-  padding: 7px 14px; border-radius: 999px; background: var(--blue-soft); color: var(--blue);
-  font: 700 var(--fs-xxs)/1 var(--t); animation: rise 500ms var(--ease) 1700ms backwards;
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+  background: var(--good-soft); color: var(--good); font: 700 var(--fs-xxs)/1 var(--t);
+  animation: rise 500ms var(--ease) 1750ms backwards;
 }
+.sc-invite .lbl svg { width: 13px; height: 13px; }
 
-/* 3. Спросите: вопрос уходит по нитям, обратно приходит имя */
+/* ——— 3. Спросите: вопрос бежит по нитям, обратно приходит имя ——— */
 .sc-ask .bubble {
-  position: absolute; left: 4%; top: 16%; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
+  position: absolute; left: 2%; top: 8%; display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 15px; border-radius: 16px 16px 16px 4px;
   background: var(--grad-ink); color: var(--paper); font: 600 var(--fs-xs)/1 var(--t); box-shadow: var(--sh-2);
   animation: rise 500ms var(--ease) backwards;
 }
+.sc-ask .bubble svg { width: 14px; height: 14px; opacity: .7; }
 .sc-ask .hop {
-  position: absolute; top: 34%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
+  position: absolute; top: 30%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
   box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .5); animation: blink 1.8s var(--ease) infinite;
 }
-.sc-ask .h1 { left: 22%; animation-delay: 500ms; }
-.sc-ask .h2 { left: 47%; animation-delay: 800ms; }
-.sc-ask .h3 { left: 72%; animation-delay: 1100ms; }
+.sc-ask .h1 { left: 26%; animation-delay: 500ms; }
+.sc-ask .h2 { left: 50%; animation-delay: 800ms; }
+.sc-ask .h3 { left: 74%; animation-delay: 1100ms; }
 @keyframes blink {
   0%, 100% { transform: scale(1); background: #dbe8ff; }
   18% { transform: scale(1.5); background: var(--blue); }
 }
 .sc-ask .answer-card {
-  position: absolute; left: 50%; bottom: 6%; width: 264px; margin-left: -132px; padding: var(--s-4);
-  display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; text-align: left;
+  position: absolute; left: 50%; bottom: 2%; width: 272px; margin-left: -136px; padding: var(--s-4);
+  display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; text-align: left;
   border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3);
   animation: rise 620ms cubic-bezier(.22, 1, .36, 1) 1500ms backwards;
 }
-.sc-ask .av-n { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #eef3fb; color: var(--ink-2); font: 700 var(--fs-xs)/1 var(--t); }
-.sc-ask .answer-card b { display: block; font: 700 var(--fs-sm)/1.2 var(--t); }
-.sc-ask .answer-card s { text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; }
-.sc-ask .answer-card em {
-  grid-column: 1 / -1; justify-self: start; font-style: normal; font: 600 var(--fs-xxs)/1 var(--t);
-  color: var(--good); background: var(--good-soft); padding: 6px 10px; border-radius: 999px;
+.sc-ask .av-n { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(160deg, #eef3f9, #dde6f1); color: var(--ink-2); font: 700 var(--fs-xs)/1 var(--t); }
+.sc-ask .who b { display: block; font: 700 var(--fs-sm)/1.2 var(--t); }
+.sc-ask .who s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; margin-top: 2px; }
+.sc-ask .vouch {
+  grid-column: 1 / -1; justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-style: normal;
+  font: 600 var(--fs-xxs)/1 var(--t); color: var(--good); background: var(--good-soft); padding: 7px 11px; border-radius: 999px;
   animation: rise 420ms var(--ease) 2000ms backwards;
 }
+.sc-ask .vouch svg { width: 13px; height: 13px; }
+.sc-ask .chain {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; padding-top: 10px; border-top: 1px solid var(--line);
+  animation: rise 420ms var(--ease) 2200ms backwards;
+}
+.sc-ask .chain i { font-style: normal; font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-3); }
+.sc-ask .chain i.last { color: var(--ink); }
+.sc-ask .chain svg { width: 12px; height: 12px; color: var(--ink-4); }
 
-/* 4. Места и фирмы: та же карточка, что в приложении */
+/* ——— 4. Места и фирмы: та же карточка, что в приложении ——— */
 .sc-places .place-card {
-  position: absolute; left: 50%; top: 4px; width: 276px; margin-left: -138px; padding: 0 var(--s-4) var(--s-4);
+  position: absolute; left: 50%; top: 0; width: 280px; margin-left: -140px; padding: 0 var(--s-4) var(--s-4);
   border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3); text-align: left; overflow: hidden;
   animation: rise 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-places .sc-cover { position: relative; margin: 0 calc(-1 * var(--s-4)) 20px; height: 72px; background: linear-gradient(140deg, #e7a877, #c07a4e); }
+.sc-places .sc-cover {
+  position: relative; margin: 0 calc(-1 * var(--s-4)) 20px; height: 74px; overflow: hidden;
+  background: linear-gradient(140deg, #e8ac7c, #bd7549);
+}
+/* по обложке проходит блик — снимок оживает */
+.sc-places .shine {
+  position: absolute; inset: 0 auto 0 -40%; width: 40%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .34), rgba(255, 255, 255, 0));
+  animation: shine 2.8s var(--ease) 600ms infinite;
+}
+@keyframes shine { from { transform: translateX(0); } to { transform: translateX(400%); } }
 .sc-places .pin {
-  position: absolute; left: var(--s-4); bottom: -16px; width: 32px; height: 32px; border-radius: 50%;
+  position: absolute; left: var(--s-4); bottom: -16px; width: 34px; height: 34px; border-radius: 50%;
   display: grid; place-items: center; background: var(--paper); color: var(--blue); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
 }
-.sc-places .pin svg { width: 17px; height: 17px; }
+.sc-places .pin svg { width: 18px; height: 18px; }
 .sc-places .place-card b { display: block; font: 700 var(--fs-sm)/1.25 var(--t); }
-.sc-places .place-card s { text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; }
+.sc-places .place-card s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; margin-top: 2px; }
 .sc-places .fact {
-  display: block; margin-top: 8px; padding: 8px 11px; border-radius: 10px; background: var(--mist);
+  display: flex; align-items: baseline; gap: 8px; margin-top: 8px; padding: 9px 11px; border-radius: 10px; background: var(--mist);
   font: 500 var(--fs-xxs)/1.35 var(--t); color: var(--ink-2); font-style: normal;
   animation: rise 460ms var(--ease) backwards;
 }
+.sc-places .fact u { text-decoration: none; flex: none; font-size: 10px; color: var(--ink-4); text-transform: uppercase; letter-spacing: .04em; }
+.sc-places .fact svg { width: 13px; height: 13px; flex: none; }
 .sc-places .f1 { animation-delay: 700ms; }
 .sc-places .f2 { animation-delay: 1000ms; }
-.sc-places .f3 { animation-delay: 1300ms; color: var(--good); background: var(--good-soft); font-weight: 600; }
+.sc-places .f3 { animation-delay: 1300ms; align-items: center; color: var(--good); background: var(--good-soft); font-weight: 600; }
