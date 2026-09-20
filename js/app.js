@@ -570,14 +570,17 @@
       const t = G.trust(a.person, q.cat);
       const direct = G.connected(S.me, a.person);
       const intro = S.intros.find((x) => x.to === a.person);
-      const act = a.person === S.me ? '' : direct ? `<a class="btn soft sm" href="#/p/${a.person}?cat=${q.cat}">Профиль</a>`
-        : intro ? `<a class="btn ghost sm" href="#/p/${a.person}?cat=${q.cat}">${intro.status === 'ok' ? 'Знакомство состоялось' : 'Ждём ответа'}</a>`
-          : `<button class="btn primary sm" data-act="intro" data-id="${a.person}" data-via="${a.from}" data-cat="${q.cat}">Попросить знакомство</button>`;
-      const thanks = mine ? (a.thanked ? `<span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Спасибо отправлено</span>` : `<button class="btn ghost sm" data-act="thank" data-q="${q.id}" data-i="${i}">Спасибо</button>`) : '';
-      return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">советует · ${when(a.at)}</span></div></div>
+      // Внизу карточки — одно действие: попросить знакомство.
+      // Благодарность относится к тому, кто посоветовал, поэтому живёт наверху, рядом с его именем.
+      const act = a.person === S.me ? '' : direct ? `<a class="btn soft sm block" href="#/p/${a.person}?cat=${q.cat}">Открыть профиль</a>`
+        : intro ? `<a class="btn ghost sm block" href="#/p/${a.person}?cat=${q.cat}">${intro.status === 'ok' ? 'Знакомство состоялось' : 'Ждём ответа'}</a>`
+          : `<button class="btn primary sm block" data-act="intro" data-id="${a.person}" data-via="${a.from}" data-cat="${q.cat}">${ic('hand')}Попросить знакомство</button>
+             <p class="tiny muted" style="margin:7px 0 0;text-align:center">${esc(first(a.from))} передаст вашу просьбу</p>`;
+      const thanks = mine ? (a.thanked ? `<span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Спасибо</span>` : `<button class="btn ghost xs" data-act="thank" data-q="${q.id}" data-i="${i}">Сказать спасибо</button>`) : '';
+      return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">советует · ${when(a.at)}</span></div>${thanks}</div>
         <a href="#/p/${a.person}?cat=${q.cat}" style="text-decoration:none;display:block;margin-top:10px"><div class="row">${av(a.person)}<div class="grow"><div class="h3">${esc(full(a.person))}</div><div class="small muted">${esc(cat(q.cat).who)} · ${pl(G.recsTo(a.person, q.cat).length, 'рекомендация', 'рекомендации', 'рекомендаций')}</div></div></div></a>
         <div style="margin-top:10px">${chainLine(direct ? [S.me, a.person] : [S.me, a.from, a.person].filter((x, k, arr) => arr.indexOf(x) === k))}</div>
-        <p class="txt">«${esc(a.text)}»</p><div class="btn-row">${act}${thanks}</div></div>`;
+        <p class="txt">«${esc(a.text)}»</p>${act}</div>`;
     }).join('');
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><h1 class="h2 grow">${mine ? 'Ваш запрос' : 'Запрос'}</h1></div>
       <div class="card">${mine ? '' : `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`}

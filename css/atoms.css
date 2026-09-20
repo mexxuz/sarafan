@@ -68,6 +68,7 @@ p { text-wrap: pretty; }
 .btn.ghost { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); }
 .btn.block { width: 100%; }
 .btn.sm { height: 38px; padding: 0 var(--s-4); font-size: var(--fs-xs); }
+.btn.xs { height: 28px; padding: 0 var(--s-3); font-size: var(--fs-xs); font-weight: 600; flex: none; }
 .btn[disabled] { opacity: .4; pointer-events: none; box-shadow: none; }
 @media (hover: hover) {
   .btn:hover { background: var(--mist-2); }
