@@ -96,9 +96,16 @@ window.Cloud = function (canvas, opts) {
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
-      const pad = n.r + 6;
-      n.x = Math.max(pad, Math.min(W - pad, n.x));
-      n.y = Math.max(pad, Math.min(H - pad, n.y));
+      // держим узлы в мягком овале, а не в прямоугольнике: углы выглядели неряшливо
+      const pad = n.r + 16;
+      const ax = W / 2 - pad, ay = H / 2 - pad;
+      const ox = (n.x - cx) / ax, oy = (n.y - cy) / ay;
+      const out = Math.hypot(ox, oy);
+      if (out > 1) {
+        n.x = cx + (ox / out) * ax;
+        n.y = cy + (oy / out) * ay;
+        n.vx *= 0.4; n.vy *= 0.4;
+      }
     });
   }
 
