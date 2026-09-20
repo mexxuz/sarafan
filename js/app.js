@@ -252,10 +252,17 @@
     });
   }
 
+  let navHideT;
   function drawNav(show, active) {
     const n = $('#nav');
-    n.hidden = !show;
-    if (!show) return;
+    clearTimeout(navHideT);
+    if (!show) {
+      n.classList.add('hide');
+      navHideT = setTimeout(() => { if (n.classList.contains('hide')) n.hidden = true; }, 320);
+      return;
+    }
+    n.hidden = false;
+    requestAnimationFrame(() => n.classList.remove('hide'));
     const incoming = S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !q.answers.some((a) => a.from === S.me) && !(q.skip || []).includes(S.me)).length;
     const pendingIn = S.conns.filter(askedMe).length;
     const item = (key, href, icon, label, badge) => `<a href="${href}" class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span>${badge ? `<i class="badge">${badge}</i>` : ''}</a>`;
