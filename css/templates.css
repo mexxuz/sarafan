@@ -105,3 +105,8 @@
 .go svg:last-child { transition: transform var(--fast) var(--ease); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Портрет-дверь в профиль: одна на все экраны, в правом верхнем углу */
+.me-dot { flex: none; display: block; line-height: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--blue); transition: transform var(--fast) var(--ease); }
+.me-dot:active { transform: scale(.94); }
+.me-dot .av { width: 34px; height: 34px; font-size: 12px; }

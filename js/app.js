@@ -253,6 +253,7 @@
     else if (name === 'ask') { html = Ask(); active = 'ask'; }
     else if (name === 'q' && id) { html = Request(id); nav = false; }
     else if (name === 'net') { html = Network(params); active = 'net'; }
+    else if (name === 'new') { html = News(); active = 'new'; }
     else if (name === 'me') { html = Me(params); active = 'me'; }
     else { html = Home(); active = 'home'; }
     const app = $('#app');
@@ -301,7 +302,7 @@
     n.innerHTML = '<i class="pill" aria-hidden="true"></i>' +
       item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') +
       `<a href="#/ask" class="ask ${active === 'ask' ? 'on' : ''}" aria-label="Спросить свою сеть">${ic('ask')}<span>Спросить</span>${incoming ? `<i class="badge">${incoming}</i>` : ''}</a>` +
-      item('net', '#/net', 'net', 'Сеть', pendingIn) + item('me', '#/me', 'user', 'Профиль');
+      item('net', '#/net', 'net', 'Сеть', pendingIn) + item('new', '#/new', 'bell', 'Новое', todo());
     movePill(n);
   }
 
@@ -478,25 +479,18 @@
     const catCount = {};
     near.forEach((id) => G.catsOf(id).forEach((c) => { catCount[c] = (catCount[c] || 0) + 1; }));
     const topCats = Object.keys(catCount).sort((a, b) => catCount[b] - catCount[a]).slice(0, 8);
-    const inc = incomingRequests().filter((q) => !q.answers.some((a) => a.from === S.me)).slice(0, 2);
     const near2 = Object.keys(G.dist).filter((id) => id !== S.me && G.dist[id] >= 1 && G.dist[id] <= 2)
       .map((id) => { const c = G.catsOf(id)[0]; if (!c) return null; const rep = G.reputation(id, c); return rep.count ? { user: U(id), cat: c, rep, ...G.trust(id, c) } : null; })
       .filter(Boolean)
       .sort((a, b) => a.circle - b.circle || b.rep.independent - a.rep.independent)
       .slice(0, 6);
     const mine = S.requests.filter((q) => q.from === S.me && !q.closed).sort((a, b) => b.at - a.at).slice(0, 2);
-    const pend = S.conns.filter(askedMe);
-    const asks = S.intros.filter((i) => i.via === S.me && i.status === 'wait');
-    // Через три дня тихо спрашиваем того, кто просил: сложилось ли. Ответ видит только он
-    const howItWent = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
-      && Date.now() - i.at > 3 * 864e5).slice(0, 1);
-    const ev = feed();
     const op = orbitPeople(6, 8);
     const small = op.total1 < 3;
     return `
       <div class="place">
         <div class="grow"><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
-        <button class="icon-btn bell ${inc.length ? 'ping' : ''}" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
+        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
@@ -506,13 +500,49 @@
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
+      ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
+        <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
+      ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
+  }
+
+  // ——— Новое: всё, что произошло и что просит ответа ———
+  const todoCounts = () => {
+    const asks = S.intros.filter((i) => i.via === S.me && i.status === 'wait').length;
+    const pend = S.conns.filter(askedMe).length;
+    const inc = incomingRequests().filter((q) => !q.answers.some((a) => a.from === S.me)).length;
+    const res = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
+      && Date.now() - i.at > 3 * 864e5).length;
+    return { asks, pend, inc, res };
+  };
+  const todo = () => { const t = todoCounts(); return t.asks + t.pend + t.inc + t.res; };
+  const todoText = () => {
+    const t = todoCounts();
+    const parts = [];
+    if (t.inc) parts.push(pl(t.inc, 'запрос от знакомых', 'запроса от знакомых', 'запросов от знакомых'));
+    if (t.asks) parts.push(pl(t.asks, 'просьба познакомить', 'просьбы познакомить', 'просьб познакомить'));
+    if (t.pend) parts.push(pl(t.pend, 'заявка в вашу сеть', 'заявки в вашу сеть', 'заявок в вашу сеть'));
+    if (t.res) parts.push('вопрос о знакомстве');
+    return parts.join(' · ');
+  };
+
+  function News() {
+    const asks = S.intros.filter((i) => i.via === S.me && i.status === 'wait');
+    const pend = S.conns.filter(askedMe);
+    const inc = incomingRequests();
+    const howItWent = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
+      && Date.now() - i.at > 3 * 864e5).slice(0, 1);
+    const ev = feed();
+    const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length;
+    return `<div class="top"><h1 class="h1 grow">Новое</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+      ${nothing ? `<div class="empty" style="padding-top:18vh"><h2 class="h2">Пока тихо</h2>
+        <p>Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кого просят познакомить.</p>
+        <a class="btn primary" href="#/net">${ic('plus')}Позвать знакомых</a></div>` : ''}
       ${howItWent.map(resultAskCard).join('')}
       ${asks.length ? `<div class="sec-title"><h2 class="h2">Просят познакомить</h2><span class="badge">${asks.length}</span></div>${asks.map(introAskCard).join('')}` : ''}
       ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
-      ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><a class="link" href="#/ask">Все</a></div><div class="stack">${inc.map((q, i) => requestCard(q, false, i === 0)).join('')}</div>` : ''}
-      ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}
-      <div class="sec-title"><h2 class="h2">В вашей сети</h2></div>
-      <div class="card">${ev.length ? ev.map((e) => `<div class="feed-item" data-act="goto" data-h="${e.link}" role="link" tabindex="0">${av(e.who, 's')}<div class="grow" style="min-width:0">${e.html}<div class="when">${when(e.at)}</div></div></div>`).join('') : `<div class="empty" style="padding:var(--s-4) 0"><p style="margin:0">Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кто чем поделился.<br><b style="color:var(--ink)">Пока вы один — начните с приглашения.</b></p></div>`}</div>`;
+      ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2></div><div class="stack">${inc.map((q, i) => requestCard(q, false, i === 0)).join('')}</div>` : ''}
+      ${ev.length ? `<div class="sec-title"><h2 class="h2">В вашей сети</h2></div>
+      <div class="card">${ev.map((e) => `<div class="feed-item" data-act="goto" data-h="${e.link}" role="link" tabindex="0">${av(e.who, 's')}<div class="grow" style="min-width:0">${e.html}<div class="when">${when(e.at)}</div></div></div>`).join('')}</div>` : ''}`;
   }
 
   // Просьба познакомить: решает посредник, и только он
@@ -542,7 +572,7 @@
   const FILTERS = [['all', 'Все'], ['1', '1-й круг'], ['2', '2-й круг'], ['far', 'Дальше']];
   function Search(params) {
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
-    return `<div class="top"><h1 class="h1 grow">Поиск</h1></div>
+    return `<div class="top"><h1 class="h1 grow">Поиск</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <label class="search">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
       <div id="results">${searchResults()}</div>`;
   }
@@ -645,7 +675,7 @@
     const c1 = myContacts();
     const mine = S.requests.filter((q) => q.from === S.me).sort((a, b) => b.at - a.at);
     const inc = incomingRequests();
-    return `<div class="top"><h1 class="h1 grow">Спросить свою сеть</h1></div>
+    return `<div class="top"><h1 class="h1 grow">Спросить свою сеть</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="card">
         <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен юрист по трудовому спору — уволили, хочу разобраться" maxlength="300">${esc(F.t)}</textarea></label>
         <div id="askcats">${askCats()}</div>
@@ -770,7 +800,7 @@
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
 
-    return `<div class="top"><div class="grow"><h1 class="h1">Моя сеть</h1>
+    return `<div class="top"><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a><div class="grow"><h1 class="h1">Моя сеть</h1>
         <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} через них`}</div></div></div>
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
