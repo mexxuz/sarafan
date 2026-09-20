@@ -407,6 +407,11 @@
   window.addEventListener('resize', () => { const n = $('#nav'); if (n && !n.hidden) movePill(n); });
 
   // ——— Общие куски ———
+  // Шапка экрана: всегда одной высоты, заголовок одной строкой, подпись под ним,
+  // справа — круглые кнопки экрана и последним портрет.
+  const screenHead = (title, sub, tools) => `<div class="top screen">
+      <div class="grow"><h1 class="h1 one">${title}</h1>${sub ? `<div class="sub ellip">${sub}</div>` : ''}</div>
+      ${tools || ''}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>`;
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
 
   // Витрина: то, что человек рассказывает о себе сам. Рекомендации — то, что о нём
@@ -1088,7 +1093,7 @@
       && Date.now() - i.at > 3 * 864e5).slice(0, 1);
     const ev = feed();
     const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length;
-    return `<div class="top"><h1 class="h1 grow">Новое</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+    return screenHead('Новое', todo() ? 'Ждут вашего ответа' : 'Движение доверия вокруг вас') + `
       ${nothing ? `<div class="empty" style="padding-top:18vh"><h2 class="h2">Пока тихо</h2>
         <p>Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кого просят познакомить.</p>
         <a class="btn primary" href="#/net">${ic('plus')}Позвать знакомых</a></div>` : ''}
@@ -1259,7 +1264,7 @@
     const c1 = myContacts();
     const mine = S.requests.filter((q) => q.from === S.me).sort((a, b) => b.at - a.at);
     const inc = incomingRequests();
-    return `<div class="top"><h1 class="h1 grow">Спросить свою сеть</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+    return screenHead('Спросить', `Запрос уйдёт ${pl(myContacts().length, 'знакомому', 'знакомым', 'знакомым')}`) + `
       <div class="card">
         <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен юрист по трудовому спору — уволили, хочу разобраться" maxlength="300">${esc(F.t)}</textarea></label>
         <div id="askcats">${askCats()}</div>
@@ -1388,10 +1393,9 @@
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
 
-    return `<div class="top"><div class="grow"><h1 class="h1">Моя сеть</h1>
-        <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} в их кругах`}</div></div>
-        <button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Карта сети">${ic('net')}</button>
-        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+    return screenHead('Моя сеть',
+      empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} в их кругах`,
+      `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
       ${empty ? howto : ''}

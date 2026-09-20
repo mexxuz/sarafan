@@ -8,6 +8,11 @@
 /* Шапка экрана: назад · заголовок · действие */
 .top { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-5) 0 var(--s-2); min-height: 62px; }
 .top .grow { flex: 1; min-width: 0; }
+/* Шапка раздела: одна высота на всех экранах, чтобы содержимое не скакало */
+.top.screen { min-height: 74px; align-items: center; padding: var(--s-5) 0 var(--s-3); }
+.top.screen .h1.one { font-size: var(--fs-2xl); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top.screen .sub { margin-top: 3px; font-size: var(--fs-xs); color: var(--ink-3); }
+.top.screen .icon-btn, .top.screen .me-dot { align-self: center; }
 
 /* Шапка главной: вы · ваша сеть · уведомления */
 .head-bar { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-5) 0 var(--s-3); }
