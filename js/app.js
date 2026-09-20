@@ -1581,7 +1581,7 @@
         <i class="card-n n2">${ic('user')}<span><b>Нигора</b><s>педиатр</s></span></i>
         <i class="card-n n3">${ic('user')}<span><b>Улугбек</b><s>электрик</s></span></i>
         <i class="card-n n4">${ic('user')}<span><b>Азиз</b><s>юрист</s></span></i>
-        <i class="count">4 в вашем кругу</i></div>`,
+        <i class="count">4 проверенных</i></div>`,
     },
     {
       key: 'invite',
