@@ -89,22 +89,26 @@ window.Cloud = function (canvas, opts) {
       // своё кольцо: ближний круг держится ближе к центру, дальний — дальше
       const dx = n.x - cx, dy = n.y - cy;
       const d = Math.max(1, Math.hypot(dx, dy));
-      const want = 72 + n.ring * 62;
+      const k = Math.min(1.25, Math.max(0.78, Math.min(W, H) / 330));
+      const want = (70 + n.ring * 58) * k;
       const pull = (want - d) * 0.006;
       n.vx += (dx / d) * pull;
       n.vy += (dy / d) * pull;
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
-      // держим узлы в мягком овале, а не в прямоугольнике: углы выглядели неряшливо
+      // Держим узлы в мягком овале. Центр графа смещён вниз, поэтому сверху и снизу
+      // места разное — считаем полуоси от настоящего центра, иначе облако сплющивает.
       const pad = n.r + 16;
-      const ax = W / 2 - pad, ay = H / 2 - pad;
-      const ox = (n.x - cx) / ax, oy = (n.y - cy) / ay;
+      const ax = W / 2 - pad;
+      const ay = (n.y < cy ? cy : H - cy) - pad;
+      const ox = (n.x - cx) / Math.max(20, ax);
+      const oy = (n.y - cy) / Math.max(20, ay);
       const out = Math.hypot(ox, oy);
       if (out > 1) {
         n.x = cx + (ox / out) * ax;
         n.y = cy + (oy / out) * ay;
-        n.vx *= 0.4; n.vy *= 0.4;
+        n.vx *= 0.5; n.vy *= 0.5;
       }
     });
   }
