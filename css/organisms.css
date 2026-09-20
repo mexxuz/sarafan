@@ -205,3 +205,21 @@
 .step-row.done .mark { background: var(--good-soft); color: var(--good); }
 .step-row.locked { opacity: .55; }
 .step-row .grow { flex: 1; min-width: 0; }
+
+
+/* ——— Будущие знакомые: серые места, медленно плывущие по орбите ——— */
+.orbit .spin { position: absolute; inset: 0; pointer-events: none; }
+.orbit .spin.slow { animation: orbit-spin 80s linear infinite; }
+.orbit .spin.rev { animation: orbit-spin 120s linear infinite reverse; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+.orb.ghost { animation: none; opacity: 1; }
+.ghost-av {
+  display: grid; place-items: center; border-radius: 50%; color: var(--ink-4);
+  background: var(--mist); box-shadow: inset 0 0 0 1px var(--line);
+  width: 34px; height: 34px;
+}
+.ghost-av.xs { width: 26px; height: 26px; }
+.ghost-av svg { width: 55%; height: 55%; }
+.orbit .spin.slow .ghost-av { animation: orbit-spin 80s linear infinite reverse; }
+.orbit .spin.rev .ghost-av { animation: orbit-spin 120s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .orbit .spin, .orbit .spin .ghost-av { animation: none !important; } }

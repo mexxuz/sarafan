@@ -83,8 +83,26 @@
       const via = '';
       return `<button class="orb ${cls} ${o.dim && o.dim !== cls ? 'dim' : ''}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px;--i:${k++}" data-act="peek" data-id="${id}" aria-label="${esc(U(id).name)}">${av(id, size, cls === 'in' ? 'r1' : 'r2')}${label ? `<i>${esc(first(id))}${via}</i>` : ''}</button>`;
     }).join('');
+    // Пустые места на орбите: медленно вращаются, показывают, как сеть будет выглядеть
+    const ghosts = (count, rPct, size, cls) => {
+      if (!count) return '';
+      const step = 360 / count;
+      return Array.from({ length: count }, (_, i) => {
+        const a = -90 + step * i + (cls === 'out' ? step / 2 : 0);
+        return `<span class="orb ghost ${cls}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px" aria-hidden="true">
+          <span class="ghost-av ${size}">${ic('user')}</span></span>`;
+      }).join('');
+    };
+    const gIn = Math.max(0, (o.ghost ? o.ghost.inner : 0) - inner.length);
+    const gOut = Math.max(0, (o.ghost ? o.ghost.outer : 0) - outer.length);
+    const spin = (gIn || gOut)
+      ? `<div class="spin slow">${ghosts(gIn, 0.295, o.big ? 's' : 'xs', 'in')}</div>
+         <div class="spin rev">${ghosts(gOut, 0.47, 'xs', 'out')}</div>`
+      : '';
+
     return `<div class="orbit" style="width:${box}px;height:${box}px">
       <div class="ring r-in"></div><div class="ring r-out"></div>
+      ${spin}
       <div class="core">${av(S.me, 'l', 'r1')}${o.cap ? `<span class="cap">${esc(o.cap)}</span>` : ''}</div>
       ${ring(inner, 0.295, o.big ? 's' : 'xs', 'in', o.labels !== false)}
       ${ring(outer, 0.47, 'xs', 'out', !!o.big)}</div>`;
@@ -314,7 +332,7 @@
         title: 'Позовите тех, кому доверяете',
         text: c1.length ? `В вашей сети ${pl(c1.length, 'человек', 'человека', 'человек')}. Чем больше знакомых, тем чаще сеть выручает.`
           : 'Сарафан работает только через ваших знакомых. Начните с трёх-пяти человек: коллеги, друзья, родственники.',
-        btn: c1.length ? 'Позвать ещё' : 'Позвать знакомых', act: 'sendInvite',
+        btn: c1.length ? 'Позвать ещё' : 'Позвать знакомых', act: 'goto', href: '#/net',
       },
       {
         done: myRecs > 0, num: 2,
@@ -369,8 +387,9 @@
         <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <button class="icon-btn bell" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
       ${small ? starter() : ''}
-      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 240 : 320 })}</a>
+      <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 260 : 320, ghost: small ? { inner: 6, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
+      ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Дизайнер, врач, юрист…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
@@ -548,25 +567,57 @@
     const c2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2).sort((a, b) => U(a).name.localeCompare(U(b).name));
     const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
     const inv = S.invite;
-    const link = `t.me/${S.bot || 'sarafanibot'}?start=${inv.code}`;
+    const bot = S.bot || 'sarafanibot';
+    const link = `t.me/${bot}?start=${inv.code}`;
+    const left = inv.max - inv.used;
+    const empty = c1.length === 0;
     const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
-    const list = F.tab === 'c1'
+    const dim = F.tab === 'c1' ? 'in' : F.tab === 'c2' ? 'out' : null;
+
+    const invite = `<div class="invite-card">
+      <div class="eyebrow" style="color:rgba(255,255,255,.7)">ваша личная ссылка</div>
+      <div class="h2" style="margin:6px 0 8px">${empty ? 'Позовите знакомых' : 'Пригласить в сеть'}</div>
+      <div class="small">Кто войдёт по ней — сразу станет вашим контактом. Приглашение не значит, что вы за человека ручаетесь: это отдельное действие.</div>
+      <div class="link-box">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.7"')}<span>${link}</span></div>
+      <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
+      <div class="small" style="margin-top:14px">Осталось мест: ${left} из ${inv.max}</div>
+      <div class="dots">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
+    </div>`;
+
+    const howto = `<div class="card" style="margin-top:10px">
+      <div class="eyebrow">как это работает</div>
+      <div class="rail" style="margin-top:10px">
+        ${[['Вы отправляете ссылку', 'в Telegram, любым знакомым'],
+           ['Человек открывает её', 'и нажимает «Открыть Сарафан»'],
+           ['Он в сети и он ваш контакт', 'дальше вы можете поручиться друг за друга']]
+          .map(([t, d], i, all) => `<div class="step ${i === all.length - 1 ? 'now' : ''}" style="--k:${i}">
+            <span class="mark"><span class="dot"></span><span class="line"></span></span>
+            <span class="body"><span class="grow"><span class="who">${t}</span><span class="role">${d}</span></span></span></div>`).join('')}
+      </div></div>`;
+
+    const outsider = `<button class="card tap" style="width:100%;text-align:left;margin-top:10px;display:flex;gap:12px;align-items:center" data-act="outsider">
+      <span class="av" style="background:var(--blue-soft);color:var(--blue)">${ic('seal').replace('<svg', '<svg style="width:21px;height:21px"')}</span>
+      <span class="grow"><span class="h3" style="display:block">Рекомендовать того, кого здесь нет</span>
+      <span class="small muted">Мастер получит ссылку, а ваша рекомендация будет ждать его в профиле</span></span>
+      ${ic('chev').replace('<svg', '<svg style="width:18px;height:18px;color:var(--ink-4);flex:none"')}</button>`;
+
+    const people = F.tab === 'c1'
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
-    const dim = F.tab === 'c1' ? 'in' : F.tab === 'c2' ? 'out' : null;
-    return `<div class="top"><div class="grow"><h1 class="h1">Моя сеть</h1><div class="small muted" style="margin-top:4px">${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} через них</div></div></div>
-      ${orbit({ inner: c1.slice(0, 8), outer: c2.slice(0, 8), cap: 'вы', size: 380, big: true, dim })}
-      <div class="orbit-legend" style="margin-bottom:18px"><span><i class="dot-1"></i>1-й круг</span><span><i class="dot-2"></i>2-й круг</span></div>
-      <div class="invite-card"><div class="h2">Пригласите знакомых</div><div class="small" style="opacity:.75;margin-top:6px">В Сарафан входят только по личной ссылке. Приглашение — не рекомендация: ручаться за человека не нужно.</div>
-        <div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
-        <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
-        <div class="small" style="opacity:.7;margin-top:14px">Использовано ${inv.used} из ${inv.max}</div><div class="dots">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div></div>
-      <button class="card tap" style="width:100%;text-align:left;margin-top:10px;display:flex;gap:12px;align-items:center" data-act="outsider"><span class="av" style="--h:20;background:var(--warm-soft);color:var(--warm)">${ic('seal').replace('<svg', '<svg style="width:22px;height:22px"')}</span><span class="grow"><span class="h3" style="display:block">Рекомендовать того, кого здесь нет</span><span class="small muted">Мастер получит ссылку, а ваша рекомендация будет ждать его в профиле</span></span>${ic('chev').replace('<svg', '<svg style="width:18px;height:18px;color:var(--muted);flex:none"')}</button>
-      ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут ваших приглашений</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="--h:${hue(p.id)}">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
-      ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
-      <div class="sec-title"><h2 class="h2">Люди</h2></div>
+
+    return `<div class="top"><div class="grow"><h1 class="h1">Моя сеть</h1>
+        <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} через них`}</div></div></div>
+      ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
+      ${invite}
+      ${empty ? howto : ''}
+      ${outsider}
+      ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
+      ${empty ? '' : `
+      <div class="sec-title"><h2 class="h2">Круги знакомых</h2></div>
+      ${orbit({ inner: c1.slice(0, 8), outer: c2.slice(0, 8), cap: 'вы', size: 360, big: true, dim })}
+      <div class="orbit-legend" style="margin-bottom:var(--s-5)"><span><i class="dot-1"></i>1-й круг</span><span><i class="dot-2"></i>2-й круг</span></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Мои контакты · ${c1.length}</button><button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">2-й круг · ${c2.length}</button></div>
-      <div class="card">${list || '<p class="muted small" style="margin:0">Пока пусто</p>'}</div>`;
+      <div class="card">${people || '<p class="muted small" style="margin:0">Здесь пока пусто</p>'}</div>`}`;
   }
 
   // ——— Мой профиль ———
