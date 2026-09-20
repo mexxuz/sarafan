@@ -1,0 +1,136 @@
+/* ——— СТАРТОВОЕ ДЕМО ———
+   Четыре сцены для новичка: что делаешь и что с этого получаешь.
+   Каждая сцена разыгрывает себя сама, поэтому текста нужно немного. */
+
+.tour { position: relative; min-height: 100vh; display: flex; flex-direction: column; padding-top: calc(18px + env(safe-area-inset-top)); }
+
+/* Полоски сверху: сколько сцен и на которой мы сейчас */
+.tour .bars { display: flex; gap: 5px; }
+.tour .bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(47, 123, 255, .16); overflow: hidden; }
+.tour .bars i b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--blue); }
+.tour .bars i.done b { width: 100%; }
+.tour .bars i.run b { animation: bar 6.4s linear forwards; }
+@keyframes bar { from { width: 0; } to { width: 100%; } }
+
+.tour-skip { position: absolute; top: calc(30px + env(safe-area-inset-top)); right: 0; z-index: 3; padding: 8px 0 8px 12px; font: 600 var(--fs-xs)/1 var(--t); color: var(--ink-3); }
+.tour .scenes { flex: 1; position: relative; }
+.tour .scene { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; text-align: center; }
+.tour .scene.on { display: flex; }
+.tour .scene .h1 { font-size: var(--fs-2xl); margin-top: var(--s-6); animation: rise 420ms var(--ease) 120ms backwards; }
+.tour .gain { margin: var(--s-3) auto 0; max-width: 300px; color: var(--ink-2); font-size: var(--fs-sm); line-height: 1.5; animation: rise 460ms var(--ease) 240ms backwards; }
+.tour-foot { position: relative; z-index: 3; padding: var(--s-4) 0 calc(var(--s-6) + env(safe-area-inset-bottom)); }
+
+/* Половинки экрана: слева шаг назад, справа вперёд */
+.tour-tap { position: absolute; top: 60px; bottom: 96px; z-index: 2; background: none; }
+.tour-tap.prev { left: 0; width: 38%; }
+.tour-tap.next { right: 0; width: 62%; }
+
+/* Площадка сцены */
+.tour .sc { position: relative; width: 100%; max-width: 330px; height: 260px; margin: 0 auto; }
+
+/* 1. Ваш круг: имена слетаются к вам */
+.sc-write .me {
+  position: absolute; left: 50%; top: 50%; width: 74px; height: 74px; margin: -37px 0 0 -37px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--grad-blue); color: #fff; font: 700 var(--fs-sm)/1 var(--t);
+  box-shadow: var(--sh-blue); animation: pop-in 520ms var(--ease) backwards;
+}
+.sc-write .card-n {
+  position: absolute; display: flex; flex-direction: column; gap: 2px; padding: 9px 13px; border-radius: 14px;
+  background: var(--paper); box-shadow: var(--sh-2); text-align: left; font-style: normal;
+  animation: fly 620ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.sc-write .card-n b { font: 700 var(--fs-xs)/1.2 var(--t); }
+.sc-write .card-n s { text-decoration: none; font-size: var(--fs-xxs); color: var(--ink-3); }
+.sc-write .n1 { left: 2%; top: 12%; animation-delay: 300ms; --fx: -26px; --fy: -16px; }
+.sc-write .n2 { right: 2%; top: 20%; animation-delay: 620ms; --fx: 26px; --fy: -12px; }
+.sc-write .n3 { left: 6%; bottom: 14%; animation-delay: 940ms; --fx: -22px; --fy: 18px; }
+.sc-write .n4 { right: 4%; bottom: 20%; animation-delay: 1260ms; --fx: 24px; --fy: 16px; }
+@keyframes fly { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.9); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.7); } }
+
+/* 2. Позовите знакомого: нить тянется, и его круг распускается */
+.sc-invite .p {
+  position: absolute; top: 50%; width: 62px; height: 62px; margin-top: -31px; border-radius: 50%;
+  display: grid; place-items: center; font: 700 var(--fs-xs)/1 var(--t);
+  animation: pop-in 460ms var(--ease) backwards;
+}
+.sc-invite .p.a { left: 8%; background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue); }
+.sc-invite .p.b { right: 8%; background: #dbe8ff; color: var(--blue); box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px rgba(47, 123, 255, .5); animation-delay: 520ms; }
+.sc-invite .thread {
+  position: absolute; left: calc(8% + 62px); right: calc(8% + 62px); top: 50%; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--blue), rgba(47, 123, 255, .45));
+  transform-origin: left center; animation: draw-x 620ms var(--ease) 300ms backwards;
+}
+@keyframes draw-x { from { transform: scaleX(0); } }
+.sc-invite .spark {
+  position: absolute; right: 8%; top: 50%; width: 13px; height: 13px; margin: -6px -6px 0 0; border-radius: 50%;
+  background: #eaf1ff; box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .55);
+  transform: translate(var(--tx), var(--ty));
+  animation: fan 700ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.sc-invite .s1 { animation-delay: 900ms; --tx: 30px; --ty: -62px; }
+.sc-invite .s2 { animation-delay: 1050ms; --tx: 60px; --ty: -18px; }
+.sc-invite .s3 { animation-delay: 1200ms; --tx: 52px; --ty: 40px; }
+.sc-invite .s4 { animation-delay: 1350ms; --tx: 4px; --ty: 66px; }
+.sc-invite .s5 { animation-delay: 1500ms; --tx: -34px; --ty: -58px; }
+@keyframes fan { from { opacity: 0; transform: none; } }
+.sc-invite .lbl {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px; background: var(--blue-soft); color: var(--blue);
+  font: 700 var(--fs-xxs)/1 var(--t); animation: rise 500ms var(--ease) 1700ms backwards;
+}
+
+/* 3. Спросите: вопрос уходит по нитям, обратно приходит имя */
+.sc-ask .bubble {
+  position: absolute; left: 4%; top: 16%; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
+  background: var(--grad-ink); color: var(--paper); font: 600 var(--fs-xs)/1 var(--t); box-shadow: var(--sh-2);
+  animation: rise 500ms var(--ease) backwards;
+}
+.sc-ask .hop {
+  position: absolute; top: 44%; width: 11px; height: 11px; border-radius: 50%; background: #dbe8ff;
+  box-shadow: inset 0 0 0 2px rgba(47, 123, 255, .5); animation: blink 1.8s var(--ease) infinite;
+}
+.sc-ask .h1 { left: 22%; animation-delay: 500ms; }
+.sc-ask .h2 { left: 47%; animation-delay: 800ms; }
+.sc-ask .h3 { left: 72%; animation-delay: 1100ms; }
+@keyframes blink {
+  0%, 100% { transform: scale(1); background: #dbe8ff; }
+  18% { transform: scale(1.5); background: var(--blue); }
+}
+.sc-ask .answer-card {
+  position: absolute; left: 50%; bottom: 12%; width: 264px; margin-left: -132px; padding: var(--s-4);
+  display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; text-align: left;
+  border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3);
+  animation: rise 620ms cubic-bezier(.22, 1, .36, 1) 1500ms backwards;
+}
+.sc-ask .av-n { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #eef3fb; color: var(--ink-2); font: 700 var(--fs-xs)/1 var(--t); }
+.sc-ask .answer-card b { display: block; font: 700 var(--fs-sm)/1.2 var(--t); }
+.sc-ask .answer-card s { text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; }
+.sc-ask .answer-card em {
+  grid-column: 1 / -1; justify-self: start; font-style: normal; font: 600 var(--fs-xxs)/1 var(--t);
+  color: var(--good); background: var(--good-soft); padding: 6px 10px; border-radius: 999px;
+  animation: rise 420ms var(--ease) 2000ms backwards;
+}
+
+/* 4. Места и фирмы: та же карточка, что в приложении */
+.sc-places .place-card {
+  position: absolute; left: 50%; top: 50%; width: 276px; margin: -118px 0 0 -138px; padding: 0 var(--s-4) var(--s-4);
+  border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3); text-align: left; overflow: hidden;
+  animation: rise 560ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.sc-places .cover { position: relative; margin: 0 calc(-1 * var(--s-4)) 22px; height: 84px; background: linear-gradient(140deg, #e7a877, #c07a4e); }
+.sc-places .pin {
+  position: absolute; left: var(--s-4); bottom: -16px; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--paper); color: var(--blue); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
+}
+.sc-places .pin svg { width: 17px; height: 17px; }
+.sc-places .place-card b { display: block; font: 700 var(--fs-sm)/1.25 var(--t); }
+.sc-places .place-card s { text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; }
+.sc-places .fact {
+  display: block; margin-top: 8px; padding: 8px 11px; border-radius: 10px; background: var(--mist);
+  font: 500 var(--fs-xxs)/1.35 var(--t); color: var(--ink-2); font-style: normal;
+  animation: rise 460ms var(--ease) backwards;
+}
+.sc-places .f1 { animation-delay: 700ms; }
+.sc-places .f2 { animation-delay: 1000ms; }
+.sc-places .f3 { animation-delay: 1300ms; color: var(--good); background: var(--good-soft); font-weight: 600; }

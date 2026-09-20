@@ -251,7 +251,10 @@
     if (hashChanged) { F = {}; lastHash = location.hash; }
     let html, nav = true, active = '';
     const [name, id] = path;
-    if (!S.onboarded) { html = Onboarding(); nav = false; }
+    let seenTour = true;
+    try { seenTour = !!localStorage.getItem('sarafan.tour'); } catch (e) { /* приватный режим */ }
+    if (!S.onboarded && name !== 'start' && (name === 'tour' || !seenTour)) { html = Tour(); nav = false; }
+    else if (!S.onboarded) { html = Onboarding(); nav = false; }
     else if (name === 'search') { html = Search(params); active = 'search'; }
     else if (name === 'p' && id && U(id)) {
       if (id === S.me) { go('#/me'); return; }
@@ -263,6 +266,8 @@
     else if (name === 'new') { html = News(); active = 'new'; }
     else if (name === 'o' && id) { html = Node(id); nav = false; }
     else if (name === 'map') { html = CloudScreen(); active = 'net'; }
+    else if (name === 'tour') { html = Tour(); nav = false; }
+    else if (name === 'start') { html = Onboarding(); nav = false; }
     else if (name === 'me') { html = Me(params); active = 'me'; }
     else { html = Home(); active = 'home'; }
     const app = $('#app');
@@ -294,6 +299,7 @@
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
     if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
+    if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
 
   // Жест «назад» на телефоне. Пока Telegram не видит своей кнопки возврата,
@@ -943,7 +949,7 @@
       <div style="height:96px"></div>
       <div class="actions"><div class="inner">
         <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Поручиться'}</button>
-        <button class="btn ghost icon" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div></div>`;
+        </div></div>`;
   }
 
   // Что можно поправить в карточке места — под кнопкой в шапке, а не в подвале экрана
@@ -1244,11 +1250,11 @@
 
     let actions;
     if (pendingIn) actions = `<button class="btn primary" data-act="acceptConn" data-id="${id}">${ic('check')}Это мой знакомый</button><button class="btn ghost" data-act="declineConn" data-id="${id}">Не знаю</button>`;
-    else if (direct) actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button><button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${focus || ''}">${ic('seal')}Рекомендовать</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
+    else if (direct) actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button><button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${focus || ''}">${ic('seal')}Рекомендовать</button>`;
     else if (intro && intro.status === 'ok') actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button>${pendingOut ? '<button class="btn ghost" disabled>Заявка отправлена</button>' : `<button class="btn primary" data-act="addConn" data-id="${id}">${ic('plus')}В мою сеть</button>`}`;
-    else if (intro && intro.status === 'gone') actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}Попросить ещё раз</button><span class="tag" style="align-self:center">Не сложилось</span><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
-    else if (intro) actions = `<button class="btn ghost" disabled>Ждём ответа: ${esc(first(intro.via))}</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
-    else if (t.chain && t.chain.length > 2) actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}${t.chain.length > 3 ? 'Шаг к знакомству' : 'Попросить знакомство'}</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
+    else if (intro && intro.status === 'gone') actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}Попросить ещё раз</button><span class="tag" style="align-self:center">Не сложилось</span>`;
+    else if (intro) actions = `<button class="btn ghost" disabled>Ждём ответа: ${esc(first(intro.via))}</button>`;
+    else if (t.chain && t.chain.length > 2) actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}${t.chain.length > 3 ? 'Шаг к знакомству' : 'Попросить знакомство'}</button>`;
     else actions = `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться контактом</button>`;
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
@@ -1552,6 +1558,107 @@
     }).catch(() => {});
   }
 
+
+  // ——— Стартовое демо ———
+  // Четыре сцены: что делаешь и что с этого получаешь. Каждая сцена сама себя
+  // разыгрывает, поэтому объяснять словами почти не приходится.
+  const TOUR = [
+    {
+      key: 'write',
+      title: 'Запишите своих проверенных',
+      gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
+      scene: `<div class="sc sc-write">
+        <span class="me">вы</span>
+        <i class="card-n n1"><b>Рустам</b><s>часовщик</s></i>
+        <i class="card-n n2"><b>Нигора</b><s>педиатр</s></i>
+        <i class="card-n n3"><b>Улугбек</b><s>электрик</s></i>
+        <i class="card-n n4"><b>Азиз</b><s>юрист</s></i></div>`,
+    },
+    {
+      key: 'invite',
+      title: 'Позовите знакомого',
+      gain: 'Его проверенные становятся видны вам — и проверенные его знакомых. Один знакомый открывает целый круг',
+      scene: `<div class="sc sc-invite">
+        <span class="p a">вы</span>
+        <span class="thread"></span>
+        <span class="p b">АК</span>
+        <i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>
+        <i class="spark s4"></i><i class="spark s5"></i>
+        <span class="lbl">круг Азиза открыт вам</span></div>`,
+    },
+    {
+      key: 'ask',
+      title: 'Спросите свой круг',
+      gain: 'Вместо сорока вариантов из поиска — одно имя, за которое ручается знакомый',
+      scene: `<div class="sc sc-ask">
+        <span class="bubble">Нужен педиатр</span>
+        <i class="hop h1"></i><i class="hop h2"></i><i class="hop h3"></i>
+        <div class="answer-card">
+          <span class="av-n">НА</span>
+          <div><b>Нигора Ахмедова</b><s>педиатр</s></div>
+          <em>Азиз ручается</em></div></div>`,
+    },
+    {
+      key: 'places',
+      title: 'Места и фирмы — так же',
+      gain: 'Куда ходят свои: с часами работы, ценами и именем того, кто это проверил',
+      scene: `<div class="sc sc-places">
+        <div class="place-card">
+          <div class="cover"><span class="pin">${ic('pin')}</span></div>
+          <b>Чайхана Центральная</b><s>кухня и торты</s>
+          <i class="fact f1">Плов до 14:00, потом шашлык</i>
+          <i class="fact f2">Есть зал для большой компании</i>
+          <i class="fact f3">Эстелла и ещё двое ручаются</i></div></div>`,
+    },
+  ];
+
+  function Tour() {
+    return `<div class="tour">
+      <div class="bars">${TOUR.map((_, i) => `<i data-bar="${i}"><b></b></i>`).join('')}</div>
+      <button class="tour-skip" data-act="tourEnd">Пропустить</button>
+      <div class="scenes">${TOUR.map((t, i) => `<section class="scene" data-scene="${i}">
+        ${t.scene}
+        <h2 class="h1">${t.title}</h2>
+        <p class="gain">${t.gain}</p></section>`).join('')}</div>
+      <div class="tour-foot">
+        <button class="btn primary block" data-act="tourNext">Дальше</button>
+      </div>
+      <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
+      <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
+  }
+
+  let tourAt = 0, tourT = null;
+  function mountTour(from) {
+    tourAt = from || 0;
+    showScene();
+  }
+  function showScene() {
+    const root = $('.tour');
+    if (!root) return;
+    clearTimeout(tourT);
+    root.querySelectorAll('.scene').forEach((el, i) => el.classList.toggle('on', i === tourAt));
+    root.querySelectorAll('[data-bar]').forEach((el, i) => {
+      el.classList.toggle('done', i < tourAt);
+      el.classList.toggle('run', i === tourAt);
+    });
+    const last = tourAt === TOUR.length - 1;
+    const btn = root.querySelector('.tour-foot .btn');
+    if (btn) btn.textContent = last ? 'Понятно, начнём' : 'Дальше';
+    if (!last) tourT = setTimeout(() => { tourAt++; showScene(); }, 6400);
+  }
+  function tourStep(d) {
+    const root = $('.tour');
+    if (!root) return;
+    if (tourAt + d >= TOUR.length) { endTour(); return; }
+    tourAt = Math.max(0, tourAt + d);
+    showScene();
+  }
+  function endTour() {
+    clearTimeout(tourT);
+    try { localStorage.setItem('sarafan.tour', '1'); } catch (e) { /* приватный режим */ }
+    go(S.onboarded ? '#/' : '#/start');
+  }
+
   // ——— Первый вход ———
   function Onboarding() {
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
@@ -1577,7 +1684,7 @@
           <div class="chips">${S.cats.map((c) => `<button class="chip ${F.cats.includes(c.id) ? 'on' : ''}" data-act="toggleCat" data-v="${c.id}">${esc(c.who)}</button>`).join('')}</div>
           <p class="hint">Можно пропустить: в чём вы сильны, решат рекомендации знакомых</p></div>
         <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${F.name.trim() ? '' : 'disabled'}>Войти в сеть</button>
-        <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tryDemo">Сначала посмотреть, как всё устроено</button></p>
+        <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
       </div></div>`;
   }
 
@@ -2124,6 +2231,10 @@
     editNode: (d) => sheetEditNode(d.id),
     submitEditNode: () => SH.submit(),
     nodeTools: (d) => sheetNodeTools(d.id),
+    tourNext: () => tourStep(1),
+    tourPrev: () => tourStep(-1),
+    tourEnd: () => endTour(),
+    tourOpen: () => go('#/tour'),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
       '/nodes/close', { id: d.id, closed: !!d.v }, d.v ? 'Отметили: закрылось' : 'Отметили: снова работает'),
     answerPlace: (d) => sheetAnswerPlace(d.id, d.cat),
