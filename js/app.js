@@ -1597,11 +1597,18 @@
       title: 'Позовите знакомого',
       gain: 'Его проверенные становятся видны вам — и проверенные его знакомых. Один знакомый открывает целый круг',
       scene: `<div class="sc sc-invite">
+        <svg class="web" viewBox="0 0 330 268" aria-hidden="true">
+          <path class="join" d="M86 134H150"/>
+          <path class="t1" d="M190 122C210 104 226 92 246 82"/>
+          <path class="t2" d="M196 134C222 134 250 134 280 134"/>
+          <path class="t3" d="M190 148C210 166 226 178 246 190"/>
+          <path class="t4" d="M176 156C182 180 188 198 196 214"/></svg>
         <span class="p a"><b>вы</b></span>
-        <span class="thread"><i class="pulse"></i></span>
-        <span class="p b"><b>АК</b></span>
-        <i class="spark s1"></i><i class="spark s2"></i><i class="spark s3"></i>
-        <i class="spark s4"></i><i class="spark s5"></i><i class="spark s6"></i>
+        <span class="p b"><b>АК</b><s>Азиз</s></span>
+        <i class="dot n1"><em>МХ</em><s>Мирсобит</s></i>
+        <i class="dot n2"><em>КУ</em><s>Камила</s></i>
+        <i class="dot n3"><em>РЮ</em><s>Рустам</s></i>
+        <i class="dot n4"><em>${ic('pin')}</em><s>Чайхана</s></i>
         <span class="lbl">${ic('check')}круг Азиза открыт вам</span></div>`,
     },
     {
