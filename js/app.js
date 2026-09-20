@@ -254,6 +254,7 @@
     else if (name === 'q' && id) { html = Request(id); nav = false; }
     else if (name === 'net') { html = Network(params); active = 'net'; }
     else if (name === 'new') { html = News(); active = 'new'; }
+    else if (name === 'o' && id) { html = Node(id); nav = false; }
     else if (name === 'me') { html = Me(params); active = 'me'; }
     else { html = Home(); active = 'home'; }
     const app = $('#app');
@@ -544,8 +545,159 @@
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)} · записан ${when(p.at)}</div></div>
         <button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button></div>`).join('')}</div>` : ''}
-      <button class="btn primary block" data-act="outsider">${ic('seal')}${waiting.length ? 'Записать ещё человека' : 'Записать первого человека'}</button>
+      <div class="btn-row"><button class="btn primary" data-act="outsider">${ic('seal')}Человека</button>
+        <button class="btn" data-act="newNode" data-v="place">${ic('pin')}Место</button>
+        <button class="btn" data-act="newNode" data-v="company">${ic('net')}Фирму</button></div>
       ${waiting.length ? '' : '<p class="tiny muted" style="text-align:center;margin:10px 0 0">Достаточно имени и пары слов — за что вы его советуете</p>'}</div>`;
+  }
+
+  // ——— Места и фирмы ———
+  // Такой же узел сети, как человек, только приглашать никого не нужно.
+  const NODE_KIND = { place: 'Место', company: 'Фирма' };
+  const FACT_KIND = { service: 'Что делают', hours: 'Когда работают', price: 'Сколько стоит',
+    contact: 'Как связаться', who: 'К кому подходить', note: 'Просто знание' };
+  const nodesAll = () => Object.values(S.nodes || {});
+  const nodeById = (id) => (S.nodes || {})[id];
+  const nodeRecs = (n) => (n.recs || []).filter((r) => !r.private || r.from === S.me);
+  const nodeNear = (n) => nodeRecs(n).filter((r) => G.dist[r.from] !== undefined && G.dist[r.from] <= 2);
+
+  const nodeCard = (n, accent) => {
+    const recs = nodeRecs(n);
+    const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
+    const who1 = recs.some((r) => r.from === S.me) ? 'Вы ручаетесь'
+      : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' ручается')
+        : esc(first(n.by)) + ' записал';
+    return `<a class="card tap pcard ${accent ? 'accent' : ''}" href="#/o/${n.id}">
+      <div class="head"><span class="node-ic ${n.kind}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+        <div class="grow"><div class="name ellip">${esc(n.name)}</div>
+          <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
+        <span class="tag">${NODE_KIND[n.kind]}</span></div>
+      <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : 'пока только запись'}</div>
+      ${best ? `<p class="quote">«${esc(best.text)}»</p><div class="by ellip">${esc(full(best.from))}</div>`
+    : `<p class="quote empty">${n.address ? esc(n.address) : 'Никто пока не рассказал об этом месте'}</p>`}
+      <div class="foot">${recs.length ? stack(recs.map((r) => r.from)) : ''}
+        <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
+  };
+
+  function Node(id) {
+    const n = nodeById(id);
+    if (!n) return '<div class="empty"><h2 class="h2">Место не найдено</h2><a class="btn" href="#/">На главную</a></div>';
+    const recs = nodeRecs(n).sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
+    const mine = recs.find((r) => r.from === S.me);
+    const facts = (n.facts || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
+    const byKind = {};
+    facts.forEach((f) => { (byKind[f.kind] = byKind[f.kind] || []).push(f); });
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
+        <div class="grow"></div>
+        <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
+      <div class="p-head"><span class="node-ic big ${n.kind}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+        <div><div class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div>
+          <h1 class="h1" style="margin-top:4px">${esc(n.name)}</h1></div>
+        ${n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
+        ${n.link ? `<a class="link-row" href="${esc(n.link.startsWith('http') ? n.link : 'https://' + n.link)}" target="_blank" rel="noopener">${ic('link')}<span class="grow ellip">${esc(n.link.replace(/^https?:\/\//, ''))}</span>${ic('arrow')}</a>` : ''}</div>
+
+      <div class="stat-grid" style="margin-top:18px">
+        <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
+        <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек ручается', 'человека ручаются', 'человек ручаются')}</span></div>
+        <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
+
+      <div class="sec-title"><h2 class="h2">Что об этом знают</h2><button class="btn sm" data-act="addFact" data-id="${n.id}">Добавить</button></div>
+      ${facts.length ? `<div class="card">${Object.keys(byKind).map((k) => `<div class="fact-group">
+        <div class="eyebrow">${esc(FACT_KIND[k] || FACT_KIND.note)}</div>
+        ${byKind[k].map((f) => `<div class="fact"><p>${esc(f.text)}</p>
+          <div class="row"><span class="tiny muted grow">${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
+          ${f.from === S.me ? `<button class="btn ghost xs" data-act="delFact" data-id="${f.id}">Убрать</button>` : ''}</div></div>`).join('')}
+      </div>`).join('')}</div>`
+    : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}
+
+      ${recs.length ? `<div class="sec-title"><h2 class="h2">Кто ручается</h2></div>
+      <div class="card">${recs.map((r) => `<div class="rec"><div class="row"><a href="#/p/${r.from}">${av(r.from, 's')}</a>
+        <div class="grow"><div class="row" style="gap:8px"><a href="#/p/${r.from}" class="h3 ellip" style="text-decoration:none">${esc(full(r.from))}</a>${G.dist[r.from] === 1 ? circleTag(1) : G.dist[r.from] === 2 ? circleTag(2) : ''}${r.private ? '<span class="tag">только для вас</span>' : ''}</div>
+        <div class="tiny muted">${when(r.at)}</div></div></div>
+        <p class="txt">${esc(r.text)}</p></div>`).join('')}</div>` : ''}
+
+      <div class="actions"><div class="inner">
+        <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Поручиться'}</button>
+        <button class="btn ghost icon" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div></div>`;
+  }
+
+  // Записать место или фирму
+  function sheetNewNode(kind) {
+    const f = { kind: kind || 'place', name: '', cat: '', address: '', link: '', text: '' };
+    openSheet({
+      F: f,
+      valid: () => f.name.trim().length >= 2,
+      render: () => `${sheetHead(null, 'Записать место или фирму')}
+        <div class="field" style="margin-top:0"><span>Что это</span><div class="chips">
+          ${Object.entries(NODE_KIND).map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-act="set" data-k="kind" data-v="${k}">${l}</button>`).join('')}</div></div>
+        <label class="field"><span>Название</span><input class="input" data-bind="name" maxlength="90" placeholder="${f.kind === 'company' ? 'Например: Ремстрой' : 'Например: Чайхана на Мирабаде'}" value="${esc(f.name)}"></label>
+        <div class="field"><span>Сфера</span><div class="chips">${S.cats.slice(0, 10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}
+          <button class="chip ${f.allCats ? 'on' : ''}" data-act="set" data-k="allCats" data-v="1">Другая…</button></div>
+          ${f.allCats ? `<div class="chips" style="margin-top:8px">${S.cats.slice(10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}</div>
+        <label class="field"><span>Адрес — если это место</span><input class="input" data-bind="address" maxlength="160" placeholder="Мирабад, 12" value="${esc(f.address)}"></label>
+        <label class="field"><span>Ссылка — сайт, канал, карта</span><input class="input" data-bind="link" maxlength="200" placeholder="remstroy.uz" value="${esc(f.link)}"></label>
+        <label class="field"><span>За что советуете — по желанию</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Например: плов только до обеда, зато настоящий — ходим семьёй третий год">${esc(f.text)}</textarea></label>
+        <div class="note">Приглашать никого не нужно: карточка появится сразу, и её увидят ваши знакомые.</div>
+        <div class="s-foot"><button class="btn primary block" data-act="submitNode" data-submit>${ic('plus')}Записать</button></div>`,
+      submit: async () => {
+        const body = { kind: f.kind, name: f.name.trim(), cat: f.cat, address: f.address.trim(),
+          link: f.link.trim(), text: f.text.trim() };
+        closeSheet();
+        if (!LIVE) { toast('В демо места не записываются'); return; }
+        try {
+          const res = await window.API.post('/nodes', body);
+          await refresh();
+          go('#/o/' + res.id);
+          toast(res.existed ? 'Это место уже записано — открыли его' : 'Записали');
+        } catch (e) { toast(e.message); }
+      },
+    });
+  }
+
+  // Поручиться за место
+  function sheetNodeRec(id) {
+    const n = nodeById(id);
+    const was = nodeRecs(n).find((r) => r.from === S.me);
+    const f = { text: was ? was.text : '', priv: was ? !!was.private : false };
+    openSheet({
+      F: f,
+      valid: () => f.text.trim().length >= 20,
+      render: () => `${sheetHead(null, was ? 'Изменить запись' : 'Поручиться', esc(n.name))}
+        <label class="field" style="margin-top:0"><span>За что вы ручаетесь</span>
+          <textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что здесь было хорошо: что делали, сколько ждали, чем кончилось">${esc(f.text)}</textarea>
+          <p class="hint" data-count="text" data-min="20"></p></label>
+        <button class="pick ${f.priv ? 'on' : ''}" data-act="set" data-k="priv" data-v="${f.priv ? '' : '1'}">
+          <span class="grow"><span class="h3" style="display:block">Только для себя</span>
+          <span class="small muted">Останется в вашей книжке, знакомым видно не будет</span></span><span class="radio"></span></button>
+        <div class="s-foot"><button class="btn primary block" data-act="submitNodeRec" data-id="${id}" data-submit>${ic('seal')}${was ? 'Сохранить' : 'Поручиться'}</button></div>`,
+      submit: () => {
+        const body = { node: id, text: f.text.trim(), private: f.priv };
+        closeSheet();
+        mutate(null, '/nodes/recommend', body, f.priv ? 'Записали только для вас' : 'Готово');
+      },
+    });
+  }
+
+  // Добавить своё знание о месте
+  function sheetFact(id) {
+    const n = nodeById(id);
+    const f = { kind: 'hours', text: '' };
+    openSheet({
+      F: f,
+      valid: () => f.text.trim().length >= 2,
+      render: () => `${sheetHead(null, 'Что вы об этом знаете', esc(n.name))}
+        <div class="field" style="margin-top:0"><span>О чём расскажете</span><div class="chips">
+          ${Object.entries(FACT_KIND).map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-act="set" data-k="kind" data-v="${k}">${l}</button>`).join('')}</div></div>
+        <label class="field"><span>Своими словами</span>
+          <textarea class="textarea" data-bind="text" maxlength="300" placeholder="Например: по понедельникам закрыто, а после семи лучше звонить заранее">${esc(f.text)}</textarea></label>
+        <div class="note">Рядом будет ваше имя: знакомые увидят, чьё это знание.</div>
+        <div class="s-foot"><button class="btn primary block" data-act="submitFact" data-id="${id}" data-submit>Добавить</button></div>`,
+      submit: () => {
+        const body = { node: id, kind: f.kind, text: f.text.trim() };
+        closeSheet();
+        mutate(null, '/nodes/fact', body, 'Спасибо, это увидят ваши знакомые');
+      },
+    });
   }
 
   // ——— Новое: всё, что произошло и что просит ответа ———
@@ -619,6 +771,17 @@
       <label class="search">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
       <div id="results">${searchResults()}</div>`;
   }
+  // Места и фирмы, подходящие под запрос: по названию и по сфере
+  const findNodes = (q, catId) => {
+    const words = (q || '').toLowerCase().trim();
+    return nodesAll().filter((n) => {
+      if (catId && n.cat !== catId) return false;
+      if (!words) return !!catId;
+      return n.name.toLowerCase().includes(words)
+        || (n.cat && (cat(n.cat).name.toLowerCase().includes(words) || cat(n.cat).who.toLowerCase().includes(words)));
+    }).sort((a, b) => nodeNear(b).length - nodeNear(a).length || nodeRecs(b).length - nodeRecs(a).length);
+  };
+
   function searchResults() {
     const q = (F.q || '').trim();
     if (!q && !F.c) {
@@ -642,8 +805,13 @@
     const filt = `<div class="chips scroll" style="margin-top:12px">${F.c ? `<button class="chip on" data-act="clearCat">${esc(cat(F.c).name)} ${ic('x').replace('<svg', '<svg style="width:14px;height:14px"')}</button>` : ''}${FILTERS.map(([k, l]) => `<button class="chip ${F.f === k ? 'on' : ''}" data-act="filter" data-v="${k}" ${counts[k] ? '' : 'disabled style="opacity:.45"'}>${l}<span class="n">${counts[k]}</span></button>`).join('')}</div>`;
     const askPrefill = encodeURIComponent(q || (F.c ? cat(F.c).who : ''));
     const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Спросить знакомых?' : 'В книжках знакомых никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — они посмотрят у себя и посоветуют.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить свою сеть</a></div>`;
+    const places = findNodes(q, F.c);
+    const placeBlock = places.length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><span class="small muted">${places.length}</span></div>
+      <div class="stack">${places.slice(0, 6).map((n, i) => nodeCard(n, i === 0 && !all.length)).join('')}</div>` : '';
+    const addPlace = `<p style="text-align:center;margin-top:16px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>`;
     if (!all.length) {
-      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В книжках ваших знакомых в этой сфере пока никого.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + askCard;
+      if (places.length) return filt + placeBlock + addPlace + askCard;
+      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В книжках ваших знакомых в этой сфере пока никого.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + addPlace + askCard;
     }
     const groups = [['1', 'Ваши контакты'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
     let html = filt + `<div class="count-line"><b>${pl(list.length, 'человек найден', 'человека найдено', 'человек найдено')}</b>${F.f !== 'all' ? '<button class="link" data-act="filter" data-v="all">Показать всех</button>' : ''}</div>`;
@@ -652,7 +820,7 @@
       if (!g.length) return;
       html += `<div class="group-label">${label}</div><div class="stack">${g.map(resultCard).join('')}</div>`;
     });
-    return html + askCard;
+    return html + placeBlock + addPlace + askCard;
   }
 
   // ——— Профиль человека ———
@@ -1518,6 +1686,15 @@
       } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
     },
     hideStarter: () => { try { localStorage.setItem(STARTER_KEY, '1'); } catch (e) { /* */ } render(); toast('Убрали. Всё это есть в разделах ниже'); },
+    newNode: (d) => sheetNewNode(d.v),
+    submitNode: () => SH.submit(),
+    recNode: (d) => sheetNodeRec(d.id),
+    submitNodeRec: () => SH.submit(),
+    addFact: (d) => sheetFact(d.id),
+    submitFact: () => SH.submit(),
+    delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
+    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=o_${d.id}`,
+      `${n.name} — советую, посмотри в Сарафане:`); },
     editShowcase: () => sheetShowcase(),
     submitShowcase: () => SH.submit(),
     delWork: (d) => mutate(() => {

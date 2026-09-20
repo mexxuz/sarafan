@@ -178,8 +178,22 @@ window.buildSeed = function () {
       text: 'Партнёр тянет с оплатой второй месяц, нужен юрист по договорам — посоветовали твою знакомую.' },
   ];
 
+  // Места и фирмы: такие же узлы сети, только приглашать никого не нужно
+  const nodes = {
+    n1: { id: 'n1', kind: 'place', name: 'Чайхана на Мирабаде', cat: 'cook', city: 'Ташкент',
+      address: 'Мирабад, 12', link: '', by: 'u3', at: ago(40), claimed: null,
+      recs: [{ from: 'u3', text: 'Плов только до обеда, зато настоящий — ходим семьёй третий год.', at: ago(40) },
+        { from: 'u1', text: 'Беру там еду на съёмки, на двадцать человек собрали за час.', at: ago(12) }],
+      facts: [{ id: 'f1', from: 'u5', kind: 'hours', text: 'По понедельникам закрыто', at: ago(9) },
+        { id: 'f2', from: 'u2', kind: 'price', text: 'Плов 45 тысяч, лагман 38', at: ago(4) }] },
+    n2: { id: 'n2', kind: 'company', name: 'Ремстрой', cat: 'repair', city: 'Ташкент',
+      address: '', link: 'remstroy.uz', by: 'u5', at: ago(60), claimed: null,
+      recs: [{ from: 'u5', text: 'Делали ремонт в двух квартирах, уложились в смету и в срок.', at: ago(60) }],
+      facts: [{ id: 'f3', from: 'u5', kind: 'who', text: 'Спрашивать Улугбека, он ведёт объекты', at: ago(30) }] },
+  };
+
   return {
-    me: 'u0', cats, users, conns, recs, requests, shares, intros,
+    me: 'u0', cats, users, conns, recs, requests, shares, intros, nodes,
     invite: { code: 'vikram-7Q2', max: 10, used: 3 },
     pendingInvites: [], // рекомендации людям, которых ещё нет в сети
     onboarded: false,

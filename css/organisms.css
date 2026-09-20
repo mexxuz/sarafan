@@ -327,3 +327,17 @@
 .link-row { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-sm); background: var(--mist); color: var(--ink); font-size: var(--fs-sm); }
 .link-row svg { width: 16px; height: 16px; color: var(--ink-4); flex: none; }
 .link-row:active { background: var(--mist-2); }
+
+/* Места и фирмы: значок вместо портрета */
+.node-ic { width: 46px; height: 46px; border-radius: var(--r-md); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); }
+.node-ic svg { width: 22px; height: 22px; }
+.node-ic.company { background: linear-gradient(170deg, #eef3ff, #e2e9ff); }
+.node-ic.big { width: 64px; height: 64px; border-radius: var(--r-lg); }
+.node-ic.big svg { width: 30px; height: 30px; }
+.card.accent .node-ic { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* Слои знания: у каждого утверждения свой автор */
+.fact-group + .fact-group { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); }
+.fact { padding: var(--s-2) 0; }
+.fact + .fact { border-top: 1px dashed var(--line); }
+.fact p { margin: 0 0 6px; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
