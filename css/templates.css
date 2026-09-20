@@ -48,4 +48,33 @@
 .orb { animation: pop 320ms var(--ease) both; animation-delay: calc(var(--i, 0) * 40ms); }
 @keyframes pop { from { opacity: 0; transform: rotate(var(--a)) translate(calc(var(--r) * .75)) rotate(calc(-1 * var(--a))) translate(-50%, -50%) scale(.85); } }
 .rail .step { animation: fade 300ms var(--ease) both; animation-delay: calc(var(--k, 0) * 90ms); }
+
+/* Заголовок на входе: слова проявляются один раз, коротко */
+.reveal > * { animation: reveal 460ms var(--ease) both; animation-delay: calc(var(--k, 0) * 80ms); }
+@keyframes reveal { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
+
+/* Ошибка: поле вздрагивает — заметно, но без крика */
+.shake { animation: shake 320ms var(--ease) both; }
+@keyframes shake {
+  20% { transform: translateX(-5px); } 45% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); } 100% { transform: none; }
+}
+
+/* Получилось: на кнопке вместо надписи появляется галочка */
+.btn.done { background: var(--good-soft) !important; color: var(--good) !important; box-shadow: none !important; }
+.btn.done svg { animation: check 320ms var(--ease) both; }
+@keyframes check { from { opacity: 0; transform: scale(.4) rotate(-12deg); } }
+
+/* Новое событие: от центра расходится одно кольцо и гаснет */
+.ping { position: relative; }
+.ping::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid var(--blue); animation: ping 1.6s var(--ease) 2;
+}
+@keyframes ping { from { opacity: .55; transform: scale(.92); } to { opacity: 0; transform: scale(1.25); } }
+
+/* Стрелка в кнопке чуть выезжает при наведении */
+@media (hover: hover) { .go:hover svg:last-child { transform: translateX(3px); } }
+.go svg:last-child { transition: transform var(--fast) var(--ease); }
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

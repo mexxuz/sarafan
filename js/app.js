@@ -404,7 +404,7 @@
     return `
       <div class="place"><a href="#/me" aria-label="Профиль">${av(S.me, '', 'r1')}</a>
         <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
-        <button class="icon-btn bell" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
+        <button class="icon-btn bell ${inc.length ? 'ping' : ''}" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
       ${small ? starter() : ''}
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
@@ -721,8 +721,11 @@
 
     $('#app').innerHTML = `<div class="onb fade-in" style="padding-bottom:40px">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
-      <h1 class="h1" style="text-align:center;margin-top:10px">Люди, за которых<br>ручаются знакомые</h1>
-      <p class="small muted" style="text-align:center;margin:10px auto 6px;max-width:300px">Закрытая сеть: сюда входят по приглашению. Работает и в браузере — Telegram не нужен.</p>
+      <div class="reveal" style="text-align:center;margin-top:10px">
+        <h1 class="h1" style="--k:0">Люди, за которых</h1>
+        <h1 class="h1" style="--k:1">ручаются знакомые</h1>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:300px">Закрытая сеть: сюда входят по приглашению. Работает и в браузере — Telegram не нужен.</p>
+      </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
       ${box('join', 'У меня есть приглашение', 'Код из ссылки, которую прислал знакомый',
@@ -741,23 +744,27 @@
     </div>`;
 
     const val = (id) => ($('#' + id).value || '').trim();
+    const wrong = (id) => {
+      const el = $('#' + id);
+      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); el.focus();
+    };
     const busy = (btn, on) => { btn.disabled = on; btn.textContent = on ? 'Минутку…' : btn.dataset.t; };
 
     const join = $('#wjoin'); join.dataset.t = join.textContent;
     join.onclick = async () => {
-      if (!val('wcode')) { toast('Нужен код приглашения'); return; }
-      if (val('wname').length < 2) { toast('Напишите, как вас зовут'); return; }
+      if (!val('wcode')) { wrong('wcode'); toast('Нужен код приглашения'); return; }
+      if (val('wname').length < 2) { wrong('wname'); toast('Напишите, как вас зовут'); return; }
       busy(join, true);
       try { await window.API.joinByInvite(val('wcode'), val('wname')); location.href = location.pathname; }
-      catch (e) { busy(join, false); toast(e.message); }
+      catch (e) { busy(join, false); wrong('wcode'); toast(e.message); }
     };
 
     const claim = $('#wclaim'); claim.dataset.t = claim.textContent;
     claim.onclick = async () => {
-      if (val('wmove').length < 4) { toast('Наберите код из приложения'); return; }
+      if (val('wmove').length < 4) { wrong('wmove'); toast('Наберите код из приложения'); return; }
       busy(claim, true);
       try { await window.API.claimCode(val('wmove')); location.href = location.pathname; }
-      catch (e) { busy(claim, false); toast(e.message); }
+      catch (e) { busy(claim, false); wrong('wmove'); toast(e.message); }
     };
 
     $('#wdemo').onclick = () => { location.href = location.pathname + '?demo=1'; };
