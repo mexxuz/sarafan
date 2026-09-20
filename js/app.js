@@ -710,7 +710,8 @@
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
-      cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5 });
+      cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5,
+        safeTop: id === 'homecloud' ? 92 : 0 });
       cloud.setData(cloudData(limitRing, withPlaces, maxFar));
       cloud.start();
     }, 30);

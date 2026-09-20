@@ -100,6 +100,13 @@ window.Cloud = function (canvas, opts) {
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
+      // Под шапкой с логотипом и портретом узел не достать — мягко выталкиваем оттуда
+      const screenY = n.y * cam.scale + cam.y;
+      const safeTop = (opts.safeTop || 0);
+      if (safeTop && screenY < safeTop) {
+        n.vy += (safeTop - screenY) * 0.012 / Math.max(0.5, cam.scale);
+      }
+
       // Стен нет. Если узел ушёл совсем далеко, его мягко тянет обратно —
       // пространство бесконечное, но граф не разлетается в пустоту.
       const far = Math.hypot(n.x - cx, n.y - cy);
