@@ -459,6 +459,41 @@
       </div>`;
   }
 
+  // Как с человеком иметь дело — короткой таблицей, только заполненное
+  function howView(id) {
+    const h = U(id).how || {};
+    const rows = [
+      h.area && ['area', esc(h.area)],
+      h.visit && ['visit', HOW.visit[h.visit] || esc(h.visit)],
+      h.hours && ['hours', esc(h.hours)],
+      h.langs && ['langs', howList(h.langs).map((x) => HOW.langs[x] || esc(x)).join(' · ')],
+      h.pay && ['pay', howList(h.pay).map((x) => HOW.pay[x] || esc(x)).join(' · ')],
+      h.reply && ['reply', HOW.reply[h.reply] || esc(h.reply)],
+    ].filter(Boolean);
+    if (!rows.length) return '';
+    return `<div class="sec-title"><h2 class="h2">Как с ним работать</h2>${id === S.me ? '<button class="btn sm" data-act="editMe">Изменить</button>' : ''}</div>
+      <div class="card how">${rows.map(([k, v]) => `<div class="how-row"><span>${HOW_LABEL[k]}</span><b>${v}</b></div>`).join('')}</div>`;
+  }
+
+  // Уточнения о человеке: их дописывают знакомые
+  const factsAbout = (id) => (S.userFacts || []).filter((f) => f.to === id && (f.status === 'ok' || f.from === S.me || id === S.me));
+
+  function factsView(id) {
+    const list = factsAbout(id);
+    const mineToCheck = id === S.me ? list.filter((f) => f.status === 'new') : [];
+    const shown = list.filter((f) => f.status === 'ok' || (id === S.me && f.status === 'new') || f.from === S.me);
+    const canAdd = id !== S.me && G.connected(S.me, id);
+    if (!shown.length && !canAdd) return '';
+    return `<div class="sec-title"><h2 class="h2">Что о нём знают</h2>${canAdd ? `<button class="btn sm" data-act="addUserFact" data-id="${id}">Добавить</button>` : ''}</div>
+      ${shown.length ? `<div class="card">${shown.map((f) => `<div class="fact">
+        <p>${esc(f.text)}</p>
+        <div class="row"><span class="tiny muted grow">${esc(full(f.from))}${f.status === 'new' && id !== S.me ? ' · ждёт подтверждения' : ''} · ${when(f.at)}</span>
+          ${id === S.me && f.status === 'new' ? `<button class="btn primary xs" data-act="factYes" data-id="${f.id}">Верно</button><button class="btn ghost xs" data-act="factNo" data-id="${f.id}">Убрать</button>`
+      : f.from === S.me ? `<button class="btn ghost xs" data-act="factNo" data-id="${f.id}">Убрать</button>` : ''}</div></div>`).join('')}</div>`
+      : `<div class="card"><p class="small muted" style="margin:0">Знаете, как с ним удобнее иметь дело — часы, район, оплату? Допишите: это увидят ваши знакомые.</p></div>`}
+      ${mineToCheck.length ? '' : ''}`;
+  }
+
   const repRows = (id, onlyCat) => {
     const cats = G.catsOf(id).filter((c) => !onlyCat || c === onlyCat);
     if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда человека рекомендуют другие.</p>';
@@ -870,6 +905,16 @@
 
   // ——— Места и фирмы ———
   // Такой же узел сети, как человек, только приглашать никого не нужно.
+  // Как с человеком иметь дело: короткие варианты, одинаковые у всех
+  const HOW = {
+    visit: { out: 'Выезжаю', home: 'Принимаю у себя', both: 'И выезжаю, и принимаю', far: 'Работаю удалённо' },
+    reply: { fast: 'Отвечаю за час-другой', day: 'Отвечаю в тот же день', slow: 'Отвечаю не сразу' },
+    pay: { cash: 'Наличными', card: 'Картой', transfer: 'Переводом', bill: 'По счёту, с договором' },
+    langs: { ru: 'Русский', uz: 'Oʻzbekcha', en: 'English' },
+  };
+  const HOW_LABEL = { area: 'Район', visit: 'Как работаю', hours: 'Когда писать', langs: 'Языки', pay: 'Деньги', reply: 'Ответ' };
+  const howList = (v) => (v || '').split(',').map((x) => x.trim()).filter(Boolean);
+
   const NODE_KIND = { place: 'Место', company: 'Фирма' };
   // Карта — Яндекс: по Узбекистану он знает адреса и дворы лучше остальных.
   // По координатам ставим метку, по адресу — ищем текстом.
@@ -1294,6 +1339,8 @@
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${howView(id)}
+      ${factsView(id)}
       ${showcaseView(id)}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
       <div class="card">${repRows(id)}</div>
@@ -2024,8 +2071,11 @@
   // Изменить свой профиль
   function sheetEditMe() {
     const me = U(S.me);
+    const how = me.how || {};
     const f = { name: me.name, about: me.about, cats: [...me.cats], role: me.role || 'both',
-      avail: S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open') };
+      avail: S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open'),
+      area: how.area || '', visit: how.visit || '', hours: how.hours || '',
+      langs: how.langs || '', pay: how.pay || '', reply: how.reply || '', busyDays: '' };
     const hidden = S.blocked || [];
     openSheet({
       F: f,
@@ -2038,9 +2088,19 @@
           ${f.own ? `<div class="row" style="margin-top:8px"><input class="input" data-bind="ownName" placeholder="Например: таможенный брокер" maxlength="40" value="${esc(f.ownName || '')}">
             <button class="btn sm" data-act="saveOwnJob">Добавить</button></div>` : ''}</div>`}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
+        ${f.role === 'client' ? '' : `<div class="field"><span>Как с вами работать</span>
+          <input class="input" data-bind="area" maxlength="80" placeholder="Район: Мирабад, Юнусабад…" value="${esc(f.area || '')}">
+          <div class="chips" style="margin-top:8px">${Object.entries(HOW.visit).map(([k, l]) => `<button class="chip ${f.visit === k ? 'on' : ''}" data-act="set" data-k="visit" data-v="${k}">${l}</button>`).join('')}</div>
+          <div class="chips" style="margin-top:8px">${Object.entries(HOW.reply).map(([k, l]) => `<button class="chip ${f.reply === k ? 'on' : ''}" data-act="set" data-k="reply" data-v="${k}">${l}</button>`).join('')}</div>
+          <div class="chips" style="margin-top:8px">${Object.entries(HOW.pay).map(([k, l]) => `<button class="chip ${howList(f.pay).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="pay" data-v="${k}">${l}</button>`).join('')}</div>
+          <div class="chips" style="margin-top:8px">${Object.entries(HOW.langs).map(([k, l]) => `<button class="chip ${howList(f.langs).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="langs" data-v="${k}">${l}</button>`).join('')}</div>
+          <input class="input" style="margin-top:8px" data-bind="hours" maxlength="80" placeholder="Когда удобно писать: будни до 20:00" value="${esc(f.hours || '')}">
+          <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>`}
         <div class="field"><span>Как вы видны сети</span><div class="chips">${[
           ['open', 'Беру работу'], ['busy', 'Сейчас занят'], ['hidden', 'Не показывать меня'],
         ].map(([k, l]) => `<button class="chip ${f.avail === k ? 'on' : ''}" data-act="set" data-k="avail" data-v="${k}">${l}</button>`).join('')}</div>
+          ${f.avail === 'busy' ? `<div class="chips" style="margin-top:8px">${[['', 'Без срока'], ['7', 'До конца недели'], ['30', 'На месяц']].map(([k, l]) => `<button class="chip ${String(f.busyDays || '') === k ? 'on' : ''}" data-act="set" data-k="busyDays" data-v="${k}">${l}</button>`).join('')}</div>
+          <p class="hint">Со сроком состояние отпускает само — не придётся вспоминать</p>` : ''}
           <p class="hint">${f.avail === 'open' ? 'Вас находят в поиске, к вам приходят запросы'
             : f.avail === 'busy' ? 'Вас по-прежнему видно, но рядом с именем написано, что сейчас вы не берёте'
               : 'Вас не найдут в поиске и не посоветуют. Видят только ваши знакомые'}</p></div>
@@ -2049,10 +2109,33 @@
         <div class="s-foot"><button class="btn primary block" data-act="submitEdit" data-submit>Сохранить</button></div>`,
       submit: () => {
         const body = { name: f.name.trim(), about: f.about.trim(), role: f.role, availability: f.avail,
-          cats: f.role === 'client' ? [] : f.cats };
+          cats: f.role === 'client' ? [] : f.cats,
+          area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
+          langs: f.langs, pay: f.pay, reply: f.reply,
+          busyUntil: f.avail === 'busy' && f.busyDays ? Date.now() + Number(f.busyDays) * 864e5 : null };
         closeSheet();
-        mutate(() => { S.availability = f.avail; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden' }); },
+        mutate(() => { S.availability = f.avail; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden',
+          how: { area: body.area, visit: body.visit, hours: body.hours, langs: body.langs, pay: body.pay, reply: body.reply } }); },
           '/profile', body, 'Сохранено');
+      },
+    });
+  }
+
+  // Дописать факт о знакомом: не отзыв, а польза для тех, кто к нему пойдёт
+  function sheetUserFact(id) {
+    const f = { text: '' };
+    openSheet({
+      F: f,
+      valid: () => f.text.trim().length >= 3,
+      render: () => `${sheetHead(id, 'Что вы знаете', esc(U(id).name))}
+        <label class="field" style="margin-top:0"><span>Одним предложением</span>
+          <textarea class="textarea" data-bind="text" maxlength="160" placeholder="Например: работает по субботам, берёт наличными, лучше писать, чем звонить">${esc(f.text)}</textarea></label>
+        <div class="note">${esc(first(id))} увидит уточнение и подтвердит или поправит. Это не отзыв: пишите то, что помогает другим, а не оценку.</div>
+        <div class="s-foot"><button class="btn primary block" data-act="submitUserFact" data-id="${id}" data-submit>Добавить</button></div>`,
+      submit: () => {
+        const body = { user: id, text: f.text.trim() };
+        closeSheet();
+        mutate(null, '/user/fact', body, 'Добавили — ждём подтверждения');
       },
     });
   }
@@ -2353,6 +2436,17 @@
     delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
     shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=o_${d.id}`,
       `${n.name} — советую, посмотри в Сарафане:`); },
+    toggleWord: (d) => {
+      const cur = howList(SH.F[d.k]);
+      SH.F[d.k] = (cur.includes(d.v) ? cur.filter((x) => x !== d.v) : [...cur, d.v]).join(',');
+      drawSheet();
+    },
+    addUserFact: (d) => sheetUserFact(d.id),
+    submitUserFact: () => SH.submit(),
+    factYes: (d) => mutate(() => { const f = (S.userFacts || []).find((x) => x.id === d.id); if (f) f.status = 'ok'; },
+      '/user/fact/decide', { id: d.id, ok: true }, 'Подтвердили'),
+    factNo: (d) => mutate(() => { S.userFacts = (S.userFacts || []).filter((x) => x.id !== d.id); },
+      '/user/fact/decide', { id: d.id, ok: false }, 'Убрали'),
     editShowcase: () => sheetShowcase(),
     editDir: (d) => sheetDir(d.id || ''),
     submitDir: () => SH.submit(),
