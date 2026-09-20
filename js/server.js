@@ -1,2 +1,2 @@
-// Адрес сервера. Меняется при каждом запуске туннеля — обновляется скриптом tools/start.ps1
-window.SARAFAN_SERVER = 'https://have-numerical-feel-galleries.trycloudflare.com';
+﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
+window.SARAFAN_SERVER = 'https://poems-builder-link-gathered.trycloudflare.com';
