@@ -205,21 +205,35 @@ window.Cloud = function (canvas, opts) {
       ctx.quadraticCurveTo(kx, ky, b.x, b.y);
       ctx.stroke();
 
-      // Огонёк проходит по нити от одного человека к другому: так видно,
-      // что доверие — это движение, а не просто линия на картинке.
+      // По нити плывёт мягкий проблеск — участок линии подсвечивается градиентом
+      // и гаснет к краям. Движение заметно боковым зрением, но не отвлекает.
       if (calm || grow < 0.99) return;
-      const speed = e.kind === 'vouch' ? 0.00019 : 0.00012;
-      const t = ((now * speed + (e.seed || 0)) % 1.6);     // пауза между пробегами
-      if (t > 1) return;
-      const u = 1 - t, q = u * u, w = 2 * u * t, z = t * t;
-      const px = q * a.x + w * kx + z * b.x;
-      const py = q * a.y + w * ky + z * b.y;
-      const fade = Math.sin(t * Math.PI);                  // на концах гаснет
-      ctx.globalAlpha = (lit && !hot ? 0.2 : 0.85) * fade * grow;
-      ctx.fillStyle = e.kind === 'vouch' ? 'rgba(47,123,255,.95)' : 'rgba(126,146,178,.8)';
+      const speed = e.kind === 'vouch' ? 0.000075 : 0.00005;
+      const cycle = ((now * speed + (e.seed || 0)) % 2.4);   // долгая пауза между проблесками
+      if (cycle > 1) return;
+      const bez = (t) => {
+        const u = 1 - t, q = u * u, w = 2 * u * t, z = t * t;
+        return [q * a.x + w * kx + z * b.x, q * a.y + w * ky + z * b.y];
+      };
+      const half = 0.16;
+      const t0 = Math.max(0, cycle - half), t1 = Math.min(1, cycle + half);
+      if (t1 - t0 < 0.02) return;
+      const [x0, y0] = bez(t0), [x1, y1] = bez(t1);
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      const tone = e.kind === 'vouch' ? '47,123,255' : '126,146,178';
+      const power = (lit && !hot ? 0.12 : 0.42) * Math.sin(cycle * Math.PI);
+      g.addColorStop(0, `rgba(${tone},0)`);
+      g.addColorStop(0.5, `rgba(${tone},${power.toFixed(3)})`);
+      g.addColorStop(1, `rgba(${tone},0)`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = (e.kind === 'vouch' ? 1.8 : 1.4);
+      ctx.globalAlpha = grow;
       ctx.beginPath();
-      ctx.arc(px, py, e.kind === 'vouch' ? 2.2 : 1.6, 0, Math.PI * 2);
-      ctx.fill();
+      for (let k = 0; k <= 8; k++) {
+        const [px, py] = bez(t0 + (t1 - t0) * (k / 8));
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
     });
     ctx.globalAlpha = 1;
 
