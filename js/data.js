@@ -172,8 +172,14 @@ window.buildSeed = function () {
     { id: 's1', from: 'u6', to: 'u0', person: 'u15', note: 'Вот мой стоматолог, про которую рассказывала. Скажи, что от Анны.', at: ago(0, 9) },
   ];
 
+  // Кто-то из знакомых просит познакомить его с другим знакомым — «вы посередине»
+  const intros = [
+    { id: 'i1', from: 'u5', via: 'u0', to: 'u4', cat: 'lawyer', status: 'wait', at: ago(0, 5),
+      text: 'Партнёр тянет с оплатой второй месяц, нужен юрист по договорам — посоветовали твою знакомую.' },
+  ];
+
   return {
-    me: 'u0', cats, users, conns, recs, requests, shares, intros: [],
+    me: 'u0', cats, users, conns, recs, requests, shares, intros,
     invite: { code: 'vikram-7Q2', max: 10, used: 3 },
     pendingInvites: [], // рекомендации людям, которых ещё нет в сети
     onboarded: false,

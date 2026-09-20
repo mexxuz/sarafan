@@ -852,7 +852,7 @@
       valid: () => f.text.trim().length >= 10,
       render: () => `${sheetHead(null, far ? 'Шаг к знакомству' : 'Попросить знакомство', 'Через: ' + esc(U(via).name))}
         <div class="card" style="box-shadow:none;background:var(--card-2);margin-top:12px">${chainBig(step, viaForced || t.via, catId)}</div>
-        ${far ? `<div class="note" style="margin-top:12px">До ${esc(first(id))} два шага: знакомить может только общий знакомый. Сначала знакомимся с ${esc(first(goal))} — дальше просьба пойдёт уже через него.</div>` : ''}
+        ${far ? `<div class="note" style="margin-top:12px">Сюда два шага: знакомит только общий знакомый. Ближайшее звено — ${esc(full(goal))}; дальше просьба пойдёт через этого человека.</div>` : ''}
         <label class="field"><span>Коротко о задаче</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: нужен логотип и вывеска для кофейни, бюджет обсуждаем">${esc(f.text)}</textarea>${req ? '<p class="hint">Взяли из вашего запроса — поправьте, если нужно</p>' : '<p class="hint" data-count="text" data-min="10"></p>'}</label>
         <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(goal).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitIntro" data-submit>${ic('hand')}Отправить просьбу</button></div>`,
