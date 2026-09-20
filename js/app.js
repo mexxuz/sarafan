@@ -448,6 +448,18 @@
       if (u.id !== S.me && u.invitedBy && (c1.has(u.invitedBy) || u.invitedBy === S.me) && Date.now() - u.joined < 14 * 864e5)
         ev.push({ at: u.joined, html: `<div class="txt"><b>${esc(u.name)}</b> теперь в сети · по приглашению: ${esc(full(u.invitedBy))}</div>`, who: u.id, link: `#/p/${u.id}` });
     });
+    nodesAll().forEach((n) => {
+      (n.recs || []).filter((r) => !r.private).forEach((r) => {
+        if (r.from === S.me || !c1.has(r.from)) return;
+        ev.push({ at: r.at, who: r.from, link: '#/o/' + n.id,
+          html: `<div class="txt"><b>${esc(U(r.from).name)}</b> ручается за ${n.kind === 'company' ? 'фирму' : 'место'} · <b>${esc(n.name)}</b></div><div class="quote sm">${esc(r.text)}</div>` });
+      });
+      (n.facts || []).forEach((f) => {
+        if (f.from === S.me || !c1.has(f.from) || Date.now() - f.at > 21 * 864e5) return;
+        ev.push({ at: f.at, who: f.from, link: '#/o/' + n.id,
+          html: `<div class="txt"><b>${esc(U(f.from).name)}</b> уточняет про <b>${esc(n.name)}</b></div><div class="quote sm">${esc(f.text)}</div>` });
+      });
+    });
     return ev.sort((a, b) => b.at - a.at).slice(0, 14);
   };
 
@@ -534,6 +546,8 @@
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
+      ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><a class="link" href="#/search">Все</a></div>
+      <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
@@ -616,6 +630,39 @@
     sheetPeek(n.id);
   }
 
+  // Посоветовать в ответ не человека, а место или фирму
+  function sheetAnswerPlace(qid, catId) {
+    const q = S.requests.find((x) => x.id === qid);
+    const list = nodesAll().filter((n) => !catId || n.cat === catId || !n.cat)
+      .sort((a, b) => nodeRecs(b).length - nodeRecs(a).length);
+    const f = { node: '', text: '' };
+    openSheet({
+      F: f,
+      valid: () => f.node && f.text.trim().length >= 20,
+      render: () => `${sheetHead(q.from, 'Посоветовать место', esc(U(q.from).name) + ' спрашивает')}
+        <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
+        <div class="field"><span>Что советуете</span>
+          ${list.length ? list.map((n) => `<button class="pick ${f.node === n.id ? 'on' : ''}" data-act="set" data-k="node" data-v="${n.id}">
+            <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+            <span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span>
+            <span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}${n.address ? ' · ' + esc(n.address) : ''}</span></span>
+            <span class="radio"></span></button>`).join('')
+    : '<p class="small muted" style="margin:0">Вы пока не записали ни одного места. Запишите — и сможете советовать его знакомым.</p>'}
+          <button class="btn ghost sm block" style="margin-top:10px" data-act="newNode" data-v="place">${ic('plus')}Записать новое</button></div>
+        <label class="field"><span>Почему именно это место</span>
+          <textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинили там машину дважды, делают в срок и не навязывают лишнего">${esc(f.text)}</textarea>
+          <p class="hint" data-count="text" data-min="20"></p></label>
+        <div class="s-foot"><button class="btn primary block" data-act="submitAnswerPlace" data-id="${qid}" data-submit>${ic('send')}Отправить ответ</button></div>`,
+      submit: () => {
+        const n = nodeById(f.node);
+        const text = f.text.trim();
+        closeSheet();
+        mutate(() => { q.answers.push({ from: S.me, person: S.me, text: `${n.name} — ${text}`, at: Date.now() }); },
+          '/answers/place', { request: qid, node: f.node, text }, 'Ответ отправлен');
+      },
+    });
+  }
+
   // Быстрая карточка места или фирмы
   function sheetNodePeek(id) {
     const n = nodeById(id);
@@ -681,6 +728,11 @@
   const FACT_KIND = { service: 'Что делают', hours: 'Когда работают', price: 'Сколько стоит',
     contact: 'Как связаться', who: 'К кому подходить', note: 'Просто знание' };
   const nodesAll = () => Object.values(S.nodes || {});
+  // мои записи и те, что пришли от знакомых
+  const myNodes = () => nodesAll().filter((n) => n.by === S.me || (n.recs || []).some((r) => r.from === S.me));
+  const nodesNear = () => nodesAll()
+    .filter((n) => (n.recs || []).some((r) => !r.private && G.dist[r.from] !== undefined && G.dist[r.from] <= 2))
+    .sort((a, b) => nodeNear(b).length - nodeNear(a).length || (b.facts || []).length - (a.facts || []).length);
   const nodeById = (id) => (S.nodes || {})[id];
   const nodeRecs = (n) => (n.recs || []).filter((r) => !r.private || r.from === S.me);
   const nodeNear = (n) => nodeRecs(n).filter((r) => G.dist[r.from] !== undefined && G.dist[r.from] <= 2);
@@ -917,8 +969,12 @@
         const close = all.filter((id) => { const t = G.trust(id, c.id); return t.circle <= 2; });
         return { c, all, close };
       }).filter((x) => x.all.length).sort((a, b) => b.close.length - a.close.length || b.all.length - a.all.length);
-      return `<div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
-        <div class="cat-grid">${tiles.map((x) => `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}, но не через вашу сеть</span>`}</a>`).join('')}</div>`;
+      const placeBy = {};
+      nodesAll().forEach((n) => { if (n.cat) (placeBy[n.cat] = placeBy[n.cat] || []).push(n); });
+      return `${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><span class="small muted">${nodesNear().length}</span></div>
+        <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
+      <div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
+        <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>`}</a>`; }).join('')}</div>`;
     }
     const all = G.search(q, F.c);
     const bucket = (r) => (r.circle <= 1 ? '1' : r.circle === 2 ? '2' : 'far');
@@ -1142,6 +1198,9 @@
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
       ${empty ? howto : ''}
+      ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
+      <div class="stack">${myNodes().map((n) => nodeCard(n)).join('')}</div>` : ''}
+      <p style="text-align:center;margin-top:14px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>
       ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
       ${empty ? '' : `
       <div class="sec-title"><h2 class="h2">Круги знакомых</h2></div>
@@ -1176,6 +1235,8 @@
       <div class="sec-title"><h2 class="h2">Вы как рекомендатель</h2></div>
       <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${rs.answers}</b><span>${plural(rs.answers, 'ответ', 'ответа', 'ответов')} на запросы</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')}</span></div></div>
         <p class="small muted" style="margin:12px 0 0">Это вторая репутация: насколько хорошо вы советуете людей. Её видят все, кто смотрит ваши рекомендации.</p></div>
+      ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
+      <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам · ${inRecs.length}</button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас · ${outRecs.length}</button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
@@ -1488,7 +1549,9 @@
           <label class="field"><span>Почему этот человек</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинил мне часы в прошлом году, взял недорого и сделал за три дня">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="20"></p></label>
           ${canRec ? `<div class="note" style="margin-top:12px">Ваш ответ сам ляжет в вашу книжку — записью о ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}». Её увидят знакомые, когда будут искать такого же человека.
             <button class="btn ghost xs" style="margin-top:10px" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}">${f.asRec ? 'Не записывать, просто ответить' : 'Всё-таки записать'}</button></div>` : ''}
-          <button class="btn ghost block" style="margin-top:12px" data-act="outsider" data-cat="${q.cat}">Нужного человека нет в Сарафане</button>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn ghost sm" data-act="outsider" data-cat="${q.cat}">Человека нет в сети</button>
+            <button class="btn ghost sm" data-act="answerPlace" data-id="${q.id}" data-cat="${q.cat}">Посоветовать место</button></div>
           <div class="s-foot"><button class="btn primary block" data-act="submitAnswer" data-submit>${ic('send')}Отправить ответ</button></div>`;
       },
       submit: () => {
@@ -1814,6 +1877,8 @@
     mapShow: (d) => { F.show = d.v; render(); },
     newNode: (d) => sheetNewNode(d.v),
     submitNode: () => SH.submit(),
+    answerPlace: (d) => sheetAnswerPlace(d.id, d.cat),
+    submitAnswerPlace: () => SH.submit(),
     recNode: (d) => sheetNodeRec(d.id),
     submitNodeRec: () => SH.submit(),
     addFact: (d) => sheetFact(d.id),
