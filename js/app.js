@@ -391,6 +391,8 @@
   };
 
   // Пока сеть маленькая — главный экран объясняет, что делать, а не показывает пустоту
+  const STARTER_KEY = 'sarafan.starterOff';
+  const starterOff = () => { try { return localStorage.getItem(STARTER_KEY) === '1'; } catch (e) { return false; } };
   const starter = () => {
     const c1 = myContacts();
     const myRecs = G.recsFrom(S.me).length;
@@ -421,8 +423,12 @@
         btn: c1.length ? 'Спросить свою сеть' : '', act: 'goto', href: '#/ask',
       },
     ];
+    // Все шаги пройдены — подсказка уходит сама. И её можно убрать раньше
+    const left = steps.filter((st) => !st.done).length;
+    if (!left || starterOff()) return '';
     return `<div class="card starter">
-      <div class="eyebrow">с чего начать</div>
+      <div class="row"><div class="eyebrow grow">с чего начать · осталось ${left} из 3</div>
+        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
       <h2 class="h2" style="margin:6px 0 4px">Сеть начинается с людей</h2>
       <p class="small muted" style="margin:0 0 4px">Здесь находят людей, которые в чём-то разбираются, — не по рейтингу, а через знакомых: видно, кто за человека ручается и через кого вы на него вышли.</p>
       ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
@@ -459,7 +465,7 @@
       <div class="place"><a href="#/me" aria-label="Профиль">${av(S.me, '', 'r1')}</a>
         <div class="grow"><div class="lbl">Ваша сеть</div><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
         <button class="icon-btn bell ${inc.length ? 'ping' : ''}" data-act="goto" data-h="#/ask" aria-label="Что нового">${ic('bell')}${inc.length ? `<i class="badge">${inc.length}</i>` : ''}</button></div>
-      ${small ? starter() : ''}
+      ${starter()}
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
       <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
@@ -1330,6 +1336,7 @@
           <p class="small muted" style="margin:10px 0 0">Откройте на компьютере<br><b>${esc(site.replace(/^https?:\/\//, ''))}</b><br>и наберите этот код. Он живёт ${r.minutes} минут.</p></div>`;
       } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
     },
+    hideStarter: () => { try { localStorage.setItem(STARTER_KEY, '1'); } catch (e) { /* */ } render(); toast('Убрали. Всё это есть в разделах ниже'); },
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
     resetDemo: () => {
