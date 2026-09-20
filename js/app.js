@@ -1317,12 +1317,23 @@
     },
   };
 
+  // Действия, после которых человек остаётся на месте: кнопка сама отвечает галочкой,
+  // чтобы нажатие не проваливалось в пустоту
+  const ANSWERS_BACK = { skipReq: 'Скрыт', thank: 'Спасибо!', introWorked: 'Записали', introFailed: 'Поняли' };
+
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el || el.disabled) return;
     const fn = ACT[el.dataset.act];
     if (!fn) return;
     e.preventDefault();
+    const word = ANSWERS_BACK[el.dataset.act];
+    if (word && el.classList.contains('btn') && !calmMotion()) {
+      el.classList.add('done');
+      el.innerHTML = `${ic('check')}${word}`;
+      setTimeout(() => fn(el.dataset, el), 420);
+      return;
+    }
     fn(el.dataset, el);
   });
   document.addEventListener('keydown', (e) => {

@@ -166,7 +166,7 @@
 .sheet .shade { position: absolute; inset: 0; background: rgba(18, 20, 26, .38); opacity: 0; transition: opacity var(--base) var(--ease); backdrop-filter: blur(2px); }
 .sheet .panel {
   position: absolute; left: 50%; bottom: 0; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;
-  transform: translate(-50%, 100%); transition: transform 260ms var(--ease);
+  transform: translate(-50%, 100%); transition: transform 320ms cubic-bezier(.16, 1.06, .3, 1);
   background: linear-gradient(180deg, #ffffff, #f8fbff 38%, #ffffff); border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: var(--s-2) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom)); box-shadow: 0 -20px 60px rgba(23, 43, 77, .18);
 }

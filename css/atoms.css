@@ -92,7 +92,8 @@ p { text-wrap: pretty; }
 .chip {
   height: 38px; padding: 0 var(--s-4); border-radius: 999px; background: var(--mist); color: var(--ink-2);
   font: 600 var(--fs-xs)/1 var(--t); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease), box-shadow var(--base) var(--ease);
 }
 .chip .n { font-weight: 700; color: var(--ink-4); font-variant-numeric: tabular-nums; }
 .chip.on { background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue); }
