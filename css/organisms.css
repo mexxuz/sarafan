@@ -64,9 +64,11 @@
 
 /* Горизонтальная лента карточек */
 .rail-x {
-  display: flex; align-items: stretch; gap: var(--s-3); overflow-x: auto; overflow-y: visible;
-  margin: 0 calc(-1 * var(--s-5)); padding: var(--s-3) var(--s-5) var(--s-5);
-  scroll-snap-type: x mandatory; scrollbar-width: none;
+  display: flex; align-items: stretch; gap: var(--s-3); overflow-x: auto;
+  margin: 0 calc(-1 * var(--s-5)); padding: var(--s-3) var(--s-5) var(--s-6);
+  /* прокрутка должна уважать поля: иначе первая карточка прилипает к краю */
+  scroll-padding-left: var(--s-5); scroll-padding-right: var(--s-5);
+  scroll-snap-type: x proximity; scrollbar-width: none;
 }
 .rail-x::-webkit-scrollbar { display: none; }
 .rail-x > * { flex: 0 0 268px; width: 268px; min-width: 0; scroll-snap-align: start; }
