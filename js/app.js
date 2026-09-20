@@ -1580,10 +1580,10 @@
       gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
       scene: `<div class="sc sc-write">
         <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
-          <path class="w1" d="M131 118L95 100"/>
-          <path class="w2" d="M200 120L236 107"/>
-          <path class="w3" d="M134 156L101 178"/>
-          <path class="w4" d="M198 154L233 175"/></svg>
+          <path class="w1" d="M131 118Q115 105 95 100"/>
+          <path class="w2" d="M200 120Q220 118 236 107"/>
+          <path class="w3" d="M134 156Q115 163 101 178"/>
+          <path class="w4" d="M198 154Q213 169 233 175"/></svg>
         <span class="me"><b>вы</b></span>
         <i class="dot d1"><em>РТ</em><b>Рустам</b><s>часовщик</s></i>
         <i class="dot d2"><em>НА</em><b>Нигора</b><s>педиатр</s></i>
@@ -1598,11 +1598,11 @@
       gain: 'Его проверенные становятся видны вам — и проверенные его знакомых. Один знакомый открывает целый круг',
       scene: `<div class="sc sc-invite">
         <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
-          <path class="join" d="M86 134H144"/>
-          <path class="t1" d="M194 117L231 91"/>
-          <path class="t2" d="M200 134H260"/>
-          <path class="t3" d="M194 151L231 180"/>
-          <path class="t4" d="M180 161L191 198"/></svg>
+          <path class="join" d="M86 134Q115 141 144 134"/>
+          <path class="t1" d="M194 117Q216 108 231 91"/>
+          <path class="t2" d="M200 134Q230 141 260 134"/>
+          <path class="t3" d="M194 151Q209 170 231 180"/>
+          <path class="t4" d="M180 161Q181 181 191 198"/></svg>
         <span class="p a"><b>вы</b></span>
         <span class="p b"><b>АК</b><s>Азиз</s></span>
         <i class="dot n1"><em>МХ</em><s>Мирсобит</s></i>
