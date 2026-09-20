@@ -192,7 +192,7 @@
     seal: '<path d="M12 3l2.2 1.6 2.7-.1.8 2.6 2.2 1.6-.9 2.6.9 2.6-2.2 1.6-.8 2.6-2.7-.1L12 21l-2.2-1.6-2.7.1-.8-2.6-2.2-1.6.9-2.6-.9-2.6 2.2-1.6.8-2.6 2.7.1z"/><path d="m9 12 2 2 4-4"/>',
     alert: '<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/>',
     link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>',
-    pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+    pin: '<path d="M12 22c0 0 8-7.2 8-12.4A8 8 0 1 0 4 9.6C4 14.8 12 22 12 22z"/><circle cx="12" cy="9.6" r="3"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
     spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
     house: '<path d="M3 21h18"/><path d="M6 21V4.5a1 1 0 0 1 1-1h6.5a1 1 0 0 1 1 1V21"/><path d="M14.5 21V9.5H18a1 1 0 0 1 1 1V21"/><path d="M9 7.5h2.5M9 11h2.5M9 14.5h2.5"/>',
@@ -597,7 +597,7 @@
     const op = orbitPeople(6, 8);
     const small = op.total1 < 3;
     return `
-      <div class="place over">
+      <div class="head-bar over">
         <div class="logo grow">${logoMark}сарафан</div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}

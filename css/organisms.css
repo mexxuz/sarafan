@@ -367,7 +367,7 @@
   width: 53px; height: 53px; border-radius: 17px;
   box-shadow: 0 0 0 3px var(--paper), 0 6px 16px rgba(10, 14, 24, .2);
 }
-.node-ic.big.lift svg { width: 25px; height: 25px; }
+.node-ic.big.lift svg { width: 27px; height: 27px; }
 .node-ic.big.lift.off { color: var(--ink-4); }
 .card.accent .node-ic { background: rgba(255, 255, 255, .22); color: #fff; }
 
