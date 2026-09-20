@@ -18,7 +18,11 @@ window.API = (function () {
   const call = async (path, body) => {
     const r = await fetch(base + '/api' + path, {
       method: body ? 'POST' : 'GET',
-      headers: { 'Content-Type': 'application/json', 'X-Init-Data': who() },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Init-Data': who(),
+        'X-Invite-Code': qs.get('code') || qs.get('tgWebAppStartParam') || '',
+      },
       body: body ? JSON.stringify(body) : undefined,
     });
     let data = null;
