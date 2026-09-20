@@ -259,10 +259,24 @@
     const incoming = S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !q.answers.some((a) => a.from === S.me) && !(q.skip || []).includes(S.me)).length;
     const pendingIn = S.conns.filter(askedMe).length;
     const item = (key, href, icon, label, badge) => `<a href="${href}" class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span>${badge ? `<i class="badge">${badge}</i>` : ''}</a>`;
-    n.innerHTML = item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') +
+    n.innerHTML = '<i class="pill" aria-hidden="true"></i>' +
+      item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') +
       `<a href="#/ask" class="ask ${active === 'ask' ? 'on' : ''}" aria-label="Спросить свою сеть">${ic('ask')}<span>Спросить</span>${incoming ? `<i class="badge">${incoming}</i>` : ''}</a>` +
       item('net', '#/net', 'net', 'Сеть', pendingIn) + item('me', '#/me', 'user', 'Профиль');
+    movePill(n);
   }
+
+  // Подложка переезжает к выбранному разделу. Под круглой кнопкой «Спросить» её прячем
+  function movePill(n) {
+    const on = n.querySelector('a.on');
+    const pill = n.querySelector('.pill');
+    if (!pill) return;
+    if (!on || on.classList.contains('ask')) { pill.style.setProperty('--pill', '0'); return; }
+    pill.style.setProperty('--pill', '1');
+    pill.style.setProperty('--w', on.offsetWidth - 8 + 'px');
+    pill.style.setProperty('--x', on.offsetLeft + 4 + 'px');
+  }
+  window.addEventListener('resize', () => { const n = $('#nav'); if (n && !n.hidden) movePill(n); });
 
   // ——— Общие куски ———
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
@@ -1325,7 +1339,12 @@
   // чтобы нажатие не проваливалось в пустоту
   const ANSWERS_BACK = { skipReq: 'Скрыт', thank: 'Спасибо!', introWorked: 'Записали', introFailed: 'Поняли' };
 
+  // Короткая отдача в телефоне: нажатие ощущается, а не только видится
+  const buzz = (kind) => {
+    try { tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred(kind || 'light'); } catch (e) { /* не везде есть */ }
+  };
   document.addEventListener('click', (e) => {
+    if (e.target.closest('#nav a') || e.target.closest('.chip')) buzz('light');
     const el = e.target.closest('[data-act]');
     if (!el || el.disabled) return;
     const fn = ACT[el.dataset.act];
