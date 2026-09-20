@@ -435,23 +435,23 @@
         done: c1.length > 0, num: 1,
         title: 'Позовите тех, кому доверяете',
         text: c1.length ? `В вашей сети ${pl(c1.length, 'человек', 'человека', 'человек')}. Чем больше знакомых, тем чаще сеть выручает.`
-          : 'Сарафан работает только через ваших знакомых. Начните с трёх-пяти человек: коллеги, друзья, родственники.',
+          : 'Книжка открывается только через знакомых. Начните с трёх-пяти человек: коллеги, друзья, родственники.',
         btn: c1.length ? 'Позвать ещё' : 'Позвать знакомых', act: 'goto', href: '#/net',
       },
       {
         done: myRecs > 0, num: 2,
-        title: 'Поручитесь за тех, кого знаете',
+        title: 'Запишите своих проверенных',
         text: c1.length
           ? (myRecs ? `Вы поручились за ${pl(myRecs, 'человека', 'человек', 'человек')}. Так вас находят через ваших знакомых.`
-            : 'Напишите, за что вы ручаетесь: «делал мне сайт», «лечил зуб». Это и есть рекомендация, из них растёт сеть.')
+            : 'Напишите, за что вы их советуете: «делал мне сайт», «лечил зуб». Так ваша книжка становится полезной знакомым.')
           : 'Станет доступно, когда в сети появится хотя бы один знакомый.',
         btn: c1.length ? 'Кого рекомендовать' : '', act: 'goto', href: '#/net',
       },
       {
         done: asked > 0, num: 3,
-        title: 'Спросите сеть, когда нужен человек',
+        title: 'Спросите, если в книжках никого нет',
         text: c1.length
-          ? 'Юрист, врач, бухгалтер, автосервис, репетитор — опишите задачу, и знакомые посоветуют тех, кому доверяют сами.'
+          ? 'Юрист, врач, бухгалтер, автосервис, репетитор — опишите задачу, и знакомые посмотрят у себя.'
           : 'Запрос уходит вашему кругу. Пока круга нет, спрашивать некого.',
         btn: c1.length ? 'Спросить свою сеть' : '', act: 'goto', href: '#/ask',
       },
@@ -462,8 +462,8 @@
     return `<div class="card starter">
       <div class="row"><div class="eyebrow grow">с чего начать · осталось ${left} из 3</div>
         <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
-      <h2 class="h2" style="margin:6px 0 4px">Сеть начинается с людей</h2>
-      <p class="small muted" style="margin:0 0 4px">Здесь находят людей, которые в чём-то разбираются, — не по рейтингу, а через знакомых: видно, кто за человека ручается и через кого вы на него вышли.</p>
+      <h2 class="h2" style="margin:6px 0 4px">Книжка наполняется людьми</h2>
+      <p class="small muted" style="margin:0 0 4px">Чем больше знакомых рядом, тем больше проверенных людей вам открыто. Видно, кто за человека ручается и через кого вы на него вышли.</p>
       ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
         <span class="mark">${st.done ? ic('check') : st.num}</span>
         <div class="grow"><div class="h3">${st.title}</div><div class="small muted" style="margin-top:2px">${st.text}</div>
@@ -493,7 +493,7 @@
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
       <a href="#/net" style="display:block">${orbit({ inner: op.inner, outer: op.outer, cap: 'ваша сеть', size: small ? 290 : 320, ghost: small ? { inner: 5, outer: 9 } : null })}</a>
-      <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} через них</span></div>
+      <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} в их книжках</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
@@ -515,9 +515,9 @@
     const mineRecs = G.recsFrom(S.me);
     if (mineRecs.length >= 5 && waiting.length === 0) return '';   // сеть уже живая
     return `<div class="card" style="margin-top:18px">
-      <div class="eyebrow">ваш список</div>
-      <h2 class="h2" style="margin:6px 0 6px">Люди, которых вы и так советуете</h2>
-      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик, юрист — те, чьи имена вы диктуете знакомым по памяти. Запишите их здесь: список останется у вас под рукой, а когда человек войдёт по вашей ссылке, ваша запись станет его первой рекомендацией.</p>
+      <div class="eyebrow">ваша книжка</div>
+      <h2 class="h2" style="margin:6px 0 6px">Запишите своих проверенных</h2>
+      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик, юрист — те, чьи имена вы диктуете знакомым по памяти. Здесь они не потеряются, а ваши знакомые увидят их, когда будут искать такого же человека.</p>
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)} · записан ${when(p.at)}</div></div>
         <button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button></div>`).join('')}</div>` : ''}
@@ -618,9 +618,9 @@
     const catsFound = F.c ? [F.c] : G.matchCats(q);
     const filt = `<div class="chips scroll" style="margin-top:12px">${F.c ? `<button class="chip on" data-act="clearCat">${esc(cat(F.c).name)} ${ic('x').replace('<svg', '<svg style="width:14px;height:14px"')}</button>` : ''}${FILTERS.map(([k, l]) => `<button class="chip ${F.f === k ? 'on' : ''}" data-act="filter" data-v="${k}" ${counts[k] ? '' : 'disabled style="opacity:.45"'}>${l}<span class="n">${counts[k]}</span></button>`).join('')}</div>`;
     const askPrefill = encodeURIComponent(q || (F.c ? cat(F.c).who : ''));
-    const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Хотите мнение знакомых?' : 'Через вашу сеть пока никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — посоветуют тех, кому доверяют сами.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить свою сеть</a></div>`;
+    const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Спросить знакомых?' : 'В книжках знакомых никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — они посмотрят у себя и посоветуют.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить свою сеть</a></div>`;
     if (!all.length) {
-      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В этой сфере пока нет людей с рекомендациями.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + askCard;
+      return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В книжках ваших знакомых в этой сфере пока никого.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + askCard;
     }
     const groups = [['1', 'Ваши контакты'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
     let html = filt + `<div class="count-line"><b>${pl(list.length, 'человек найден', 'человека найдено', 'человек найдено')}</b>${F.f !== 'all' ? '<button class="link" data-act="filter" data-v="all">Показать всех</button>' : ''}</div>`;
@@ -821,7 +821,7 @@
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
 
     return `<div class="top"><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a><div class="grow"><h1 class="h1">Моя сеть</h1>
-        <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} через них`}</div></div></div>
+        <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} в их книжках`}</div></div></div>
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
       ${empty ? howto : ''}
@@ -873,9 +873,9 @@
     $('#app').innerHTML = `<div class="onb fade-in" style="padding-bottom:40px">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       <div class="reveal" style="text-align:center;margin-top:10px">
-        <h1 class="h1" style="--k:0">Люди, за которых</h1>
-        <h1 class="h1" style="--k:1">ручаются знакомые</h1>
-        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:300px">Закрытая сеть: сюда входят по приглашению. Работает и в браузере — Telegram не нужен.</p>
+        <h1 class="h1" style="--k:0">Записная книжка,</h1>
+        <h1 class="h1" style="--k:1">общая со знакомыми</h1>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:310px">Ваш часовщик, педиатр, электрик — в одном месте. И то же самое от людей, которым вы доверяете. Входят по приглашению; работает и в браузере, без Telegram.</p>
       </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
@@ -952,13 +952,13 @@
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
-      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Люди, за которых<br>ручаются знакомые</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">Юрист, врач, бухгалтер, репетитор, автомеханик — кто угодно, в чём-то разбирающийся. Вы видите не рейтинг, а живую цепочку: кто из ваших знакомых его знает.</p>
+      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Записная книжка,<br>общая со знакомыми</h1>
+      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">У каждого есть свои проверенные: часовщик, педиатр, электрик, юрист. Здесь вы записываете их себе — и видите книжки тех, кому доверяете. Не рейтинг, а живая цепочка: кто из ваших знакомых человека знает.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
-        ${rule('seal', 'Знакомство — ещё не рекомендация', 'Добавить человека в сеть и поручиться за него — два разных действия.')}
-        ${rule('net', 'Видно, кто ручается', 'У каждого человека — цепочка: Вы → Иван → Алексей.')}
-        ${rule('ask', 'Сначала спросите сеть', 'Не нашли — знакомые посоветуют своих.')}
+        ${rule('seal', 'Записать — не то же, что поручиться', 'Человек может быть в вашей книжке просто как знакомый. Рекомендация — отдельное действие, и она подписана вашим именем.')}
+        ${rule('net', 'Видно, чья это запись', 'У каждого человека цепочка: Вы → Иван → Алексей. Понятно, кому верить.')}
+        ${rule('ask', 'Нет в книжках — спросите', 'Знакомые посмотрят у себя и посоветуют того, кому доверяют сами.')}
       </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
