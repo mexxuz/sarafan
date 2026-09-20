@@ -1388,9 +1388,10 @@
       ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
       : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
 
-    return `<div class="top"><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a><div class="grow"><h1 class="h1">Моя сеть</h1>
+    return `<div class="top"><div class="grow"><h1 class="h1">Моя сеть</h1>
         <div class="small muted" style="margin-top:4px">${empty ? 'Пока только вы' : `${pl(c1.length, 'контакт', 'контакта', 'контактов')} · ещё ${pl(c2.length, 'человек', 'человека', 'человек')} в их книжках`}</div></div>
-        <button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Карта сети">${ic('net')}</button></div>
+        <button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Карта сети">${ic('net')}</button>
+        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       ${invite}
       ${empty ? howto : ''}
