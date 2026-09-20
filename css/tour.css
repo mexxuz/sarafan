@@ -52,7 +52,7 @@
 .tour-tap.next { right: 0; width: 62%; }
 
 /* Площадка сцены */
-.tour .sc { position: relative; width: 100%; max-width: 330px; height: 250px; margin: 0 auto; }
+.tour .sc { position: relative; width: 100%; max-width: 330px; height: 268px; margin: 0 auto; }
 
 /* ——— 1. Ваш круг: имена слетаются к вам по нитям ——— */
 .sc-write .web { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -182,7 +182,7 @@
   animation: rise 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 .sc-places .sc-cover {
-  position: relative; margin: 0 calc(-1 * var(--s-4)) 20px; height: 74px; overflow: hidden;
+  position: relative; margin: 0 calc(-1 * var(--s-4)) 18px; height: 66px; overflow: hidden;
   background: linear-gradient(140deg, #e8ac7c, #bd7549);
 }
 /* по обложке проходит блик — снимок оживает */
@@ -200,7 +200,7 @@
 .sc-places .place-card b { display: block; font: 700 var(--fs-sm)/1.25 var(--t); }
 .sc-places .place-card s { display: block; text-decoration: none; font-size: var(--fs-xxs); color: var(--blue); font-weight: 600; margin-top: 2px; }
 .sc-places .fact {
-  display: flex; align-items: baseline; gap: 8px; margin-top: 8px; padding: 9px 11px; border-radius: 10px; background: var(--mist);
+  display: flex; align-items: baseline; gap: 8px; margin-top: 7px; padding: 8px 10px; border-radius: 10px; background: var(--mist);
   font: 500 var(--fs-xxs)/1.35 var(--t); color: var(--ink-2); font-style: normal;
   animation: rise 460ms var(--ease) backwards;
 }
