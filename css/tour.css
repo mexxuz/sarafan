@@ -137,9 +137,9 @@
 }
 .sc-invite .dot em svg { width: 15px; height: 15px; }
 .sc-invite .dot s { text-decoration: none; font: 600 9.5px/1 var(--t); color: var(--ink-4); }
-.sc-invite .n1 { left: 76%; top: 30%; animation-delay: 1180ms; }
-.sc-invite .n2 { left: 87%; top: 50%; animation-delay: 1310ms; }
-.sc-invite .n3 { left: 76%; top: 71%; animation-delay: 1440ms; }
+.sc-invite .n1 { left: 74%; top: 30%; animation-delay: 1180ms; }
+.sc-invite .n2 { left: 84%; top: 50%; animation-delay: 1310ms; }
+.sc-invite .n3 { left: 74%; top: 71%; animation-delay: 1440ms; }
 .sc-invite .n4 { left: 59.5%; top: 80%; animation-delay: 1570ms; }
 
 .sc-invite .lbl {
