@@ -800,10 +800,11 @@
   // ——— Места и фирмы ———
   // Такой же узел сети, как человек, только приглашать никого не нужно.
   const NODE_KIND = { place: 'Место', company: 'Фирма' };
-  // Ссылка на карту: по координатам точнее, по адресу — как получится
+  // Карта — Яндекс: по Узбекистану он знает адреса и дворы лучше остальных.
+  // По координатам ставим метку, по адресу — ищем текстом.
   const mapLink = (n) => (n.lat && n.lng
-    ? `https://maps.google.com/?q=${n.lat},${n.lng}`
-    : n.address ? `https://maps.google.com/?q=${encodeURIComponent(n.address + ', ' + (n.city || 'Ташкент'))}` : '');
+    ? `https://yandex.uz/maps/?ll=${n.lng},${n.lat}&z=17&pt=${n.lng},${n.lat},pm2rdm`
+    : n.address ? `https://yandex.uz/maps/?text=${encodeURIComponent(n.address + ', ' + (n.city || 'Ташкент'))}` : '');
   const askWhere = (onOk) => {
     if (!navigator.geolocation) { toast('Телефон не даёт определить место'); return; }
     toast('Определяем, где вы…');
@@ -878,7 +879,7 @@
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
         ${mapLink(n)
       ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}
-          <span class="grow">${n.address ? esc(n.address) : 'Посмотреть на карте'}<i>${n.lat ? 'Открыть карту и построить маршрут' : 'Открыть на карте'}</i></span>${ic('arrow')}</a>`
+          <span class="grow">${n.address ? esc(n.address) : 'Посмотреть на карте'}<i>${n.lat ? 'Открыть в Яндекс Картах — точка уже стоит' : 'Найти в Яндекс Картах'}</i></span>${ic('arrow')}</a>`
       : n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
         ${n.link ? `<a class="link-row" href="${esc(n.link.startsWith('http') ? n.link : 'https://' + n.link)}" target="_blank" rel="noopener">${ic('link')}<span class="grow ellip">${esc(n.link.replace(/^https?:\/\//, ''))}</span>${ic('arrow')}</a>` : ''}</div>
 
