@@ -555,8 +555,8 @@
     const quiet = F.quiet;
     const rows = quiet
       ? `<div class="chips" style="margin-top:8px">${c1.map((id) => `<button class="chip ${picked.includes(id) ? 'on' : ''}" data-act="askTo" data-v="${id}">${esc(first(id))}</button>`).join('')}</div>
-         <label class="pick" style="margin-top:10px"><span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span><span class="small muted">Имя увидит только тот, кто ответит</span></span>
-           <button class="radio ${F.anon ? 'on' : ''}" data-act="askAnon" aria-label="Скрыть имя"></button></label>`
+         <button class="pick ${F.anon ? 'on' : ''}" style="margin-top:10px" data-act="askAnon"><span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span><span class="small muted">Имя увидит только тот, кто ответит</span></span>
+           <span class="radio"></span></button>`
       : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">Получат ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
     return `<div class="field" id="askto"><span>Кому уйдёт</span>
       <div class="chips"><button class="chip ${quiet ? '' : 'on'}" data-act="askQuiet" data-v="">Всем знакомым</button><button class="chip ${quiet ? 'on' : ''}" data-act="askQuiet" data-v="1">Выбрать, кому</button></div>
@@ -697,7 +697,64 @@
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам · ${inRecs.length}</button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас · ${outRecs.length}</button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
-      <p style="text-align:center;margin-top:24px"><button class="btn ghost sm" data-act="resetDemo">Начать демо заново</button></p>`;
+      <div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
+        <p class="small muted" style="margin:6px 0 12px">Сарафан открывается и на компьютере, без Telegram. Возьмите код и наберите его там — вход сохранится в том браузере.</p>
+        <div id="handoff"><button class="btn block" data-act="handoff">Получить код</button></div></div>
+      <p style="text-align:center;margin-top:20px"><button class="btn ghost sm" data-act="resetDemo">Начать демо заново</button></p>`;
+  }
+
+  // ——— Вход в браузере ———
+  // Сарафан должен работать и без Telegram: не всем удобно в мини-приложении,
+  // а где-то Telegram недоступен. Здесь три двери, все ведут в одну и ту же сеть.
+  function webEntrance(note) {
+    const nav = $('#nav'); if (nav) nav.hidden = true;
+    const codeFromLink = qs.get('code') || qs.get('start') || qs.get('startapp') || '';
+    const bot = 'sarafanibot';
+    const box = (id, title, sub, inner) => `<div class="card" style="margin-top:14px"><div class="h3">${title}</div>
+      <p class="small muted" style="margin:6px 0 12px">${sub}</p>${inner}</div>`;
+
+    $('#app').innerHTML = `<div class="onb fade-in" style="padding-bottom:40px">
+      <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
+      <h1 class="h1" style="text-align:center;margin-top:10px">Люди, за которых<br>ручаются знакомые</h1>
+      <p class="small muted" style="text-align:center;margin:10px auto 6px;max-width:300px">Закрытая сеть: сюда входят по приглашению. Работает и в браузере — Telegram не нужен.</p>
+      ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
+
+      ${box('join', 'У меня есть приглашение', 'Код из ссылки, которую прислал знакомый',
+    `<label class="field" style="margin-top:0"><span>Код приглашения</span><input class="input" id="wcode" maxlength="20" value="${esc(codeFromLink)}" placeholder="например, vikram-7Q2"></label>
+        <label class="field"><span>Как вас зовут</span><input class="input" id="wname" maxlength="40" placeholder="Имя и фамилия"></label>
+        <button class="btn primary block" id="wjoin">Войти в сеть</button>`)}
+
+      ${box('move', 'Я уже в сети', 'Перенесите вход с телефона: в приложении откройте Профиль → «Войти в браузере» и наберите код',
+    `<label class="field" style="margin-top:0"><span>Код переноса</span><input class="input" id="wmove" maxlength="8" placeholder="шесть знаков"></label>
+        <button class="btn block" id="wclaim">Продолжить</button>`)}
+
+      ${box('tg', 'Открыть в Telegram', 'Если вам удобнее в телефоне',
+    `<a class="btn ghost block" href="https://t.me/${bot}" target="_blank" rel="noopener">Перейти к боту</a>`)}
+
+      <p style="text-align:center;margin-top:22px"><button class="btn ghost sm" id="wdemo">Посмотреть, как всё устроено</button></p>
+    </div>`;
+
+    const val = (id) => ($('#' + id).value || '').trim();
+    const busy = (btn, on) => { btn.disabled = on; btn.textContent = on ? 'Минутку…' : btn.dataset.t; };
+
+    const join = $('#wjoin'); join.dataset.t = join.textContent;
+    join.onclick = async () => {
+      if (!val('wcode')) { toast('Нужен код приглашения'); return; }
+      if (val('wname').length < 2) { toast('Напишите, как вас зовут'); return; }
+      busy(join, true);
+      try { await window.API.joinByInvite(val('wcode'), val('wname')); location.href = location.pathname; }
+      catch (e) { busy(join, false); toast(e.message); }
+    };
+
+    const claim = $('#wclaim'); claim.dataset.t = claim.textContent;
+    claim.onclick = async () => {
+      if (val('wmove').length < 4) { toast('Наберите код из приложения'); return; }
+      busy(claim, true);
+      try { await window.API.claimCode(val('wmove')); location.href = location.pathname; }
+      catch (e) { busy(claim, false); toast(e.message); }
+    };
+
+    $('#wdemo').onclick = () => { location.href = location.pathname + '?demo=1'; };
   }
 
   // ——— Первый вход ———
@@ -1155,6 +1212,18 @@
         '/blocks', { user: d.id, on: false }, 'Снова видите друг друга');
       if (SH) drawSheet();
     },
+    // Код для входа на компьютере: человек набирает его в браузере
+    handoff: async () => {
+      const box = $('#handoff');
+      if (!LIVE) { box.innerHTML = '<div class="note">В демо код не выдаём — он нужен для настоящей сети</div>'; return; }
+      box.innerHTML = '<p class="small muted" style="margin:0">Готовим код…</p>';
+      try {
+        const r = await window.API.handoff();
+        const site = location.origin + location.pathname;
+        box.innerHTML = `<div class="note" style="text-align:center"><div style="font:800 30px/1.1 var(--t);letter-spacing:.12em">${esc(r.code)}</div>
+          <p class="small muted" style="margin:10px 0 0">Откройте на компьютере<br><b>${esc(site.replace(/^https?:\/\//, ''))}</b><br>и наберите этот код. Он живёт ${r.minutes} минут.</p></div>`;
+      } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
+    },
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
     resetDemo: () => {
@@ -1202,15 +1271,21 @@
 
   if (LIVE) {
     $('#app').innerHTML = '<div class="empty" style="padding-top:38vh"><p class="muted">Открываем вашу сеть…</p></div>';
-    refresh().catch((e) => {
+    refresh().then(() => {
+      // В Telegram сразу оставляем ключ для браузера: потом можно работать и без Telegram
+      if (window.API.inTelegram && !window.API.hasSession()) window.API.keepMeIn().catch(() => {});
+    }).catch((e) => {
       if (!e.status) {  // сервера нет рядом — показываем демо, чтобы ссылка не была мёртвой
         S = load(); G = window.Graph(S); S.onboarded = true; render();
         toast('Сервер недоступен — показываю демо на выдуманных людях');
         return;
       }
+      if (e.status === 401 && !window.API.inTelegram) { webEntrance(); return; }
       $('#app').innerHTML = `<div class="empty" style="padding-top:26vh"><h2 class="h2">${e.status === 403 ? 'Сюда только по приглашению' : 'Не получилось открыть сеть'}</h2>`
         + `<p>${esc(e.message)}</p><button class="btn primary" onclick="location.reload()">Попробовать снова</button></div>`;
     });
+  } else if (!window.API.inTelegram && !qs.has('demo') && !qs.has('dev')) {
+    webEntrance();   // открыли в обычном браузере — предлагаем войти
   } else {
     render();
   }
