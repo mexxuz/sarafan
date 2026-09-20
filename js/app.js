@@ -851,7 +851,7 @@
   function photoBlock(n, can) {
     const input = `<input type="file" accept="image/*" id="nodephoto" data-node="${n.id}" hidden>`;
     if (n.photo) {
-      return `<div class="node-photo"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}">
+      return `<div class="node-photo full"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}">
         ${can ? `<label class="shoot">${ic('cam')}Заменить${input}</label>` : ''}</div>`;
     }
     if (!can) return '';
@@ -869,7 +869,7 @@
     const byKind = {};
     facts.forEach((f) => { (byKind[f.kind] = byKind[f.kind] || []).push(f); });
     const can = n.by === S.me || !!mine;
-    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
+    return `<div class="top ${n.photo ? 'on-photo' : ''}"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
         <div class="grow"></div>
         ${can ? `<button class="icon-btn" data-act="nodeTools" data-id="${n.id}" aria-label="Что можно поправить">${ic('dots3')}</button>` : ''}
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
