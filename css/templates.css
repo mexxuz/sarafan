@@ -2,8 +2,8 @@
    Как организмы расставлены на экране: поля страницы, шапки, заголовки разделов,
    нижняя полоса действий, вертикальный ритм и движение при появлении. */
 
-#app { max-width: 460px; margin: 0 auto; padding: 0 var(--s-5) calc(var(--nav-h) + var(--s-8) + env(safe-area-inset-bottom)); }
-#app.no-nav { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+#app { max-width: 460px; margin: 0 auto; padding: 0 var(--s-5) calc(var(--nav-h) + var(--s-10, 48px) + env(safe-area-inset-bottom)); }
+#app.no-nav { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
 
 /* Шапка экрана: назад · заголовок · действие */
 .top { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-5) 0 var(--s-2); min-height: 62px; }
@@ -35,9 +35,12 @@
 
 /* Нижняя полоса действий на карточке человека */
 .actions {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: var(--s-3) var(--s-5) calc(var(--s-4) + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--paper) 72%, transparent);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  padding: var(--s-5) var(--s-5) calc(var(--s-4) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--paper) 62%, rgba(255, 255, 255, .86) 86%, transparent);
+  pointer-events: none;
 }
+.actions .inner { pointer-events: auto; }
 .actions .inner { max-width: 420px; margin: 0 auto; display: flex; gap: var(--s-2); }
 .actions .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
 .actions .btn.icon { flex: none; width: 50px; padding: 0; }

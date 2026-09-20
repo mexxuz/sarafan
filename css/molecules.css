@@ -23,7 +23,7 @@
 /* Ряд чипов */
 .chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .chip:active { transform: scale(.95); }
-.chips.scroll { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--s-5)); padding: 2px var(--s-5); scrollbar-width: none; }
+.chips.scroll { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); scrollbar-width: none; }
 .chips.scroll::-webkit-scrollbar { display: none; }
 
 /* Ряд кнопок */
