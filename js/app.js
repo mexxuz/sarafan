@@ -195,6 +195,9 @@
     pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
     spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
+    cam: '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.3-2h6.8l1.3 2h2.8A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/>',
+    edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/>',
+    dots3: '<circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
     hand: '<path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V11M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.1L4 15.5a1.5 1.5 0 0 1 2.2-2L7 14.3"/>',
   };
   const ic = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -284,9 +287,52 @@
     if (hashChanged) countUp(app);
     const np = $('#nodephoto', app);
     if (np) np.onchange = () => uploadPlacePhoto(np.files && np.files[0], np.dataset.node);
+    wireRails(app);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
     if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
+  }
+
+  // Ленты вбок: пальцем они листались всегда, а мышью — нет.
+  // Колесо крутит ленту, пока она не упёрлась в край, и её же можно тянуть мышью.
+  function wireRails(root) {
+    root.querySelectorAll('.rail-x, .chips.scroll').forEach((el) => {
+      if (el.dataset.rail) return;
+      el.dataset.rail = '1';
+
+      el.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // трекпад уже умеет вбок
+        const max = el.scrollWidth - el.clientWidth;
+        if (max < 4) return;
+        const next = el.scrollLeft + e.deltaY;
+        if ((next < 0 && el.scrollLeft <= 0) || (next > max && el.scrollLeft >= max)) return;  // край — листаем страницу
+        e.preventDefault();
+        el.scrollLeft = Math.max(0, Math.min(max, next));
+      }, { passive: false });
+
+      let sx = 0, sl = 0, moved = 0, drag = false;
+      el.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        drag = true; moved = 0; sx = e.clientX; sl = el.scrollLeft;
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (!drag) return;
+        const dx = e.clientX - sx;
+        if (Math.abs(dx) > 3) {
+          moved = Math.abs(dx);
+          el.classList.add('dragging');
+          el.scrollLeft = sl - dx;
+        }
+      });
+      const drop = () => {
+        drag = false;
+        el.classList.remove('dragging');
+        setTimeout(() => { moved = 0; }, 0);   // клик после протяжки не должен открывать карточку
+      };
+      el.addEventListener('pointerup', drop);
+      el.addEventListener('pointerleave', drop);
+      el.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
+    });
   }
 
   // Числа в профиле набегают от нуля — видно, что за ними живые люди
@@ -570,9 +616,11 @@
       ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
       <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
-      ${near2.length ? `<div class="sec-title"><h2 class="h2">Рядом с вами</h2><a class="link" href="#/search">Все</a></div>
+      ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
+      <p class="sec-note">За них поручились знакомые и их знакомые</p>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
-      ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><a class="link" href="#/search">Все</a></div>
+      ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
+      <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
       <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
@@ -797,6 +845,19 @@
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
 
+  // Снимок места — первое, что смотрят. Поэтому и кнопка живёт здесь же, а не в подвале.
+  function photoBlock(n, can) {
+    const input = `<input type="file" accept="image/*" id="nodephoto" data-node="${n.id}" hidden>`;
+    if (n.photo) {
+      return `<div class="node-photo"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}">
+        ${can ? `<label class="shoot">${ic('cam')}Заменить${input}</label>` : ''}</div>`;
+    }
+    if (!can) return '';
+    return `<label class="node-photo blank">${ic('cam')}
+      <b>Добавить снимок</b>
+      <span>Знакомые узнают место с первого взгляда — вывеску, вход, зал</span>${input}</label>`;
+  }
+
   function Node(id) {
     const n = nodeById(id);
     if (!n) return '<div class="empty"><h2 class="h2">Место не найдено</h2><a class="btn" href="#/">На главную</a></div>';
@@ -805,11 +866,13 @@
     const facts = (n.facts || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
     const byKind = {};
     facts.forEach((f) => { (byKind[f.kind] = byKind[f.kind] || []).push(f); });
+    const can = n.by === S.me || !!mine;
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
         <div class="grow"></div>
+        ${can ? `<button class="icon-btn" data-act="nodeTools" data-id="${n.id}" aria-label="Что можно поправить">${ic('dots3')}</button>` : ''}
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
-      ${n.photo ? `<div class="node-photo"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}"></div>` : ''}
-      <div class="p-head"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+      ${photoBlock(n, can)}
+      <div class="p-head">${n.photo ? '' : `<span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>`}
         <div><div class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div>
           <h1 class="h1" style="margin-top:4px">${esc(n.name)}</h1></div>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
@@ -837,14 +900,27 @@
         <div class="tiny muted">${when(r.at)}</div></div></div>
         <p class="txt">${esc(r.text)}</p></div>`).join('')}</div>` : ''}
 
-      ${n.by === S.me || mine ? `<div style="display:flex;gap:8px;justify-content:center;margin:22px 0 96px;flex-wrap:wrap">
-        <label class="btn ghost xs" style="cursor:pointer">${n.photo ? 'Заменить снимок' : 'Добавить снимок'}
-          <input type="file" accept="image/*" id="nodephoto" data-node="${n.id}" hidden></label>
-        ${n.by === S.me ? `<button class="btn ghost xs" data-act="editNode" data-id="${n.id}">Поправить карточку</button>` : ''}
-        <button class="btn ghost xs" data-act="closeNode" data-id="${n.id}" data-v="${n.closed ? '' : '1'}">${n.closed ? 'Снова работает' : 'Закрылось или переехало'}</button></div>` : ''}
+      <div style="height:96px"></div>
       <div class="actions"><div class="inner">
         <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Поручиться'}</button>
         <button class="btn ghost icon" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div></div>`;
+  }
+
+  // Что можно поправить в карточке места — под кнопкой в шапке, а не в подвале экрана
+  function sheetNodeTools(id) {
+    const n = nodeById(id);
+    if (!n) return;
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, esc(n.name), 'Что можно поправить')}
+        ${n.by === S.me ? `<button class="link-row wide" data-act="editNode" data-id="${n.id}">${ic('edit')}
+          <span class="grow"><b>Поправить карточку</b><i>Название, сфера, адрес, ссылка</i></span>${ic('arrow')}</button>` : ''}
+        <label class="link-row wide" style="cursor:pointer">${ic('cam')}
+          <span class="grow"><b>${n.photo ? 'Заменить снимок' : 'Добавить снимок'}</b><i>Знакомые узнают место с первого взгляда</i></span>
+          <input type="file" accept="image/*" id="nodephoto2" data-node="${n.id}" hidden></label>
+        <button class="link-row wide" data-act="closeNode" data-id="${n.id}" data-v="${n.closed ? '' : '1'}">${ic('alert')}
+          <span class="grow"><b>${n.closed ? 'Снова работает' : 'Закрылось или переехало'}</b><i>${n.closed ? 'Уберём отметку, карточка снова обычная' : 'Знакомые не поедут зря. Рекомендации останутся'}</i></span></button>`,
+    });
   }
 
   // Записать место или фирму
@@ -1476,6 +1552,8 @@
     $('#sheet .body').innerHTML = SH.render();
     p.scrollTop = st;
     syncForm();
+    const np2 = $('#nodephoto2', $('#sheet'));
+    if (np2) np2.onchange = () => { const file = np2.files && np2.files[0]; const id = np2.dataset.node; closeSheet(); uploadPlacePhoto(file, id); };
   }
   // Пока была открыта шторка, сеть могла измениться — догоняем сразу после закрытия
   const catchUp = () => { if (missedWhileBusy) { missedWhileBusy = false; setTimeout(checkPulse, 400); } };
@@ -2001,6 +2079,7 @@
     dropWhere: () => { SH.F.lat = null; SH.F.lng = null; drawSheet(); },
     editNode: (d) => sheetEditNode(d.id),
     submitEditNode: () => SH.submit(),
+    nodeTools: (d) => sheetNodeTools(d.id),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
       '/nodes/close', { id: d.id, closed: !!d.v }, d.v ? 'Отметили: закрылось' : 'Отметили: снова работает'),
     answerPlace: (d) => sheetAnswerPlace(d.id, d.cat),

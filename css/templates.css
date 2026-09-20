@@ -24,6 +24,8 @@
 .sec-title { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); margin: var(--s-8) 0 var(--s-3); }
 .sec-title .h2 { font-size: var(--fs-xl); letter-spacing: -.02em; }
 .sec-title .small, .sec-title .tag { color: var(--ink-3); }
+/* Строка под заголовком: чьи это карточки и откуда взялись */
+.sec-note { margin: calc(-1 * var(--s-2)) 0 var(--s-3); font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.45; }
 
 /* Вертикальный ритм и вспомогательные раскладки */
 .stack > * + * { margin-top: var(--s-2); }
