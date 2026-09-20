@@ -360,11 +360,13 @@
 /* Со снимком значок сидит ровно наполовину на кадре, подпись — рядом, под кадром */
 .node-line.on-photo { align-items: flex-end; margin: -46px 0 10px; position: relative; z-index: 1; }
 .node-line.on-photo .who { padding-bottom: 4px; }
+/* растёт вправо-вниз от своего верхнего левого угла: верхний край остаётся
+   на месте, поэтому граница снимка проходит чуть выше середины значка */
 .node-ic.big.lift {
-  width: 44px; height: 44px; border-radius: var(--r-md);
+  width: 53px; height: 53px; border-radius: 17px;
   box-shadow: 0 0 0 3px var(--paper), 0 6px 16px rgba(10, 14, 24, .2);
 }
-.node-ic.big.lift svg { width: 21px; height: 21px; }
+.node-ic.big.lift svg { width: 25px; height: 25px; }
 .node-ic.big.lift.off { color: var(--ink-4); }
 .card.accent .node-ic { background: rgba(255, 255, 255, .22); color: #fff; }
 
