@@ -283,7 +283,7 @@ window.Cloud = function (canvas, opts) {
   const ICON = {
     place: new Path2D('M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z'),
     placeDot: new Path2D('M12 7.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z'),
-    company: new Path2D('M4 21V9.5L12 4l8 5.5V21M9.5 21v-5h5v5'),
+    company: new Path2D('M6 21V4h8.5v17M14.5 21V9.5H19V21M9 7.5h2.5M9 11h2.5M9 14.5h2.5'),
   };
 
   function drawPlace(n) {
