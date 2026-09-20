@@ -56,7 +56,7 @@ window.Cloud = function (canvas, opts) {
 
   // ——— физика ———
   function step(heat) {
-    const cx = W / 2, cy = H / 2;
+    const cx = W / 2, cy = H * (opts.centerY || 0.5);
     for (let i = 0; i < nodes.length; i++) {
       const a = nodes[i];
       if (a.self) { a.x += (cx - a.x) * 0.2; a.y += (cy - a.y) * 0.2; a.vx = a.vy = 0; continue; }
@@ -136,7 +136,7 @@ window.Cloud = function (canvas, opts) {
 
     // Круги никуда не делись — они просто перестали быть расстановкой.
     // Две еле видные окружности напоминают: ближе центра свои, дальше — через них.
-    const cx = W / 2, cy = H / 2;
+    const cx = W / 2, cy = H * (opts.centerY || 0.5);
     ctx.strokeStyle = 'rgba(47,123,255,.045)';
     ctx.lineWidth = 1;
     [72 + 62, 72 + 124].forEach((r) => {
