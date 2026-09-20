@@ -303,7 +303,9 @@
     const answered = q.answers.some((a) => a.from === S.me);
     const head = mine
       ? `<div class="row"><span class="tag brand">Ваш запрос</span><span class="grow"></span><span class="tiny muted">${when(q.at)}</span></div>`
-      : `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3 ellip">${esc(U(q.from).name)}</div><div class="tiny muted">спрашивает · ${when(q.at)}</div></div></div>`;
+      : q.from
+        ? `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3 ellip">${esc(U(q.from).name)}</div><div class="tiny muted">спрашивает · ${when(q.at)}</div></div></div>`
+        : `<div class="row"><span class="av s ghost-av">${ic('user')}</span><div class="grow"><div class="h3 ellip">Кто-то из ваших знакомых</div><div class="tiny muted">спрашивает тихо · ${when(q.at)}</div></div></div>`;
     const foot = mine
       ? `<div class="row"><span class="small">${q.answers.length ? `<b>${pl(q.answers.length, 'ответ', 'ответа', 'ответов')}</b>` : '<span class="muted">Ответов пока нет</span>'}</span><span class="grow"></span>${q.closed ? '<span class="tag">Закрыт</span>' : ''}${ic('chev', 'chev').replace('class="chev"', 'class="chev" style="width:18px;height:18px;color:var(--muted)"')}</div>`
       : answered
@@ -518,6 +520,7 @@
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
+      ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
       <div class="card">${repRows(id)}</div>
       ${allRecs.length ? `<div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
@@ -525,7 +528,6 @@
       <div class="card">${shown.map((r) => recItem(r)).join('')}${recs.length > shown.length ? `<button class="btn ghost block" style="margin-top:12px" data-act="more">Показать все ${recs.length}</button>` : ''}</div>` : ''}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, cat(r.cat).who)).join('')}</div>` : ''}
-      ${direct ? '' : `<div style="text-align:center;margin:22px 0 96px"><button class="btn ghost sm" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
       <div class="actions"><div class="inner">${actions}</div></div>`;
   }
 
@@ -540,13 +542,28 @@
       <div class="card">
         <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен юрист по трудовому спору — уволили, хочу разобраться" maxlength="300">${esc(F.t)}</textarea></label>
         <div id="askcats">${askCats()}</div>
-        <div class="row" style="margin-top:14px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">Получат ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>
+        ${askTo(c1)}
         <button class="btn primary block" style="margin-top:14px" data-act="postAsk" data-submit ${askValid() ? '' : 'disabled'}>${ic('send')}Отправить запрос</button>
       </div>
       ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><span class="small muted">${pl(inc.length, 'запрос', 'запроса', 'запросов')}</span></div><div class="stack">${inc.map((q) => requestCard(q)).join('')}</div>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
-  const askValid = () => (F.t || '').trim().length >= 10 && !!F.cat;
+  const askValid = () => (F.t || '').trim().length >= 10 && !!F.cat && (!F.quiet || (F.to || []).length > 0);
+  // Кому уйдёт запрос: всем знакомым или только выбранным. Деликатное спрашивают тихо
+  function askTo(c1) {
+    const picked = F.to || [];
+    const quiet = F.quiet;
+    const rows = quiet
+      ? `<div class="chips" style="margin-top:8px">${c1.map((id) => `<button class="chip ${picked.includes(id) ? 'on' : ''}" data-act="askTo" data-v="${id}">${esc(first(id))}</button>`).join('')}</div>
+         <label class="pick" style="margin-top:10px"><span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span><span class="small muted">Имя увидит только тот, кто ответит</span></span>
+           <button class="radio ${F.anon ? 'on' : ''}" data-act="askAnon" aria-label="Скрыть имя"></button></label>`
+      : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">Получат ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
+    return `<div class="field" id="askto"><span>Кому уйдёт</span>
+      <div class="chips"><button class="chip ${quiet ? '' : 'on'}" data-act="askQuiet" data-v="">Всем знакомым</button><button class="chip ${quiet ? 'on' : ''}" data-act="askQuiet" data-v="1">Выбрать, кому</button></div>
+      ${rows}
+      ${quiet && !picked.length ? '<p class="hint">Отметьте хотя бы одного человека</p>' : ''}</div>`;
+  }
+
   function askCats() {
     const auto = G.matchCats(F.t || '');
     if (!F.catTouched) F.cat = auto[0] || '';
@@ -587,7 +604,9 @@
         <p class="txt">«${esc(a.text)}»</p>${act}</div>`;
     }).join('');
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><h1 class="h2 grow">${mine ? 'Ваш запрос' : 'Запрос'}</h1></div>
-      <div class="card">${mine ? '' : `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`}
+      <div class="card">${mine ? '' : q.from
+        ? `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`
+        : `<div class="row"><span class="av s ghost-av">${ic('user')}</span><div class="grow"><div class="h3">Кто-то из ваших знакомых</div><div class="tiny muted">имя откроется, когда вы ответите · ${when(q.at)}</div></div></div>`}
         <p style="font-size:17px;margin:${mine ? 0 : '12px'} 0 12px">${esc(q.text)}</p>
         <div class="row">${q.cat ? `<span class="tag brand">${esc(cat(q.cat).name)}</span>` : ''}<span class="grow"></span><span class="tiny muted">${mine ? 'отправлен ' + when(q.at) : ''}</span></div></div>
       <div class="sec-title"><h2 class="h2">${q.answers.length ? pl(q.answers.length, 'ответ', 'ответа', 'ответов') : 'Ответов пока нет'}</h2></div>
@@ -1049,20 +1068,31 @@
     declineConn: (d) => mutate(() => { S.conns = S.conns.filter((x) => !(pairWith(x, d.id) && x.status === 'pending')); },
       '/connections/decline', { user: d.id }, 'Заявка отклонена. Человек об этом не узнает'),
     // Запросы
+    askQuiet: (d) => { F.quiet = !!d.v; if (!F.quiet) { F.to = []; F.anon = false; } render(); },
+    askTo: (d) => {
+      const a = F.to || (F.to = []);
+      const i = a.indexOf(d.v); i < 0 ? a.push(d.v) : a.splice(i, 1);
+      $('#askto').innerHTML = askTo(myContacts()).replace(/^<div class="field" id="askto">|<\/div>$/g, '');
+      render();
+    },
+    askAnon: () => { F.anon = !F.anon; render(); },
     askCat: (d) => { F.cat = d.v || ''; F.catTouched = true; F.allCats = false; $('#askcats').innerHTML = askCats(); syncForm(); },
     askAllCats: () => { F.allCats = true; $('#askcats').innerHTML = askCats(); },
     postAsk: async () => {
       const text = F.t.trim(), cat = F.cat;
+      const to = F.quiet ? (F.to || []) : [];
+      const anon = !!(F.quiet && F.anon);
+      const sent = to.length ? pl(to.length, 'человеку', 'людям', 'людям') : pl(myContacts().length, 'человеку', 'людям', 'людям');
       if (LIVE) {
         try {
-          const res = await window.API.post('/requests', { text, cat });
+          const res = await window.API.post('/requests', { text, cat, to, anon });
           await refresh();
           go('#/q/' + res.id);
-          toast('Запрос отправлен ' + pl(myContacts().length, 'человеку', 'людям', 'людям'));
+          toast('Запрос отправлен ' + sent);
         } catch (e) { toast(e.message); }
         return;
       }
-      const q = { id: 'q' + uid(), from: S.me, cat: F.cat, text: F.t.trim(), at: Date.now(), answers: [] };
+      const q = { id: 'q' + uid(), from: S.me, cat: F.cat, text: F.t.trim(), at: Date.now(), answers: [], anon, quiet: !!to.length };
       S.requests.push(q); commit(); go('#/q/' + q.id);
       toast('Запрос отправлен ' + pl(myContacts().length, 'человеку', 'людям', 'людям'));
       // В демо кто-нибудь из знакомых отвечает через несколько секунд
@@ -1120,8 +1150,11 @@
       }, '/blocks', { user: d.id, on: true }, name + ' больше вас не видит');
       location.hash = '#/';
     },
-    unblock: (d) => mutate(() => { S.blocked = (S.blocked || []).filter((b) => b.id !== d.id); },
-      '/blocks', { user: d.id, on: false }, 'Снова видите друг друга'),
+    unblock: (d) => {
+      mutate(() => { S.blocked = (S.blocked || []).filter((b) => b.id !== d.id); },
+        '/blocks', { user: d.id, on: false }, 'Снова видите друг друга');
+      if (SH) drawSheet();
+    },
     editMe: () => sheetEditMe(),
     submitEdit: () => SH.submit(),
     resetDemo: () => {
