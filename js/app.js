@@ -522,7 +522,12 @@
       ${starter()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
-      <div class="orbit-legend"><span><i class="dot-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span><span><i class="dot-2"></i>ещё ${pl(op.total2, 'человек', 'человека', 'человек')} в их книжках</span><span><i class="dot-n"></i>${pl(nodesAll().length, 'место', 'места', 'мест')} и фирм</span></div>
+      <div class="cloud-legend">
+        <span><i class="lg-me"></i>вы</span>
+        <span><i class="lg-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span>
+        <span><i class="lg-2"></i>${pl(op.total2, 'человек', 'человека', 'человек')} через них</span>
+        <span><i class="lg-place"></i>места</span>
+        <span><i class="lg-co"></i>фирмы</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
@@ -568,14 +573,19 @@
       const keep = new Set([...people.filter((id) => ring(id) <= 1), ...far]);
       people = people.filter((id) => keep.has(id));
     }
-    const nodes = people.map((id) => ({
-      id, ring: ring(id), self: id === S.me,
-      r: id === S.me ? 21 : ring(id) === 1 ? 15 : 10,
-      photo: U(id).photo || null,
-      initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
-      label: id === S.me ? 'вы' : ring(id) <= 1 ? first(id) : '',
-      go: id === S.me ? '#/me' : '#/p/' + id,
-    }));
+    const nodes = people.map((id) => {
+      const cats = G.catsOf(id);
+      const rep0 = cats.length ? G.reputation(id, cats[0]) : null;
+      return {
+        id, ring: ring(id), self: id === S.me, kind: 'person',
+        r: id === S.me ? 21 : ring(id) === 1 ? 15 : ring(id) === 2 ? 10 : 7.5,
+        photo: U(id).photo || null,
+        trusted: !!(rep0 && rep0.independent >= 3),
+        initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
+        label: id === S.me ? 'вы' : first(id),
+        go: id === S.me ? '#/me' : '#/p/' + id,
+      };
+    });
     const edges = [];
     const known = new Set(people);
     S.conns.filter((c) => c.status === 'ok' && known.has(c.a) && known.has(c.b))
@@ -588,12 +598,44 @@
         const voices = [...new Set([...nodeRecs(n).map((r) => r.from), n.by])].filter((id) => known.has(id));
         if (!voices.length) return;
         const id = 'o' + n.id;
-        nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company', r: 8,
-          label: '', go: '#/o/' + n.id });
+        nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company',
+          r: n.kind === 'company' ? 8 : 8.5,
+          label: n.name.length > 18 ? n.name.slice(0, 17) + '…' : n.name,
+          go: '#/o/' + n.id });
         voices.forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
       });
     }
     return { nodes, edges };
+  }
+
+  // Нажатие в облаке: своя карточка — на экран профиля, чужая — быстрым окном,
+  // чтобы человек не терял из виду всю сеть
+  function pickInCloud(n) {
+    if (n.self) { go('#/me'); return; }
+    if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
+    sheetPeek(n.id);
+  }
+
+  // Быстрая карточка места или фирмы
+  function sheetNodePeek(id) {
+    const n = nodeById(id);
+    if (!n) return;
+    const recs = nodeRecs(n);
+    const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
+    const facts = (n.facts || []).slice(0, 2);
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, esc(n.name), `${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}${n.address ? ' · ' + esc(n.address) : ''}`)}
+        <div class="stat-grid" style="margin-top:14px">
+          <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
+          <div class="stat"><b>${(n.facts || []).length}</b><span>${plural((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
+        ${best ? `<div class="note" style="color:var(--ink);margin-top:14px">«${esc(best.text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(best.from))}</div></div>` : ''}
+        ${facts.length ? `<div class="card" style="box-shadow:none;background:var(--card-2);margin-top:10px">${facts.map((f) => `<div class="fact"><p>${esc(f.text)}</p><div class="tiny muted">${esc(FACT_KIND[f.kind] || '')} · ${esc(first(f.from))}</div></div>`).join('')}</div>` : ''}
+        <div class="s-foot"><div class="btn-row">
+          <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Открыть</button>
+          <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}Поручиться</button>
+        </div></div>`,
+    });
   }
 
   // Облако живёт, пока экран открыт: при уходе с экрана его останавливаем
@@ -603,7 +645,7 @@
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
-      cloud = window.Cloud(el, { onPick: (n) => go(n.go) });
+      cloud = window.Cloud(el, { onPick: pickInCloud });
       cloud.setData(cloudData(limitRing, withPlaces, maxFar));
       cloud.start();
     }, 30);
@@ -622,10 +664,14 @@
       <div class="chips" style="margin-bottom:10px">
         ${[['all', 'Всё'], ['people', 'Только люди'], ['near', 'Ближний круг']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
-      <div class="orbit-legend" style="margin-top:10px">
-        <span><i class="dot-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
-        <span><i class="dot-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
-        <span><i class="dot-n"></i>${pl(nodesAll().length, 'место', 'места', 'мест')} и фирм</span></div>
+      <div class="cloud-legend" style="margin-top:10px">
+        <span><i class="lg-me"></i>вы</span>
+        <span><i class="lg-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
+        <span><i class="lg-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
+        <span><i class="lg-far"></i>дальше</span>
+        <span><i class="lg-place"></i>места</span>
+        <span><i class="lg-co"></i>фирмы</span>
+        <span><i class="lg-trust"></i>надёжно</span></div>
       <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — ручается. Точку можно тянуть, нажатие открывает карточку.</p>`;
   }
 

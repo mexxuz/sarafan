@@ -100,12 +100,26 @@ window.Cloud = function (canvas, opts) {
   }
 
   // ——— рисование ———
+  //
+  // Иерархия читается без подписей:
+  //   круг      — человек, и чем он ближе, тем ярче кольцо и крупнее сам узел
+  //   квадрат   — место (точка внутри, как метка на карте)
+  //   ромб      — фирма
+  //   зелёная искра у кольца — за человека ручаются трое и больше
   const COLOR = {
-    know: 'rgba(120,140,170,.28)',
-    vouch: 'rgba(47,123,255,.42)',
+    know: 'rgba(120,140,170,.26)',
+    vouch: 'rgba(47,123,255,.4)',
     knowHot: 'rgba(90,110,150,.55)',
     vouchHot: 'rgba(47,123,255,.85)',
+    me: '#2f7bff',
+    ring1: 'rgba(47,123,255,.95)',
+    ring2: 'rgba(47,123,255,.42)',
+    far: 'rgba(122,138,163,.4)',
+    place: { fill: '#e2efff', line: 'rgba(47,123,255,.75)', dot: 'rgba(47,123,255,.8)' },
+    company: { fill: '#e9e6ff', line: 'rgba(120,96,255,.75)', dot: 'rgba(120,96,255,.85)' },
   };
+
+  const ringColor = (n) => (n.self ? COLOR.me : n.ring === 1 ? COLOR.ring1 : n.ring === 2 ? COLOR.ring2 : COLOR.far);
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
@@ -131,7 +145,7 @@ window.Cloud = function (canvas, opts) {
       ctx.globalAlpha = dim ? 0.32 : 1;
       if (n.kind === 'node') drawPlace(n);
       else drawPerson(n);
-      if (n.label && (n.r >= 11 || n === lit)) {
+      if (n.label && (n.ring <= 1 || n === lit || near.has(n.id))) {
         ctx.globalAlpha = dim ? 0.3 : 0.9;
         ctx.fillStyle = '#5b6474';
         ctx.font = '600 10px Manrope, system-ui, sans-serif';
@@ -144,6 +158,9 @@ window.Cloud = function (canvas, opts) {
 
   function drawPerson(n) {
     const im = n.photo ? imgs[n.photo] : null;
+    const far = !n.self && n.ring >= 3;
+
+    // у незнакомых кольцо пунктирное: видно, что до них никто пока не ручается
     ctx.save();
     ctx.beginPath();
     ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
@@ -152,38 +169,70 @@ window.Cloud = function (canvas, opts) {
       const s = n.r * 2;
       ctx.drawImage(im, n.x - n.r, n.y - n.r, s, s);
       ctx.restore();
+      if (far) { ctx.globalAlpha *= 0.75; }
     } else {
-      ctx.fillStyle = n.self ? '#2f7bff' : n.ring === 1 ? '#dce8ff' : '#eef2f8';
+      ctx.fillStyle = n.self ? COLOR.me : n.ring === 1 ? '#dbe8ff' : n.ring === 2 ? '#edf3fb' : '#f1f3f7';
       ctx.fill();
       ctx.restore();
-      ctx.fillStyle = n.self ? '#fff' : '#5b6474';
-      ctx.font = `700 ${Math.round(n.r * 0.82)}px Manrope, system-ui, sans-serif`;
+      ctx.fillStyle = n.self ? '#fff' : far ? '#8d97a8' : '#59637a';
+      ctx.font = `700 ${Math.round(n.r * 0.8)}px Manrope, system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(n.initials || '', n.x, n.y + 0.5);
       ctx.textBaseline = 'alphabetic';
     }
+
     ctx.beginPath();
     ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    ctx.strokeStyle = n.self ? '#2f7bff' : n.ring === 1 ? 'rgba(47,123,255,.9)' : 'rgba(47,123,255,.35)';
-    ctx.lineWidth = n.self ? 3 : n.ring === 1 ? 2 : 1.4;
+    ctx.strokeStyle = ringColor(n);
+    ctx.lineWidth = n.self ? 3 : n.ring === 1 ? 2.2 : n.ring === 2 ? 1.5 : 1;
+    if (far) ctx.setLineDash([2.5, 2.5]);
     ctx.stroke();
+    ctx.setLineDash([]);
+
+    // трое независимых — тихая зелёная искра на кольце
+    if (n.trusted) {
+      ctx.beginPath();
+      ctx.arc(n.x + n.r * 0.72, n.y - n.r * 0.72, 2.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#16a06a';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
   }
 
   function drawPlace(n) {
-    const r = n.r, x = n.x - r, y = n.y - r, s = r * 2, rad = 4;
+    const c = n.company ? COLOR.company : COLOR.place;
+    const r = n.r;
     ctx.beginPath();
-    ctx.moveTo(x + rad, y);
-    ctx.arcTo(x + s, y, x + s, y + s, rad);
-    ctx.arcTo(x + s, y + s, x, y + s, rad);
-    ctx.arcTo(x, y + s, x, y, rad);
-    ctx.arcTo(x, y, x + s, y, rad);
-    ctx.closePath();
-    ctx.fillStyle = n.company ? '#e6ecff' : '#e8f1ff';
+    if (n.company) {
+      // фирма — ромб: издалека не спутать с местом
+      ctx.moveTo(n.x, n.y - r * 1.15);
+      ctx.lineTo(n.x + r * 1.15, n.y);
+      ctx.lineTo(n.x, n.y + r * 1.15);
+      ctx.lineTo(n.x - r * 1.15, n.y);
+      ctx.closePath();
+    } else {
+      // место — квадрат с меткой внутри
+      const x = n.x - r, y = n.y - r, s = r * 2, rad = 3;
+      ctx.moveTo(x + rad, y);
+      ctx.arcTo(x + s, y, x + s, y + s, rad);
+      ctx.arcTo(x + s, y + s, x, y + s, rad);
+      ctx.arcTo(x, y + s, x, y, rad);
+      ctx.arcTo(x, y, x + s, y, rad);
+      ctx.closePath();
+    }
+    ctx.fillStyle = c.fill;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(47,123,255,.6)';
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = c.line;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, Math.max(1.6, r * 0.28), 0, Math.PI * 2);
+    ctx.fillStyle = c.dot;
+    ctx.fill();
   }
 
   // ——— жизнь ———
