@@ -525,7 +525,7 @@
       <div class="card">${shown.map((r) => recItem(r)).join('')}${recs.length > shown.length ? `<button class="btn ghost block" style="margin-top:12px" data-act="more">Показать все ${recs.length}</button>` : ''}</div>` : ''}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, cat(r.cat).who)).join('')}</div>` : ''}
-      ${direct ? '' : `<div style="text-align:center;margin-top:22px"><button class="btn ghost sm" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${direct ? '' : `<div style="text-align:center;margin:22px 0 96px"><button class="btn ghost sm" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
       <div class="actions"><div class="inner">${actions}</div></div>`;
   }
 
