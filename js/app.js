@@ -540,12 +540,13 @@
     const op = orbitPeople(6, 8);
     const small = op.total1 < 3;
     return `
-      <div class="place">
-        <div class="grow"><div class="val">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div></div>
+      <div class="place over">
+        <div class="logo grow">${logoMark}сарафан</div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
+      <div class="cloud-where">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div>
       <div class="cloud-legend">
         <span><i class="lg-me"></i>вы</span>
         <span><i class="lg-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span>

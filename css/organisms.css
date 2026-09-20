@@ -364,13 +364,19 @@
 .orbit-legend .dot-n { width: 8px; height: 8px; border-radius: 2px; background: var(--blue-soft); box-shadow: inset 0 0 0 1.5px var(--blue); display: inline-block; }
 
 /* Облако сети: живой граф на главной и во весь экран */
+/* Облако лежит на общем фоне, без карточки: шапка и плашки идут поверх него */
 .cloud-box {
-  position: relative; margin: var(--s-3) calc(-1 * var(--s-4)) 0; height: 340px;
-  border-radius: var(--r-xl); overflow: hidden;
-  background:
-    radial-gradient(60% 46% at 50% 44%, rgba(47, 123, 255, .07) 0%, rgba(47, 123, 255, 0) 70%),
-    radial-gradient(120% 90% at 50% 35%, #ffffff 0%, rgba(240, 246, 253, .9) 55%, rgba(233, 241, 251, .7) 100%);
+  position: relative; z-index: 0;
+  margin: calc(-1 * var(--head-h, 66px)) calc(-1 * var(--s-5)) 0;
+  height: 420px; background: none;
 }
+.cloud-box.big { height: 66vh; min-height: 420px; margin-top: var(--s-2); }
+.cloud-where {
+  position: relative; z-index: 1; margin-top: calc(-1 * var(--s-4));
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font: 700 var(--fs-sm)/1.2 var(--t); color: var(--ink-2);
+}
+.cloud-where svg { width: 15px; height: 15px; color: var(--blue); }
 .cloud-box.big { height: 62vh; min-height: 380px; }
 .cloud-box canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 .cloud-full {

@@ -11,6 +11,8 @@
 
 /* Шапка главной: вы · ваша сеть · уведомления */
 .place { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-5) 0 var(--s-3); }
+.place.over { position: relative; z-index: 2; min-height: var(--head-h, 66px); }
+.place .logo { font: 800 var(--fs-lg)/1 var(--t); letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
 .place .grow { flex: 1; min-width: 0; }
 .place .lbl { font-size: var(--fs-xs); color: var(--ink-3); }
 .place .val { font: 800 var(--fs-lg)/1.25 var(--t); letter-spacing: -.02em; display: flex; align-items: center; gap: 6px; }
