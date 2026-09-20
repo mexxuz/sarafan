@@ -876,8 +876,10 @@
         <div><div class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div>
           <h1 class="h1" style="margin-top:4px">${esc(n.name)}</h1></div>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
-        ${n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
-        ${mapLink(n) ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}<span class="grow">Посмотреть на карте${n.lat ? ' · построить маршрут' : ''}</span>${ic('arrow')}</a>` : ''}
+        ${mapLink(n)
+      ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}
+          <span class="grow">${n.address ? esc(n.address) : 'Посмотреть на карте'}<i>${n.lat ? 'Открыть карту и построить маршрут' : 'Открыть на карте'}</i></span>${ic('arrow')}</a>`
+      : n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
         ${n.link ? `<a class="link-row" href="${esc(n.link.startsWith('http') ? n.link : 'https://' + n.link)}" target="_blank" rel="noopener">${ic('link')}<span class="grow ellip">${esc(n.link.replace(/^https?:\/\//, ''))}</span>${ic('arrow')}</a>` : ''}</div>
 
       <div class="stat-grid" style="margin-top:18px">
