@@ -490,4 +490,11 @@
 .tag.sign { color: var(--blue); background: var(--blue-soft); }
 .pcard .tag.sign.company, .tag.sign.company { color: #6b4fd0; background: #f1ecff; }
 .card.accent .tag.sign { background: rgba(255, 255, 255, .2); color: #fff; }
+/* с обложкой метка поднимается на её границу — половиной на снимке */
+.tag.sign.on-cover, .card.accent .tag.sign.on-cover {
+  margin-top: -24px; position: relative; z-index: 1;
+  background: rgba(255, 255, 255, .94); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
+}
+.tag.sign.on-cover { color: var(--blue); }
+.tag.sign.on-cover.company { color: #6b4fd0; }
 
