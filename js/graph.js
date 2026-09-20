@@ -21,7 +21,7 @@ window.Graph = function (S) {
   const recsTo = (id, cat) => S.recs.filter((r) => r.to === id && (!cat || r.cat === cat));
   const recsFrom = (id) => S.recs.filter((r) => r.from === id);
 
-  // Области человека: заявленные + те, в которых его рекомендуют (по убыванию числа рекомендаций)
+  // Сферы человека: заявленные + те, в которых его рекомендуют (по убыванию числа рекомендаций)
   const catsOf = (id) => {
     const count = {};
     (S.users[id].cats || []).forEach((c) => { count[c] = count[c] || 0; });
@@ -59,7 +59,7 @@ window.Graph = function (S) {
     return { count: rs.length, unique: authors.length, independent: groups.length, suspicious, bigGroup: big.length, near, recent, recs: rs };
   };
 
-  // Как «я» выхожу на человека в данной области: через ближайшего рекомендателя или через прямую связь
+  // Как «я» выхожу на человека в данной сфере: через ближайшего рекомендателя или через прямую связь
   const trust = (id, cat) => {
     if (id === S.me) return { circle: 0, chain: [S.me], via: null };
     let best = null;
@@ -110,7 +110,7 @@ window.Graph = function (S) {
       .filter((r) => (seen.has(r.user.id) ? false : seen.add(r.user.id)));
   };
 
-  // Репутация рекомендателя: скольких людей советует, в скольких областях, и как часто его советы подхватывают
+  // Репутация рекомендателя: скольких людей советует, в скольких сферах, и как часто его советы подхватывают
   const recommenderStats = (id) => {
     const given = recsFrom(id);
     const cats = new Set(given.map((r) => r.cat));
