@@ -41,6 +41,9 @@
     background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue);
   }
   .nav a.ask span { display: block; }
+  /* на телефоне «Спросить» — круглая кнопка на псевдоэлементе; здесь она лишняя */
+  .nav a.ask::before { display: none; }
+  .nav a.ask .badge { position: absolute; top: 50%; right: 12px; margin-top: -9px; background: #fff; color: var(--blue); }
   .nav a.ask svg { width: 19px; height: 19px; }
   @media (hover: hover) { .nav a.ask:hover { background: var(--blue-deep); } }
 
