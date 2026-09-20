@@ -748,14 +748,14 @@
   };
   // Своя сфера: заводим на сервере и сразу выбираем
   const addOwnCat = async (name) => {
-    const clean = name.trim();
-    if (clean.length < 3) { toast('Напишите хотя бы три буквы'); return null; }
-    const known = S.cats.find((c) => c.name.toLowerCase() === clean.toLowerCase()
-      || c.who.toLowerCase() === clean.toLowerCase());
+    const low = name.trim().replace(/\s+/g, ' ').toLowerCase();
+    if (low.length < 3) { toast('Напишите хотя бы три буквы'); return null; }
+    const clean = low[0].toUpperCase() + low.slice(1);
+    const known = S.cats.find((c) => c.name.toLowerCase() === low || c.who.toLowerCase() === low);
     if (known) return known.id;
     if (!LIVE) {
       const id = 'own-' + uid();
-      S.cats.push({ id, name: clean, who: clean, words: [clean.toLowerCase()] });
+      S.cats.push({ id, name: clean, who: clean, words: [low] });
       G = window.Graph(S);
       return id;
     }
