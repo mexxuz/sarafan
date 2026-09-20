@@ -542,23 +542,22 @@
       ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><span class="small muted">${pl(inc.length, 'запрос', 'запроса', 'запросов')}</span></div><div class="stack">${inc.map((q) => requestCard(q)).join('')}</div>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
-  const askValid = () => (F.t || '').trim().length >= 10;   // сфера — по желанию
+  const askValid = () => (F.t || '').trim().length >= 10 && !!F.cat;
   function askCats() {
     const auto = G.matchCats(F.t || '');
     if (!F.catTouched) F.cat = auto[0] || '';
     const list = F.allCats ? S.cats.map((c) => c.id) : [...new Set([...(F.cat ? [F.cat] : []), ...auto])].slice(0, 5);
     const chips = list.map((c) => `<button class="chip ${F.cat === c ? 'on' : ''}" data-act="askCat" data-v="${c}">${esc(cat(c).name)}</button>`).join('');
     const more = F.allCats ? '' : `<button class="chip" data-act="askAllCats">${list.length ? 'Другая…' : 'Выбрать сферу'}</button>`;
-    const off = `<button class="chip ${F.cat ? '' : 'on'}" data-act="askCat" data-v="">Без сферы</button>`;
     const own = F.own
       ? `<div class="row" style="margin-top:8px"><input class="input" data-bind="ownName" placeholder="Например: таможенный брокер" maxlength="40" value="${esc(F.ownName || '')}">
          <button class="btn sm" data-act="askOwnCat">Добавить</button></div>`
       : `<button class="chip" data-act="askOwn">Своей сферы нет</button>`;
-    return `<div class="field"><span>В какой сфере ищете человека <em class="muted" style="font-style:normal;font-weight:400">— по желанию</em></span>
-      <div class="chips">${chips}${more}${off}${F.own ? '' : own}</div>${F.own ? own : ''}
+    return `<div class="field"><span>В какой сфере ищете человека</span>
+      <div class="chips">${chips}${more}${F.own ? '' : own}</div>${F.own ? own : ''}
       <p class="hint">${F.cat
         ? 'Ответ знакомого сразу станет рекомендацией в этой сфере'
-        : 'Ничего подходящего? Отправляйте так — знакомые всё поймут из текста'}</p></div>`;
+        : 'Не нашли подходящую — заведите свою, она появится у всех'}</p></div>`;
   }
 
   // ——— Запрос: ответы ———
@@ -583,7 +582,7 @@
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><h1 class="h2 grow">${mine ? 'Ваш запрос' : 'Запрос'}</h1></div>
       <div class="card">${mine ? '' : `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`}
         <p style="font-size:17px;margin:${mine ? 0 : '12px'} 0 12px">${esc(q.text)}</p>
-        <div class="row">${q.cat ? `<span class="tag brand">${esc(cat(q.cat).name)}</span>` : '<span class="tag">без сферы</span>'}<span class="grow"></span><span class="tiny muted">${mine ? 'отправлен ' + when(q.at) : ''}</span></div></div>
+        <div class="row">${q.cat ? `<span class="tag brand">${esc(cat(q.cat).name)}</span>` : ''}<span class="grow"></span><span class="tiny muted">${mine ? 'отправлен ' + when(q.at) : ''}</span></div></div>
       <div class="sec-title"><h2 class="h2">${q.answers.length ? pl(q.answers.length, 'ответ', 'ответа', 'ответов') : 'Ответов пока нет'}</h2></div>
       ${answers ? `<div class="card" style="padding:6px 10px 10px">${answers}</div>` : `<div class="card"><p class="small muted" style="margin:0">${mine ? 'Мы сообщим в Telegram, как только кто-то посоветует человека.' : 'Будьте первым, кто поможет.'}</p></div>`}
       <div style="margin-top:16px">${mine
