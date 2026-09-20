@@ -182,6 +182,10 @@ window.Cloud = function (canvas, opts) {
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
     });
+    // Чем дальше человек, тем он бледнее: свои в полную силу, знакомые знакомых
+    // вполсилы, дальние — едва намечены.
+    const depth = (n) => (n.self || n.ring <= 1 ? 1 : n.ring === 2 ? 0.6 : 0.36);
+
     const lit = hover || held;
     const near = new Set();
     if (lit) { near.add(lit.id); edges.forEach((e) => { if (e.a === lit.id) near.add(e.b); if (e.b === lit.id) near.add(e.a); }); }
@@ -194,7 +198,7 @@ window.Cloud = function (canvas, opts) {
       const hot = lit && (e.a === lit.id || e.b === lit.id);
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : COLOR[e.kind];
       ctx.lineWidth = hot ? 1.6 : (e.kind === 'vouch' ? 1.1 : 0.9);
-      ctx.globalAlpha = (lit && !hot ? 0.28 : 1) * grow;
+      ctx.globalAlpha = (lit && !hot ? 0.28 : 1) * grow * Math.min(depth(a), depth(b));
       // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const dx = b.x - a.x, dy = b.y - a.y;
@@ -227,7 +231,7 @@ window.Cloud = function (canvas, opts) {
       g.addColorStop(1, `rgba(${tone},0)`);
       ctx.strokeStyle = g;
       ctx.lineWidth = (e.kind === 'vouch' ? 1.8 : 1.4);
-      ctx.globalAlpha = grow;
+      ctx.globalAlpha = grow * Math.min(depth(a), depth(b));
       ctx.beginPath();
       for (let k = 0; k <= 8; k++) {
         const [px, py] = bez(t0 + (t1 - t0) * (k / 8));
@@ -242,7 +246,7 @@ window.Cloud = function (canvas, opts) {
       const dim = lit && !near.has(n.id);
       const ease = n.born * n.born * (3 - 2 * n.born);      // мягкий вход
       const R = n.r * (0.7 + 0.3 * ease) * (1 + n.glow * 0.12);
-      ctx.globalAlpha = (dim ? 0.24 : 1) * ease;
+      ctx.globalAlpha = (dim ? 0.24 : 1) * ease * (lit && near.has(n.id) ? 1 : depth(n));
 
       // ореол: свои светятся чуть заметнее — иерархия без лишних обводок
       if (!dim && (n.self || n.ring <= 1 || n.glow > 0.02)) {
@@ -264,7 +268,7 @@ window.Cloud = function (canvas, opts) {
 
       const showLabel = n.label && (n.self || n.ring <= 1 || n === lit || near.has(n.id));
       if (showLabel) {
-        ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.82 : 0.6) * ease;
+        ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.85 : 0.55) * ease * (lit && near.has(n.id) ? 1 : depth(n));
         ctx.fillStyle = '#6b7488';
         ctx.font = `${n.self || n.ring <= 1 ? 600 : 500} 9.5px Manrope, system-ui, sans-serif`;
         ctx.textAlign = 'center';
