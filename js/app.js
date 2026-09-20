@@ -1528,6 +1528,8 @@
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="btn sm" data-act="editMe">Изменить</button></div>
       <div class="p-head">${av(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1></div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
+      ${howView(S.me)}
+      ${factsView(S.me)}
       ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
         <h2 class="h2" style="margin:6px 0 6px">Расскажите о работе</h2>
         <p class="small muted" style="margin:0 0 12px">Что вы делаете, как считаете деньги, где посмотреть работы. Витрину видят все, кто открывает вашу карточку.</p>
