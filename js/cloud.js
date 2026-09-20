@@ -121,8 +121,8 @@ window.Cloud = function (canvas, opts) {
       // медленное плавание: каждый узел ходит по своей маленькой петле
       if (!calm) {
         const t = now * 0.0004 * n.sp + n.ph;
-        n.vx += Math.cos(t) * 0.05;
-        n.vy += Math.sin(t * 1.17) * 0.05;
+        n.vx += Math.cos(t) * 0.035;
+        n.vy += Math.sin(t * 1.17) * 0.035;
       }
       n.vx *= 0.86; n.vy *= 0.86;
       n.x += n.vx; n.y += n.vy;
