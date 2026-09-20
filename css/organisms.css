@@ -357,21 +357,15 @@
 /* Значок и подпись «Место · Кухня» стоят в одну строку на краю снимка */
 .node-line { display: flex; align-items: center; gap: var(--s-3); }
 .node-line .who { font-size: var(--fs-xs); color: var(--ink-3); }
-/* Со снимком значок и подпись заезжают внутрь кадра, в левый нижний угол */
-.node-line.on-photo { margin: -70px 0 14px; position: relative; z-index: 1; padding-left: 2px; }
-.node-line.on-photo .who { color: #fff; font-weight: 600; text-shadow: 0 1px 8px rgba(10, 14, 24, .6); }
+/* Со снимком значок сидит ровно наполовину на кадре, подпись — рядом, под кадром */
+.node-line.on-photo { align-items: flex-end; margin: -46px 0 10px; position: relative; z-index: 1; }
+.node-line.on-photo .who { padding-bottom: 4px; }
 .node-ic.big.lift {
   width: 44px; height: 44px; border-radius: var(--r-md);
-  background: rgba(255, 255, 255, .92); color: var(--blue);
-  box-shadow: 0 6px 18px rgba(10, 14, 24, .28); backdrop-filter: blur(6px);
+  box-shadow: 0 0 0 3px var(--paper), 0 6px 16px rgba(10, 14, 24, .2);
 }
 .node-ic.big.lift svg { width: 21px; height: 21px; }
 .node-ic.big.lift.off { color: var(--ink-4); }
-/* низ снимка притемняем — иначе белая подпись теряется на светлом кадре */
-.node-photo::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 96px; pointer-events: none;
-  background: linear-gradient(to bottom, rgba(10, 14, 24, 0), rgba(10, 14, 24, .38));
-}
 .card.accent .node-ic { background: rgba(255, 255, 255, .22); color: #fff; }
 
 /* Слои знания: у каждого утверждения свой автор */
