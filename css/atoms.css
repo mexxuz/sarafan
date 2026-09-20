@@ -43,6 +43,9 @@ p { text-wrap: pretty; }
 .tag.brand { background: linear-gradient(170deg, #eff4ff, #e2ecff); color: var(--blue); }
 .tag.warm { background: var(--warn-soft); color: var(--warn); }
 .tag.done { background: var(--good-soft); color: var(--good); }
+/* взаимно: двое поручились друг за друга — редкий и сильный знак */
+.tag.mutual { background: linear-gradient(170deg, #eef4ff, #e0e9ff); color: var(--blue); box-shadow: inset 0 0 0 1px rgba(47, 123, 255, .22); }
+.tag.mutual svg { width: 12px; height: 12px; }
 .circle-1 { background: var(--blue-soft); color: var(--blue); }
 .circle-2 { background: var(--mist-2); color: var(--ink-2); }
 .circle-3 { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-3); }

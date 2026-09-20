@@ -157,6 +157,7 @@ window.Cloud = function (canvas, opts) {
     vouch: 'rgba(47,123,255,.24)',
     knowHot: 'rgba(96,116,150,.5)',
     vouchHot: 'rgba(47,123,255,.8)',
+    both: 'rgba(47,123,255,.46)',                // взаимно: двое ручаются друг за друга
     me: '#2f7bff',
     ring1: 'rgba(47,123,255,.95)',
     ring2: 'rgba(47,123,255,.42)',
@@ -196,8 +197,8 @@ window.Cloud = function (canvas, opts) {
       const grow = Math.min(a.born, b.born);
       if (grow <= 0.02) return;
       const hot = lit && (e.a === lit.id || e.b === lit.id);
-      ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : COLOR[e.kind];
-      ctx.lineWidth = hot ? 1.6 : (e.kind === 'vouch' ? 1.1 : 0.9);
+      ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both : COLOR[e.kind]);
+      ctx.lineWidth = hot ? 1.8 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
       ctx.globalAlpha = (lit && !hot ? 0.28 : 1) * grow * Math.min(depth(a), depth(b));
       // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
@@ -220,24 +221,28 @@ window.Cloud = function (canvas, opts) {
         return [q * a.x + w * kx + z * b.x, q * a.y + w * ky + z * b.y];
       };
       const half = 0.16;
-      const t0 = Math.max(0, cycle - half), t1 = Math.min(1, cycle + half);
-      if (t1 - t0 < 0.02) return;
-      const [x0, y0] = bez(t0), [x1, y1] = bez(t1);
-      const g = ctx.createLinearGradient(x0, y0, x1, y1);
       const tone = e.kind === 'vouch' ? '47,123,255' : '126,146,178';
-      const power = (lit && !hot ? 0.12 : 0.42) * Math.sin(cycle * Math.PI);
-      g.addColorStop(0, `rgba(${tone},0)`);
-      g.addColorStop(0.5, `rgba(${tone},${power.toFixed(3)})`);
-      g.addColorStop(1, `rgba(${tone},0)`);
-      ctx.strokeStyle = g;
-      ctx.lineWidth = (e.kind === 'vouch' ? 1.8 : 1.4);
+      const power = (lit && !hot ? 0.12 : e.both ? 0.5 : 0.42) * Math.sin(cycle * Math.PI);
+      // на взаимной нити проблеск идёт сразу в обе стороны — согласие видно без слов
+      const runs = e.both ? [cycle, 1 - cycle] : [cycle];
       ctx.globalAlpha = grow * Math.min(depth(a), depth(b));
-      ctx.beginPath();
-      for (let k = 0; k <= 8; k++) {
-        const [px, py] = bez(t0 + (t1 - t0) * (k / 8));
-        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.stroke();
+      ctx.lineWidth = (e.both ? 2 : e.kind === 'vouch' ? 1.8 : 1.4);
+      runs.forEach((c) => {
+        const t0 = Math.max(0, c - half), t1 = Math.min(1, c + half);
+        if (t1 - t0 < 0.02) return;
+        const [x0, y0] = bez(t0), [x1, y1] = bez(t1);
+        const g = ctx.createLinearGradient(x0, y0, x1, y1);
+        g.addColorStop(0, `rgba(${tone},0)`);
+        g.addColorStop(0.5, `rgba(${tone},${power.toFixed(3)})`);
+        g.addColorStop(1, `rgba(${tone},0)`);
+        ctx.strokeStyle = g;
+        ctx.beginPath();
+        for (let k = 0; k <= 8; k++) {
+          const [px, py] = bez(t0 + (t1 - t0) * (k / 8));
+          if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      });
     });
     ctx.globalAlpha = 1;
 

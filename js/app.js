@@ -196,6 +196,7 @@
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
     spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
     house: '<path d="M3 21h18"/><path d="M6 21V4.5a1 1 0 0 1 1-1h6.5a1 1 0 0 1 1 1V21"/><path d="M14.5 21V9.5H18a1 1 0 0 1 1 1V21"/><path d="M9 7.5h2.5M9 11h2.5M9 14.5h2.5"/>',
+    swap: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
     cam: '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.3-2h6.8l1.3 2h2.8A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/>',
     edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/>',
     dots3: '<circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
@@ -457,13 +458,17 @@
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
   const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'зарабатывает на этом' };
+  // Двое поручились друг за друга — это сильнее, чем две отдельные рекомендации
+  const mutualRec = (a, b) => S.recs.some((x) => !x.private && x.from === a && x.to === b)
+    && S.recs.some((x) => !x.private && x.from === b && x.to === a);
+
   const recItem = (r, showTarget) => {
     const author = r.from;
     const d = G.dist[author];
     const tag = author === S.me ? '<span class="tag brand">Вы</span>' : d === 1 ? circleTag(1) : d === 2 ? circleTag(2) : '';
     const target = showTarget ? `<div class="small muted" style="margin-top:8px">→ <a href="#/p/${r.to}"><b style="color:var(--ink)">${esc(full(r.to))}</b></a></div>` : '';
     return `<div class="rec"><div class="row"><a href="#/p/${author}">${av(author, 's')}</a><div class="grow"><div class="row" style="gap:8px"><a href="#/p/${author}" class="h3 ellip" style="text-decoration:none">${esc(full(author))}</a>${tag}</div><div class="tiny muted">${when(r.at)}${r.edited ? ' · изменена' : ''}</div></div></div>
-      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}</div>
+      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}</div>
       <p class="txt">${esc(r.text)}</p>${target}</div>`;
   };
 
@@ -699,8 +704,17 @@
     const known = new Set(people);
     S.conns.filter((c) => c.status === 'ok' && known.has(c.a) && known.has(c.b))
       .forEach((c) => edges.push({ a: c.a, b: c.b, kind: 'know' }));
+    const vouched = new Set();
+    S.recs.filter((r) => !r.private).forEach((r) => vouched.add(r.from + '>' + r.to));
+    const pairSeen = new Set();
     S.recs.filter((r) => !r.private && known.has(r.from) && known.has(r.to))
-      .forEach((r) => edges.push({ a: r.from, b: r.to, kind: 'vouch', len: 64 }));
+      .forEach((r) => {
+        // взаимность: оба поручились друг за друга — такую нить рисуем одну и особо
+        const both = vouched.has(r.to + '>' + r.from);
+        const key = both ? [r.from, r.to].sort().join('~') : null;
+        if (both) { if (pairSeen.has(key)) return; pairSeen.add(key); }
+        edges.push({ a: r.from, b: r.to, kind: 'vouch', both, len: both ? 58 : 64 });
+      });
 
     if (withPlaces) {
       nodesAll().forEach((n) => {
