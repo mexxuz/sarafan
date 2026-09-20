@@ -464,6 +464,13 @@
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
   const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'зарабатывает на этом' };
+  // Что написано на кнопке рекомендации: зависит от того, есть ли уже записи
+  const recLabel = (id, catId) => {
+    const mine = G.recsFrom(S.me).filter((r) => r.to === id);
+    if (catId ? mine.some((r) => r.cat === catId) : mine.length) return 'Изменить запись';
+    return G.recsTo(id).length ? 'Тоже рекомендую' : 'Рекомендовать';
+  };
+
   // Двое рекомендуют друг друга — это сильнее, чем две отдельные рекомендации
   const mutualRec = (a, b) => S.recs.some((x) => !x.private && x.from === a && x.to === b)
     && S.recs.some((x) => !x.private && x.from === b && x.to === a);
@@ -1258,7 +1265,7 @@
 
     let actions;
     if (pendingIn) actions = `<button class="btn primary" data-act="acceptConn" data-id="${id}">${ic('check')}Это мой знакомый</button><button class="btn ghost" data-act="declineConn" data-id="${id}">Не знаю</button>`;
-    else if (direct) actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button><button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${focus || ''}">${ic('seal')}Рекомендовать</button>`;
+    else if (direct) actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button><button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${focus || ''}">${ic('seal')}${recLabel(id, focus)}</button>`;
     else if (intro && intro.status === 'ok') actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button>${pendingOut ? '<button class="btn ghost" disabled>Заявка отправлена</button>' : `<button class="btn primary" data-act="addConn" data-id="${id}">${ic('plus')}В мою сеть</button>`}`;
     else if (intro && intro.status === 'gone') actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}Попросить ещё раз</button><span class="tag" style="align-self:center">Не сложилось</span>`;
     else if (intro) actions = `<button class="btn ghost" disabled>Ждём ответа: ${esc(first(intro.via))}</button>`;
@@ -1818,7 +1825,7 @@
       render: () => {
         const e = existing();
         const limit = !e && recsToday() >= REC_LIMIT;
-        return `${sheetHead(id, 'Рекомендовать', esc(U(id).name))}
+        return `${sheetHead(id, e ? 'Изменить запись' : 'Рекомендовать', esc(U(id).name))}
           ${catChips(f, prefer)}${relChips(f)}
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что человек сделал, как работал, какой был результат. Например: «Сделал логотип за неделю, сам предложил три варианта»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           <div class="field"><span>Есть ли у вас свой интерес</span><div class="chips">${[
@@ -1992,7 +1999,7 @@
         ${rep && rep.recs.length ? `<div class="note" style="color:var(--ink)">«${esc(rep.recs[0].text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(rep.recs[0].from))} · ${esc(cat(rep.recs[0].cat).name)}</div></div>` : ''}
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/p/${id}">Профиль</button>
-          ${direct ? `<button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${c || ''}">${ic('seal')}Рекомендовать</button>`
+          ${direct ? `<button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${c || ''}">${ic('seal')}${recLabel(id, c)}</button>`
             : t.chain && t.chain.length > 2 ? `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${c || ''}">${ic('hand')}Знакомство</button>`
               : `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться</button>`}
         </div></div>`,
