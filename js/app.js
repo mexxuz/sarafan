@@ -164,7 +164,13 @@
     hand: '<path d="M7 11V6.5a1.5 1.5 0 0 1 3 0V11M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.1L4 15.5a1.5 1.5 0 0 1 2.2-2L7 14.3"/>',
   };
   const ic = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
-  const logoMark = `<svg class="logo-mark" viewBox="0 0 28 28" aria-hidden="true" fill="none"><path d="M8 5v18" stroke="var(--line)" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="7" r="3" fill="none" stroke="var(--blue)" stroke-width="2"/><circle cx="8" cy="15.5" r="3.5" fill="var(--blue)"/><circle cx="8" cy="23" r="3" fill="none" stroke="var(--line)" stroke-width="2"/><path d="M14 15.5h9" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/></svg>`;
+  // Тот же знак, что на значке приложения и на аватарке бота: вы в центре, трое вокруг
+  const logoMark = `<svg class="logo-mark" viewBox="0 0 120 120" aria-hidden="true" fill="none">
+    <g stroke="var(--blue)" stroke-opacity=".38" stroke-width="7" stroke-linecap="round">
+      <path d="M60 45V31"/><path d="M47.6 68.5 35.4 76.9"/><path d="M72.4 68.5 84.6 76.9"/></g>
+    <circle cx="60" cy="60" r="16" fill="var(--blue)"/>
+    <g stroke="var(--blue)" stroke-width="7" fill="none">
+      <circle cx="60" cy="22" r="9"/><circle cx="28" cy="82" r="9"/><circle cx="92" cy="82" r="9"/></g></svg>`;
 
   // Цепочка одной строкой: Вы → Иван → Алексей
   const chainLine = (chain) => {
