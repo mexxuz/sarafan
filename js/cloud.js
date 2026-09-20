@@ -111,11 +111,14 @@ window.Cloud = function (canvas, opts) {
       if (n.self || n === held) return;
       // своё кольцо: ближний круг держится ближе к центру, дальний — дальше
       const dx = n.x - cx, dy = n.y - cy;
-      const d = Math.max(1, Math.hypot(dx, dy));
-      const k = Math.min(2.1, Math.max(0.78, Math.min(W, H) / 330));   // на большом экране кольца шире
+      // по высоте места меньше, поэтому масштаб берём от неё, а вширь растягиваем
+      const wide = Math.max(0.8, Math.min(1.7, W / H));
+      const room = Math.min(cy, H - cy) - 26;
+      const k = Math.max(0.62, Math.min(2.2, room / 186));
+      const d = Math.max(1, Math.hypot(dx / wide, dy));
       const want = (70 + n.ring * 58) * k;
       const pull = (want - d) * 0.006;
-      n.vx += (dx / d) * pull;
+      n.vx += (dx / d) * pull / wide;
       n.vy += (dy / d) * pull;
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       // медленное плавание: каждый узел ходит по своей маленькой петле
