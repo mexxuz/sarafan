@@ -1124,8 +1124,9 @@
   const FILTERS = [['all', 'Все'], ['1', 'Ваши контакты'], ['2', 'Через знакомых'], ['far', 'Дальше']];
   function Search(params) {
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
-    return `<div class="top"><h1 class="h1 grow">Поиск</h1><a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
-      <label class="search">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
+    return `<div class="top">
+        <label class="search grow">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
+        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div id="results">${searchResults()}</div>`;
   }
   // Места и фирмы, подходящие под запрос: по названию и по сфере
