@@ -661,7 +661,7 @@
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)} · записан ${when(p.at)}</div></div>
         <button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button></div>`).join('')}</div>` : ''}
-      <button class="btn primary block" data-act="outsider">${ic('seal')}Записать человека</button>
+      <button class="btn primary block" data-act="outsider">${ic('user')}Записать человека</button>
       <div class="btn-row" style="margin-top:8px">
         <button class="btn" data-act="newNode" data-v="place">${ic('pin')}Место</button>
         <button class="btn" data-act="newNode" data-v="company">${ic('house')}Фирму</button></div>
