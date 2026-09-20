@@ -49,6 +49,30 @@
 @keyframes pop { from { opacity: 0; transform: rotate(var(--a)) translate(calc(var(--r) * .75)) rotate(calc(-1 * var(--a))) translate(-50%, -50%) scale(.85); } }
 .rail .step { animation: fade 300ms var(--ease) both; animation-delay: calc(var(--k, 0) * 90ms); }
 
+/* Списки оживают по очереди — глаз успевает пройти сверху вниз */
+.stack > *, .rail-x > * { animation: rise 340ms var(--ease) both; }
+.stack > *:nth-child(2), .rail-x > *:nth-child(2) { animation-delay: 60ms; }
+.stack > *:nth-child(3), .rail-x > *:nth-child(3) { animation-delay: 120ms; }
+.stack > *:nth-child(4), .rail-x > *:nth-child(4) { animation-delay: 170ms; }
+.stack > *:nth-child(5), .rail-x > *:nth-child(5) { animation-delay: 210ms; }
+.stack > *:nth-child(n+6), .rail-x > *:nth-child(n+6) { animation-delay: 240ms; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+/* Нить цепочки прочерчивается сверху вниз — это подпись продукта */
+.rail .mark .line { transform-origin: top; animation: draw 420ms var(--ease) both; animation-delay: calc(var(--k, 0) * 90ms + 120ms); }
+@keyframes draw { from { transform: scaleY(0); } }
+
+/* Вкладки: переключение мягкое, без рывка */
+.tabs button { transition: background var(--base) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.tabs button:active { transform: scale(.97); }
+
+/* Числа в профиле набегают при открытии */
+.stat b { animation: rise 420ms var(--ease) both; animation-delay: 80ms; }
+
+/* Пока сеть открывается — вместо пустоты тени будущих карточек */
+.skeleton { animation: breathe 1.4s var(--ease) infinite; background: var(--mist); border-radius: var(--r-md); }
+@keyframes breathe { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+
 /* Заголовок на входе: слова проявляются один раз, коротко */
 .reveal > * { animation: reveal 460ms var(--ease) both; animation-delay: calc(var(--k, 0) * 80ms); }
 @keyframes reveal { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }

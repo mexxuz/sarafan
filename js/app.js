@@ -228,6 +228,24 @@
     drawNav(nav, active);
     if (hashChanged) window.scrollTo(0, 0);
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }
+    if (hashChanged) countUp(app);
+  }
+
+  // Числа в профиле набегают от нуля — видно, что за ними живые люди
+  const calmMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(root) {
+    if (calmMotion()) return;
+    root.querySelectorAll('.stat b').forEach((el) => {
+      const end = parseInt(el.textContent, 10);
+      if (!Number.isFinite(end) || end < 2 || end > 999) return;
+      const t0 = performance.now();
+      const tick = (t) => {
+        const k = Math.min(1, (t - t0) / 560);
+        el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3)));
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
   }
 
   function drawNav(show, active) {
@@ -1327,7 +1345,14 @@
   window.addEventListener('hashchange', () => { if (SH) closeSheet(); render(); });
 
   if (LIVE) {
-    $('#app').innerHTML = '<div class="empty" style="padding-top:38vh"><p class="muted">Открываем вашу сеть…</p></div>';
+    $('#app').innerHTML = `<div class="fade-in" style="padding:24px 20px">
+      <div class="row" style="gap:12px"><div class="skeleton" style="width:44px;height:44px;border-radius:50%"></div>
+        <div class="grow"><div class="skeleton" style="height:12px;width:40%"></div>
+          <div class="skeleton" style="height:16px;width:66%;margin-top:8px"></div></div></div>
+      <div class="skeleton" style="height:300px;border-radius:50%;margin:26px auto 0;width:300px;max-width:82vw"></div>
+      <div class="skeleton" style="height:52px;margin-top:26px"></div>
+      <div class="skeleton" style="height:150px;margin-top:16px"></div>
+      <p class="small muted" style="text-align:center;margin-top:18px">Открываем вашу сеть…</p></div>`;
     refresh().then(() => {
       // В Telegram сразу оставляем ключ для браузера: потом можно работать и без Telegram
       if (window.API.inTelegram && !window.API.hasSession()) window.API.keepMeIn().catch(() => {});
