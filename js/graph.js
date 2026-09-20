@@ -18,8 +18,10 @@ window.Graph = function (S) {
   const connected = (a, b) => !!(adj[a] && adj[a].has(b));
 
   const catById = Object.fromEntries(S.cats.map((c) => [c.id, c]));
-  const recsTo = (id, cat) => S.recs.filter((r) => r.to === id && (!cat || r.cat === cat));
-  const recsFrom = (id) => S.recs.filter((r) => r.from === id);
+  // Записи «только для себя» в общий счёт не идут: их видит лишь автор
+  const recsTo = (id, cat) => S.recs.filter((r) => r.to === id && !r.private && (!cat || r.cat === cat));
+  const recsFrom = (id) => S.recs.filter((r) => r.from === id && !r.private);
+  const myPrivate = () => S.recs.filter((r) => r.private && r.from === S.me);
 
   // Сферы человека: заявленные + те, в которых его рекомендуют (по убыванию числа рекомендаций)
   const catsOf = (id) => {
@@ -119,5 +121,5 @@ window.Graph = function (S) {
     return { given: given.length, people: new Set(given.map((r) => r.to)).size, cats: cats.size, answers, shared };
   };
 
-  return { adj, dist, pathTo, connected, catById, catsOf, recsTo, recsFrom, reputation, trust, matchCats, search, recommenderStats, groupsOf };
+  return { adj, dist, myPrivate, pathTo, connected, catById, catsOf, recsTo, recsFrom, reputation, trust, matchCats, search, recommenderStats, groupsOf };
 };

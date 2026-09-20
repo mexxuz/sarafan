@@ -873,9 +873,9 @@
     $('#app').innerHTML = `<div class="onb fade-in" style="padding-bottom:40px">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       <div class="reveal" style="text-align:center;margin-top:10px">
-        <h1 class="h1" style="--k:0">Записная книжка,</h1>
-        <h1 class="h1" style="--k:1">общая со знакомыми</h1>
-        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:310px">Ваш часовщик, педиатр, электрик — в одном месте. И то же самое от людей, которым вы доверяете. Входят по приглашению; работает и в браузере, без Telegram.</p>
+        <h1 class="h1" style="--k:0">Спросите своих —</h1>
+        <h1 class="h1" style="--k:1">получите имя</h1>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен часовщик, педиатр, электрик? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, за кого ручаются. Видно, кто ручается и через кого вы на него вышли.</p>
       </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
@@ -952,8 +952,8 @@
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
-      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Записная книжка,<br>общая со знакомыми</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:310px">У каждого есть свои проверенные: часовщик, педиатр, электрик, юрист. Здесь вы записываете их себе — и видите книжки тех, кому доверяете. Не рейтинг, а живая цепочка: кто из ваших знакомых человека знает.</p>
+      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Спросите своих —<br>получите имя</h1>
+      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен часовщик, педиатр, юрист? Знакомые посмотрят у себя и посоветуют того, за кого ручаются. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">1-й круг</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card onb" style="margin-top:10px"><div class="rules">
         ${rule('seal', 'Записать — не то же, что поручиться', 'Человек может быть в вашей книжке просто как знакомый. Рекомендация — отдельное действие, и она подписана вашим именем.')}
@@ -1049,9 +1049,9 @@
   // Рекомендовать знакомого
   function sheetRecommend(id, catId) {
     const prefer = G.catsOf(id);
-    const f = { cat: catId || prefer[0] || '', rel: '', text: '', interest: '', allCats: !prefer.length };
+    const f = { cat: catId || prefer[0] || '', rel: '', text: '', interest: '', priv: false, allCats: !prefer.length };
     const existing = () => G.recsFrom(S.me).find((r) => r.to === id && r.cat === f.cat);
-    const fillFromExisting = () => { const e = existing(); if (e) { f.text = e.text; f.rel = e.rel; f.interest = e.interest || ''; } };
+    const fillFromExisting = () => { const e = existing(); if (e) { f.text = e.text; f.rel = e.rel; f.interest = e.interest || ''; f.priv = !!e.private; } };
     fillFromExisting();
     openSheet({
       F: f,
@@ -1069,17 +1069,22 @@
             <p class="hint">Скрытый интерес ломает доверие ко всей сети, названный вслух — нет</p></div>
           ${e ? `<div class="note">Вы уже рекомендовали в этой сфере ${when(e.at)}. Изменения сохранятся с пометкой «изменена» — старую версию мы храним.</div>` : ''}
           ${limit ? `<div class="warn">${ic('alert')}<div>Сегодня вы уже дали ${REC_LIMIT} рекомендаций. Лимит защищает сеть от накруток — продолжить можно завтра.</div></div>` : ''}
-          <div class="note">Рекомендация подписана вашим именем, и её видят все. Звёзд здесь нет — только ваши слова.</div>
+          <button class="pick ${f.priv ? 'on' : ''}" data-act="set" data-k="priv" data-v="${f.priv ? '' : '1'}">
+            <span class="grow"><span class="h3" style="display:block">Только для себя</span>
+            <span class="small muted">Запись останется в вашей книжке: её не увидит ни этот человек, ни знакомые, и в его репутацию она не пойдёт</span></span><span class="radio"></span></button>
+          <div class="note">${f.priv
+            ? 'Пока запись только ваша. Её можно открыть кругу в любой момент — тогда она станет рекомендацией с вашим именем.'
+            : 'Рекомендация подписана вашим именем, и её видят знакомые. Звёзд здесь нет — только ваши слова.'}</div>
           <div class="s-foot"><button class="btn primary block" data-act="submitRec" data-id="${id}" data-submit>${ic('seal')}${e ? 'Сохранить изменения' : 'Отправить рекомендацию'}</button></div>`;
       },
       submit: () => {
         const e = existing();
         closeSheet();
         mutate(() => {
-          if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.interest = f.interest; e.edited = true; }
-          else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, at: Date.now(), confirmed: false });
-        }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest },
-          e ? 'Рекомендация обновлена' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
+          if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.interest = f.interest; e.private = f.priv; e.edited = true; }
+          else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, at: Date.now(), confirmed: false });
+        }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv },
+          e ? 'Запись обновлена' : f.priv ? 'Записали только для вас' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
       },
     });
   }
@@ -1156,7 +1161,8 @@
           <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
           <div class="field"><span>Кого советуете</span>${cands.map((x) => `<button class="pick ${f.person === x.id ? 'on' : ''}" data-act="set" data-k="person" data-v="${x.id}">${av(x.id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(U(x.id).name)}</span><span class="small muted">${x.mine ? 'Вы уже рекомендуете' : esc(who(x.id))}</span></span>${x.fit ? `<span class="tag brand">${esc(cat(q.cat).who)}</span>` : ''}<span class="radio"></span></button>`).join('')}</div>
           <label class="field"><span>Почему этот человек</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинил мне часы в прошлом году, взял недорого и сделал за три дня">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="20"></p></label>
-          ${canRec ? `<button class="pick ${f.asRec ? 'on' : ''}" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}"><span class="grow"><span class="h3" style="display:block">Сохранить и как рекомендацию</span><span class="small muted">Появится в профиле ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}»</span></span><span class="radio"></span></button>` : ''}
+          ${canRec ? `<div class="note" style="margin-top:12px">Ваш ответ сам ляжет в вашу книжку — записью о ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}». Её увидят знакомые, когда будут искать такого же человека.
+            <button class="btn ghost xs" style="margin-top:10px" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}">${f.asRec ? 'Не записывать, просто ответить' : 'Всё-таки записать'}</button></div>` : ''}
           <button class="btn ghost block" style="margin-top:12px" data-act="outsider" data-cat="${q.cat}">Нужного человека нет в Сарафане</button>
           <div class="s-foot"><button class="btn primary block" data-act="submitAnswer" data-submit>${ic('send')}Отправить ответ</button></div>`;
       },
