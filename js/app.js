@@ -874,7 +874,7 @@
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${photoBlock(n, can)}
       <div class="p-head">
-        <div class="node-line"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+        <div class="node-line ${n.photo ? 'on-photo' : ''}"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
           <span class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</span></div>
         <h1 class="h1" style="margin-top:-6px">${esc(n.name)}</h1>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
