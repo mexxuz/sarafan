@@ -389,6 +389,9 @@
       `<a href="#/ask" class="ask ${active === 'ask' ? 'on' : ''}" aria-label="Спросить свою сеть">${ic('ask')}<span>Спросить</span>${incoming ? `<i class="badge">${incoming}</i>` : ''}</a>` +
       item('net', '#/net', 'net', 'Сеть', pendingIn) + item('new', '#/new', 'bell', 'Новое', todo());
     movePill(n);
+    // меряем ещё раз, когда шрифт и подписи уже на месте — иначе подложка съезжает
+    requestAnimationFrame(() => movePill(n));
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => movePill(n));
   }
 
   // Подложка переезжает к выбранному разделу. Под круглой кнопкой «Спросить» её прячем
