@@ -1,2 +1,2 @@
 ﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://disks-spare-seventh-compromise.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://corners-capabilities-commodities-install.trycloudflare.com';
