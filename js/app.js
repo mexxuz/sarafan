@@ -338,19 +338,18 @@
     const numbers = r.rep.count
       ? `${r.rep.count} ${pl(r.rep.count, 'рекомендация', 'рекомендации', 'рекомендаций').split(' ').pop()} · ${pl(r.rep.independent, 'источник', 'источника', 'источников')}`
       : 'рекомендаций пока нет';
+    const circle = r.circle === 1 ? '1-й круг' : r.circle === 2 ? '2-й круг' : r.circle === 3 ? '3-й круг' : '';
     return `<a class="card tap pcard ${accent ? 'accent' : ''}" href="#/p/${u.id}?cat=${r.cat}">
       <div class="head">${av(u.id, '', r.circle === 1 ? 'r1' : r.circle === 2 ? 'r2' : '')}
-        <div class="grow"><div class="name">${esc(u.name)} ${trustMark(r.rep)}</div>
+        <div class="grow"><div class="name ellip">${esc(u.name)} ${trustMark(r.rep)}</div>
           <div class="job ellip">${esc(cat(r.cat).name)}${otherCats ? ` <span class="more">+${otherCats}</span>` : ''}</div></div>
-        ${circleTag(r.circle)}</div>
-      ${u.busy ? '<div class="chips" style="margin-top:10px"><span class="tag warm">сейчас не берёт</span></div>' : ''}
+        ${circle ? `<span class="tag circle-${r.circle}">${circle}</span>` : ''}</div>
+      <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
         <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
     : `<p class="quote empty">${r.circle === 1 ? 'Вы знакомы, но за него пока никто не ручался.' : 'За этого человека пока никто не ручался.'}</p>`}
-      ${r.rep.suspicious ? '<div class="chips" style="margin-top:8px"><span class="tag warm">одна тесная группа</span></div>' : ''}
       <div class="foot">${authors.length ? stack(authors) : ''}
-        <span class="grow"><span class="nums ellip">${numbers}</span><span class="who-line ellip">${who1}</span></span>
-        ${ic('arrow', 'arr')}</div></a>`;
+        <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
 
   const incomingRequests = () => S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !(q.skip || []).includes(S.me))

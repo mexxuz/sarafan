@@ -47,9 +47,9 @@
 .pcard .quote.empty { color: var(--ink-4); }
 .pcard .by { font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-4); margin-top: 7px; }
 .pcard .foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); padding-top: var(--s-3); border-top: 1px solid var(--line); }
-.pcard .foot .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.pcard .nums { font: 700 var(--fs-xxs)/1.2 var(--t); color: var(--ink); font-variant-numeric: tabular-nums; }
-.pcard .who-line { font: 500 var(--fs-xxs)/1.2 var(--t); color: var(--ink-4); }
+.pcard .foot .grow { flex: 1; min-width: 0; }
+.pcard .nums { font: 600 var(--fs-xxs)/1.3 var(--t); color: var(--ink-3); font-variant-numeric: tabular-nums; margin-top: 10px; }
+.pcard .who-line { font: 600 var(--fs-xxs)/1.2 var(--t); color: var(--ink-3); }
 .pcard .arr { width: 18px; height: 18px; color: var(--ink-4); flex: none; }
 .card.accent.pcard .foot { border-color: rgba(255, 255, 255, .28); }
 .card.accent.pcard .sub { color: rgba(255, 255, 255, .82); }
@@ -59,7 +59,7 @@
 .card.accent.pcard .quote { color: rgba(255, 255, 255, .92); }
 .card.accent.pcard .quote.empty, .card.accent.pcard .by,
 .card.accent.pcard .who-line { color: rgba(255, 255, 255, .75); }
-.card.accent.pcard .nums { color: #fff; }
+.card.accent.pcard .nums { color: rgba(255, 255, 255, .88); }
 .card.accent.pcard .arr { color: rgba(255, 255, 255, .8); }
 
 /* Горизонтальная лента карточек */
