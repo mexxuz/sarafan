@@ -1,2 +1,2 @@
 ﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://mercy-dat-mass-burke.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://onion-interpretation-mrna-universe.trycloudflare.com';
