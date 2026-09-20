@@ -341,3 +341,6 @@
 .fact { padding: var(--s-2) 0; }
 .fact + .fact { border-top: 1px dashed var(--line); }
 .fact p { margin: 0 0 6px; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
+
+/* Значок внутри обычного текста держим размером со строку */
+.p-head .about svg, .card p svg, .small svg { width: 15px; height: 15px; vertical-align: -2px; color: var(--ink-4); }
