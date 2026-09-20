@@ -4,29 +4,32 @@
    Всё остальное (карточки, шторки, ленты) остаётся тем же. */
 
 @media (min-width: 1000px) {
+  :root { --col: clamp(236px, calc(50% - 250px), 360px); }
+
   #app {
     max-width: 780px;
-    margin: 0 0 0 clamp(288px, calc(50% - 250px), 380px);
+    margin: 0 0 0 var(--col);
     padding: 0 var(--s-6) 120px;
   }
   #app.no-nav { padding-bottom: 120px; }
 
   /* ——— Меню слева ——— */
+  /* Меню — компактный столбик кнопок у самой колонки, а не панель во всю стену */
   .nav {
-    left: var(--s-6); right: auto; top: var(--s-6); bottom: var(--s-6); margin: 0;
-    width: 244px; height: auto; max-width: none; flex-direction: column;
-    align-items: stretch; justify-content: flex-start; gap: 4px;
-    padding: var(--s-5) var(--s-3); border-radius: 26px;
+    left: calc(var(--col) - 208px); right: auto; top: 26px; bottom: auto; margin: 0;
+    width: 188px; height: auto; max-width: none; flex-direction: column;
+    align-items: stretch; justify-content: flex-start; gap: 2px;
+    padding: var(--s-3); border-radius: 20px;
   }
   .nav.hide { transform: translateX(-120%); }
   .nav .pill { display: none; }
   .nav a {
-    flex: none; flex-direction: row; justify-content: flex-start; gap: 13px;
-    height: 46px; padding: 0 14px; border-radius: 14px; color: var(--ink-2);
+    flex: none; flex-direction: row; justify-content: flex-start; gap: 11px;
+    height: 42px; padding: 0 12px; border-radius: 12px; color: var(--ink-2);
     transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
   }
-  .nav a span { max-height: none; opacity: 1; font: 600 var(--fs-sm)/1 var(--t); }
-  .nav a svg { width: 20px; height: 20px; }
+  .nav a span { max-height: none; opacity: 1; font: 600 var(--fs-xs)/1 var(--t); }
+  .nav a svg { width: 18px; height: 18px; }
   .nav a.on { background: var(--blue-soft); color: var(--blue); }
   .nav a.on svg { transform: none; }
   .nav a .badge { position: absolute; right: 12px; top: 50%; margin-top: -9px; }
@@ -34,16 +37,16 @@
 
   /* «Спросить» — главное действие, отдельной кнопкой */
   .nav a.ask {
-    order: -1; margin-bottom: var(--s-3); height: 52px; border-radius: 16px;
+    order: -1; margin-bottom: 6px; height: 46px; border-radius: 14px;
     background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue);
   }
   .nav a.ask span { display: block; }
-  .nav a.ask svg { width: 21px; height: 21px; }
+  .nav a.ask svg { width: 19px; height: 19px; }
   @media (hover: hover) { .nav a.ask:hover { background: var(--blue-deep); } }
 
   /* ——— Полоса действий: внутри колонки, а не во всю ширину окна ——— */
   #actions, .actions {
-    left: clamp(288px, calc(50% - 250px), 380px); right: auto;
+    left: var(--col); right: auto;
     width: 780px; padding: var(--s-5) var(--s-6) var(--s-6);
   }
   #actions .inner { max-width: 520px; margin: 0; }
@@ -79,6 +82,5 @@
 
 /* Совсем широкие экраны: колонка встаёт по центру, меню прижато к ней */
 @media (min-width: 1500px) {
-  #app { margin-left: calc(50% - 280px); }
-  #actions, .actions { left: calc(50% - 280px); }
+  :root { --col: calc(50% - 280px); }
 }
