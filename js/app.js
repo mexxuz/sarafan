@@ -229,7 +229,7 @@
     n.hidden = !show;
     if (!show) return;
     const incoming = S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !q.answers.some((a) => a.from === S.me) && !(q.skip || []).includes(S.me)).length;
-    const pendingIn = S.conns.filter((c) => c.b === S.me && c.status === 'pending').length;
+    const pendingIn = S.conns.filter(askedMe).length;
     const item = (key, href, icon, label, badge) => `<a href="${href}" class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span>${badge ? `<i class="badge">${badge}</i>` : ''}</a>`;
     n.innerHTML = item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') +
       `<a href="#/ask" class="ask ${active === 'ask' ? 'on' : ''}" aria-label="Спросить свою сеть">${ic('ask')}<span>Спросить</span>${incoming ? `<i class="badge">${incoming}</i>` : ''}</a>` +
@@ -388,7 +388,7 @@
       .sort((a, b) => a.circle - b.circle || b.rep.independent - a.rep.independent)
       .slice(0, 6);
     const mine = S.requests.filter((q) => q.from === S.me && !q.closed).sort((a, b) => b.at - a.at).slice(0, 2);
-    const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
+    const pend = S.conns.filter(askedMe);
     const asks = S.intros.filter((i) => i.via === S.me && i.status === 'wait');
     const ev = feed();
     const op = orbitPeople(6, 8);
@@ -424,9 +424,10 @@
     <div class="btn-row"><button class="btn primary sm" data-act="introYes" data-id="${i.id}">Познакомить</button><button class="btn sm" data-act="introNo" data-id="${i.id}">Не сейчас</button></div></div>`;
 
   const connRequestCard = (c) => {
-    const common = [...(G.adj[c.a] || [])].filter((x) => G.connected(x, S.me));
-    return `<div class="card"><div class="row">${av(c.a)}<div class="grow"><a href="#/p/${c.a}" class="h3" style="text-decoration:none">${esc(U(c.a).name)}</a><div class="small muted">${common.length ? 'Общие знакомые: ' + esc(names(common)) : 'Общих знакомых нет'}</div></div></div>
-      <div class="btn-row" style="margin-top:12px"><button class="btn primary sm" data-act="acceptConn" data-id="${c.a}">Это мой знакомый</button><button class="btn ghost sm" data-act="declineConn" data-id="${c.a}">Не знаю</button></div></div>`;
+    const from = whoAsked(c);
+    const common = [...(G.adj[from] || [])].filter((x) => G.connected(x, S.me));
+    return `<div class="card"><div class="row">${av(from)}<div class="grow"><a href="#/p/${from}" class="h3" style="text-decoration:none">${esc(U(from).name)}</a><div class="small muted">${common.length ? 'Общие знакомые: ' + esc(names(common)) : 'Общих знакомых нет'}</div></div></div>
+      <div class="btn-row" style="margin-top:12px"><button class="btn primary sm" data-act="acceptConn" data-id="${from}">Это мой знакомый</button><button class="btn ghost sm" data-act="declineConn" data-id="${from}">Не знаю</button></div></div>`;
   };
 
   // ——— Поиск ———
@@ -497,16 +498,18 @@
     const shown = F.more ? recs : recs.slice(0, 5);
     const rs = G.recommenderStats(id);
     const given = G.recsFrom(id);
-    const intro = S.intros.find((x) => x.to === id);
-    const pendingOut = S.conns.find((c) => c.a === S.me && c.b === id && c.status === 'pending');
-    const pendingIn = S.conns.find((c) => c.a === id && c.b === S.me && c.status === 'pending');
+    // К дальнему человеку идём шагами, поэтому ждём ответа не про него, а про ближайшее звено
+    const stepGoal = t.chain && t.chain.length > 3 ? t.chain[2] : id;
+    const intro = S.intros.find((x) => x.to === stepGoal && x.from === S.me && x.status !== 'no');
+    const pendingOut = S.conns.find((c) => c.status === 'pending' && pairWith(c, id) && c.by === S.me);
+    const pendingIn = S.conns.find((c) => c.status === 'pending' && pairWith(c, id) && c.by === id);
 
     let actions;
     if (pendingIn) actions = `<button class="btn primary" data-act="acceptConn" data-id="${id}">${ic('check')}Это мой знакомый</button><button class="btn ghost" data-act="declineConn" data-id="${id}">Не знаю</button>`;
     else if (direct) actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button><button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${focus || ''}">${ic('seal')}Рекомендовать</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
     else if (intro && intro.status === 'ok') actions = `<button class="btn soft" data-act="write" data-id="${id}">${ic('chat')}Написать</button>${pendingOut ? '<button class="btn ghost" disabled>Заявка отправлена</button>' : `<button class="btn primary" data-act="addConn" data-id="${id}">${ic('plus')}В мою сеть</button>`}`;
     else if (intro) actions = `<button class="btn ghost" disabled>Ждём ответа: ${esc(first(intro.via))}</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
-    else if (t.chain && t.chain.length > 2) actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}Попросить знакомство</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
+    else if (t.chain && t.chain.length > 2) actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}${t.chain.length > 3 ? 'Шаг к знакомству' : 'Попросить знакомство'}</button><button class="btn ghost icon" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button>`;
     else actions = `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться контактом</button>`;
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
@@ -569,7 +572,7 @@
     const answers = q.answers.map((a, i) => {
       const t = G.trust(a.person, q.cat);
       const direct = G.connected(S.me, a.person);
-      const intro = S.intros.find((x) => x.to === a.person);
+      const intro = S.intros.find((x) => x.to === a.person && x.from === S.me);
       // Внизу карточки — одно действие: попросить знакомство.
       // Благодарность относится к тому, кто посоветовал, поэтому живёт наверху, рядом с его именем.
       const act = a.person === S.me ? '' : direct ? `<a class="btn soft sm block" href="#/p/${a.person}?cat=${q.cat}">Открыть профиль</a>`
@@ -598,7 +601,7 @@
     if (F.tab === undefined) F.tab = params.get('tab') || 'c1';
     const c1 = myContacts();
     const c2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2).sort((a, b) => U(a).name.localeCompare(U(b).name));
-    const pend = S.conns.filter((c) => c.b === S.me && c.status === 'pending');
+    const pend = S.conns.filter(askedMe);
     const inv = S.invite;
     const bot = S.bot || 'sarafanibot';
     const link = `t.me/${bot}?start=${inv.code}`;
@@ -768,6 +771,11 @@
     } catch (e) { toast(e.message); return null; }
   };
 
+  // Заявка в сеть: пара хранится один раз (a < b), кто позвал — в поле by
+  const askedMe = (c) => c.status === 'pending' && (c.a === S.me || c.b === S.me) && c.by !== S.me;
+  const whoAsked = (c) => (c.a === S.me ? c.b : c.a);
+  const pairWith = (c, id) => (c.a === S.me && c.b === id) || (c.b === S.me && c.a === id);
+
   const recsToday = () => G.recsFrom(S.me).filter((r) => Date.now() - r.at < 864e5).length;
   const REC_LIMIT = 5, MIN_TEXT = 40;
 
@@ -829,27 +837,33 @@
   // Попросить знакомство через общего знакомого
   function sheetIntro(id, catId, viaForced, fromReq) {
     const t = G.trust(id, catId);
-    const chain = viaForced ? [S.me, viaForced, id] : t.chain;
-    const via = chain[1];
+    const path = viaForced ? [S.me, viaForced, id] : (t.chain || [S.me, id]);
+    // Через сеть идут шагами: знакомит только общий знакомый, поэтому если человек
+    // дальше второго круга, сначала знакомимся со следующим звеном цепочки.
+    const step = path.slice(0, 3);
+    const via = step[1];
+    const goal = step[2] || id;
+    const far = goal !== id;
     // Если знакомство просят из своего запроса — задача уже описана, незачем писать заново
     const req = fromReq ? S.requests.find((x) => x.id === fromReq && x.from === S.me) : null;
     const f = { text: req ? req.text : '' };
     openSheet({
       F: f,
       valid: () => f.text.trim().length >= 10,
-      render: () => `${sheetHead(null, 'Попросить знакомство', 'Через: ' + esc(U(via).name))}
-        <div class="card" style="box-shadow:none;background:var(--card-2);margin-top:12px">${chainBig(chain, viaForced || t.via, catId)}</div>
+      render: () => `${sheetHead(null, far ? 'Шаг к знакомству' : 'Попросить знакомство', 'Через: ' + esc(U(via).name))}
+        <div class="card" style="box-shadow:none;background:var(--card-2);margin-top:12px">${chainBig(step, viaForced || t.via, catId)}</div>
+        ${far ? `<div class="note" style="margin-top:12px">До ${esc(first(id))} два шага: знакомить может только общий знакомый. Сначала знакомимся с ${esc(first(goal))} — дальше просьба пойдёт уже через него.</div>` : ''}
         <label class="field"><span>Коротко о задаче</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: нужен логотип и вывеска для кофейни, бюджет обсуждаем">${esc(f.text)}</textarea>${req ? '<p class="hint">Взяли из вашего запроса — поправьте, если нужно</p>' : '<p class="hint" data-count="text" data-min="10"></p>'}</label>
-        <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(id).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
+        <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(goal).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitIntro" data-submit>${ic('hand')}Отправить просьбу</button></div>`,
       submit: () => {
         const text = f.text.trim();
         closeSheet();
         mutate(() => {
-          const x = { id: 'i' + uid(), from: S.me, via, to: id, cat: catId, text, status: 'wait', at: Date.now() };
+          const x = { id: 'i' + uid(), from: S.me, via, to: goal, cat: catId, text, status: 'wait', at: Date.now() };
           S.intros.push(x);
-          setTimeout(() => { x.status = 'ok'; commit(); toast('Знакомство одобрено — можно написать: ' + U(id).name.split(' ')[0]); }, 5000);
-        }, '/intros', { to: id, via, cat: catId || null, text }, 'Просьба отправлена: ' + U(via).name);
+          setTimeout(() => { x.status = 'ok'; commit(); toast('Знакомство одобрено — можно написать: ' + first(goal)); }, 5000);
+        }, '/intros', { to: goal, via, cat: catId || null, text }, 'Просьба отправлена: ' + U(via).name);
       },
     });
   }
@@ -1011,16 +1025,16 @@
     submitIntro: () => SH.submit(),
     write: (d) => toast(tg ? 'Откроем чат в Telegram' : `В рабочей версии откроется чат с ${U(d.id).name.split(' ')[0]} в Telegram`),
     addConn: (d) => mutate(() => {
-      S.conns.push({ a: S.me, b: d.id, status: 'pending', at: Date.now() });
-      setTimeout(() => { const c = S.conns.find((x) => x.a === S.me && x.b === d.id); if (c) { c.status = 'ok'; commit(); toast(U(d.id).name + ' теперь в вашей сети'); } }, 4000);
+      S.conns.push({ a: S.me, b: d.id, by: S.me, status: 'pending', at: Date.now() });
+      setTimeout(() => { const c = S.conns.find((x) => pairWith(x, d.id)); if (c) { c.status = 'ok'; commit(); toast(U(d.id).name + ' теперь в вашей сети'); } }, 4000);
     }, '/connections/ask', { user: d.id }, 'Заявка отправлена'),
     introYes: (d) => mutate(() => { const i = S.intros.find((x) => x.id === d.id); if (i) i.status = 'ok'; },
       '/intros/decide', { id: d.id, ok: true }, 'Знакомство состоялось — оба получат уведомление'),
     introNo: (d) => mutate(() => { const i = S.intros.find((x) => x.id === d.id); if (i) i.status = 'no'; },
       '/intros/decide', { id: d.id, ok: false }, 'Отказали. Человек об этом не узнает'),
-    acceptConn: (d) => mutate(() => { const c = S.conns.find((x) => x.a === d.id && x.b === S.me); c.status = 'ok'; c.at = Date.now(); },
+    acceptConn: (d) => mutate(() => { const c = S.conns.find((x) => pairWith(x, d.id) && x.status === 'pending'); if (c) { c.status = 'ok'; c.at = Date.now(); } },
       '/connections/accept', { user: d.id }, U(d.id).name + ' теперь в вашей сети'),
-    declineConn: (d) => mutate(() => { S.conns = S.conns.filter((x) => !(x.a === d.id && x.b === S.me && x.status === 'pending')); },
+    declineConn: (d) => mutate(() => { S.conns = S.conns.filter((x) => !(pairWith(x, d.id) && x.status === 'pending')); },
       '/connections/decline', { user: d.id }, 'Заявка отклонена. Человек об этом не узнает'),
     // Запросы
     askCat: (d) => { F.cat = d.v || ''; F.catTouched = true; F.allCats = false; $('#askcats').innerHTML = askCats(); syncForm(); },

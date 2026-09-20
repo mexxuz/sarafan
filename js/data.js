@@ -67,7 +67,7 @@ window.buildSeed = function () {
   const outsider = () => { const id = 'x' + pi; add(id, pool[pi % pool.length], [], '', 60 + pi * 3, null); pi++; return id; };
 
   const conns = [];
-  const link = (a, b, status = 'ok', d = 30) => conns.push({ a, b, status, at: ago(d) });
+  const link = (a, b, status = 'ok', d = 30) => conns.push({ a, b, by: a, status, at: ago(d) });
   ['u1', 'u2', 'u3', 'u4', 'u5', 'u6'].forEach((c, i) => link('u0', c, 'ok', 40 - i * 4));
   link('u1', 'u7'); link('u2', 'u7'); link('u1', 'u14'); link('u1', 'u2'); link('u1', 'u5');
   link('u3', 'u8'); link('u2', 'u9'); link('u2', 'u11'); link('u2', 'u13'); link('u6', 'u11');
