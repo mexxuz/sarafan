@@ -523,3 +523,26 @@
 .how-row span { flex: 0 0 92px; font-size: var(--fs-xxs); color: var(--ink-3); }
 .how-row b { font: 600 var(--fs-sm)/1.4 var(--t); color: var(--ink); }
 
+/* Пустая галерея: рамки-примеры вместо снимков — видно, что получится */
+.works.ghost { margin-bottom: var(--s-2); }
+.work-ghost {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  aspect-ratio: 4 / 3; padding: var(--s-3); cursor: pointer; text-align: center;
+  border-radius: var(--r-md); background: var(--mist);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: background var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+.work-ghost svg { width: 20px; height: 20px; color: var(--ink-4); }
+.work-ghost b { font: 700 var(--fs-xxs)/1.25 var(--t); color: var(--ink-3); }
+.work-ghost span { font-size: 10px; color: var(--ink-4); }
+.work-ghost.sm { aspect-ratio: 1; gap: 3px; padding: var(--s-2); }
+.work-ghost.sm svg { width: 16px; height: 16px; }
+.work-ghost.sm span { font: 600 9.5px/1.2 var(--t); }
+@media (hover: hover) {
+  .work-ghost:hover { background: var(--blue-soft); box-shadow: inset 0 0 0 1.5px rgba(47, 123, 255, .35); }
+  .work-ghost:hover svg, .work-ghost:hover b { color: var(--blue); }
+}
+/* Пример витрины: то же оформление, но приглушённое — чтобы не спутать со своим */
+.ghost-dir { box-shadow: none; background: var(--mist); }
+.ghost-dir .h3 { color: var(--ink-2); }
+

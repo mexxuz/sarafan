@@ -426,6 +426,19 @@
   const srvUrl = (u) => (u.startsWith('http') ? u : (window.SARAFAN_SERVER || '').replace(/\/$/, '') + u);
   const lines = (t) => (t || '').split('\n').map((x) => x.trim()).filter(Boolean);
 
+  // Пустая галерея: показываем рамки-примеры, чтобы человек увидел, что получится
+  const GHOST_WORKS = [
+    ['Что было до', 'снимок «до»'],
+    ['Что получилось', 'снимок «после»'],
+    ['Как шла работа', 'процесс, детали'],
+    ['Где это стоит', 'готовое на месте'],
+  ];
+  const worksGhost = (dirId) => `<div class="works ghost">
+    ${GHOST_WORKS.map(([t, hint]) => `<label class="work-ghost">${ic('cam')}<b>${t}</b><span>${hint}</span>
+      <input type="file" accept="image/*" class="workfile" data-dir="${dirId || ''}" hidden></label>`).join('')}
+  </div>
+  <p class="hint" style="text-align:center">Так галерея выглядит заполненной. Нажмите на любую рамку — и вместо неё встанет ваш снимок.</p>`;
+
   // Картинки работ одного направления
   const workStrip = (list) => (list.length
     ? `<div class="works">${list.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="${esc(w.title)}" loading="lazy">
@@ -447,7 +460,7 @@
         <div class="dir-head"><h3 class="h3">${esc(d.title)}</h3>${mine.length ? `<span class="tag">${pl(mine.length, 'работа', 'работы', 'работ')}</span>` : ''}</div>
         ${d.story ? `<p class="small" style="margin:6px 0 0;color:var(--ink-2);line-height:1.55">${esc(d.story).split('\n').join('<br>')}</p>` : ''}
         ${d.prices ? `<p class="dir-price">${esc(d.prices)}</p>` : ''}
-        ${workStrip(mine)}</div>`;
+        ${mine.length ? workStrip(mine) : (id === S.me ? worksGhost(d.id) : '')}</div>`;
     }).join('')}
       ${workStrip(loose)}
       <div class="card">
@@ -1533,7 +1546,11 @@
       ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
         <h2 class="h2" style="margin:6px 0 6px">Расскажите о работе</h2>
         <p class="small muted" style="margin:0 0 12px">Что вы делаете, как считаете деньги, где посмотреть работы. Витрину видят все, кто открывает вашу карточку.</p>
-        <button class="btn primary block" data-act="editShowcase">${ic('seal')}Заполнить витрину</button></div>`
+        <div class="dir ghost-dir"><div class="dir-head"><h3 class="h3">Свадебная съёмка</h3><span class="tag">пример</span></div>
+          <p class="small" style="margin:6px 0 0;color:var(--ink-3)">Снимаю день целиком, отдаю 300 кадров за две недели</p>
+          <p class="dir-price">День — от 4 млн, обработка входит</p>
+          ${worksGhost('')}</div>
+        <button class="btn primary block" style="margin-top:14px" data-act="editShowcase">${ic('seal')}Заполнить витрину</button></div>`
     : `<div class="card" style="margin-top:18px"><div class="eyebrow">витрина</div>
         <h2 class="h2" style="margin:6px 0 6px">Показать свои работы</h2>
         <p class="small muted" style="margin:0 0 12px">Обычная карточка с рекомендациями есть у всех и всегда бесплатна. Витрина — для тех, кому сеть приносит работу: рассказ о себе, услуги, цены, ссылки и до 12 примеров работ.</p>
@@ -2199,7 +2216,9 @@
               <div class="row"><b class="grow">${esc(d.title)}</b>
                 <button class="btn ghost xs" data-act="editDir" data-id="${d.id}">Править</button></div>
               ${mine.length ? `<div class="works small-works">${mine.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
-                <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
+                <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>`
+        : `<div class="works small-works ghost">${GHOST_WORKS.slice(0, 3).map(([t]) => `<label class="work-ghost sm">${ic('cam')}<span>${t}</span>
+                <input type="file" accept="image/*" class="workfile" data-dir="${d.id}" hidden></label>`).join('')}</div>`}
               <label class="btn ghost xs" style="margin-top:8px;cursor:pointer">${ic('plus')}Картинка сюда
                 <input type="file" accept="image/*" class="workfile" data-dir="${d.id}" hidden></label></div>`;
     }).join('')}
