@@ -195,6 +195,7 @@
     pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
     spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
+    house: '<path d="M4 21V9.4a1 1 0 0 1 .5-.87l6.5-3.8a1 1 0 0 1 1 0l6.5 3.8a1 1 0 0 1 .5.87V21"/><path d="M3 21h18"/><path d="M9.5 21v-4.2a2.5 2.5 0 0 1 5 0V21"/>',
     cam: '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.3-2h6.8l1.3 2h2.8A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/>',
     edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/>',
     dots3: '<circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
@@ -717,7 +718,7 @@
         <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
         <div class="field"><span>Что советуете</span>
           ${list.length ? list.map((n) => `<button class="pick ${f.node === n.id ? 'on' : ''}" data-act="set" data-k="node" data-v="${n.id}">
-            <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+            <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
             <span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span>
             <span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}${n.address ? ' · ' + esc(n.address) : ''}</span></span>
             <span class="radio"></span></button>`).join('')
@@ -835,7 +836,7 @@
         : esc(first(n.by)) + ' записал';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
-      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>`}
+      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}
         <div class="grow"><div class="name ellip">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         <span class="tag ${n.closed ? 'warm' : ''}">${n.closed ? 'закрылось' : NODE_KIND[n.kind]}</span></div>
@@ -874,7 +875,7 @@
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${photoBlock(n, can)}
       <div class="p-head">
-        <div class="node-line ${n.photo ? 'on-photo' : ''}"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${ic(n.kind === 'company' ? 'net' : 'pin')}</span>
+        <div class="node-line ${n.photo ? 'on-photo' : ''}"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
           <span class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</span></div>
         <h1 class="h1" style="margin-top:-6px">${esc(n.name)}</h1>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
