@@ -289,10 +289,27 @@
     const np = $('#nodephoto', app);
     if (np) np.onchange = () => uploadPlacePhoto(np.files && np.files[0], np.dataset.node);
     wireRails(app);
+    syncBackButton(active, nav);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
     if (name === 'map') mountCloud('bigcloud', F.show === 'near' ? 1 : 2, F.show !== 'people');
   }
+
+  // Жест «назад» на телефоне. Пока Telegram не видит своей кнопки возврата,
+  // он считает, что возвращаться некуда, и просто сворачивает приложение.
+  // Поэтому на каждом экране, кроме главной, кнопку показываем — тогда и жест,
+  // и системная кнопка Android ведут на предыдущий экран.
+  const goBack = () => {
+    if (SH) { closeSheet(); return; }          // открыта шторка — «назад» закрывает её
+    navBack = true;
+    if (history.length > 1) history.back(); else go('#/');
+  };
+  function syncBackButton(active, nav) {
+    if (!tg || !tg.BackButton) return;
+    const home = !location.hash || location.hash === '#/' || (nav && active === 'home');
+    try { home ? tg.BackButton.hide() : tg.BackButton.show(); } catch (e) { /* старое приложение Telegram */ }
+  }
+  if (tg && tg.onEvent) { try { tg.onEvent('backButtonClicked', goBack); } catch (e) { /* старое приложение */ } }
 
   // Ленты вбок: пальцем они листались всегда, а мышью — нет.
   // Колесо крутит ленту, пока она не упёрлась в край, и её же можно тянуть мышью.
@@ -1933,7 +1950,7 @@
   // ——— Действия ———
   const ACT = {
     goto: (d) => go(d.h),
-    back: () => { navBack = true; return history.length > 1 ? history.back() : go('#/'); },
+    back: () => goBack(),
     closeSheet: (d) => { const s = SH; closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
     peek: (d) => sheetPeek(d.id),
     set: (d) => {
