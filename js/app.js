@@ -1604,7 +1604,7 @@
       gain: 'Куда ходят свои: с часами работы, ценами и именем того, кто это проверил',
       scene: `<div class="sc sc-places">
         <div class="place-card">
-          <div class="cover"><span class="pin">${ic('pin')}</span></div>
+          <div class="sc-cover"><span class="pin">${ic('pin')}</span></div>
           <b>Чайхана Центральная</b><s>кухня и торты</s>
           <i class="fact f1">Плов до 14:00, потом шашлык</i>
           <i class="fact f2">Есть зал для большой компании</i>

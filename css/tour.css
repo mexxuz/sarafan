@@ -118,7 +118,7 @@
   border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-3); text-align: left; overflow: hidden;
   animation: rise 560ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
-.sc-places .cover { position: relative; margin: 0 calc(-1 * var(--s-4)) 22px; height: 84px; background: linear-gradient(140deg, #e7a877, #c07a4e); }
+.sc-places .sc-cover { position: relative; margin: 0 calc(-1 * var(--s-4)) 22px; height: 84px; background: linear-gradient(140deg, #e7a877, #c07a4e); }
 .sc-places .pin {
   position: absolute; left: var(--s-4); bottom: -16px; width: 32px; height: 32px; border-radius: 50%;
   display: grid; place-items: center; background: var(--paper); color: var(--blue); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
