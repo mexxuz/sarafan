@@ -1,0 +1,81 @@
+/* ——— БОЛЬШОЙ ЭКРАН ———
+   От 1000 пикселей приложение перестаёт быть узкой лентой телефона:
+   меню уходит в колонку слева, содержимое получает ширину, облако — высоту.
+   Всё остальное (карточки, шторки, ленты) остаётся тем же. */
+
+@media (min-width: 1000px) {
+  #app {
+    max-width: 780px;
+    margin: 0 0 0 clamp(288px, calc(50% - 250px), 380px);
+    padding: 0 var(--s-6) 120px;
+  }
+  #app.no-nav { padding-bottom: 120px; }
+
+  /* ——— Меню слева ——— */
+  .nav {
+    left: var(--s-6); right: auto; top: var(--s-6); bottom: var(--s-6); margin: 0;
+    width: 244px; height: auto; max-width: none; flex-direction: column;
+    align-items: stretch; justify-content: flex-start; gap: 4px;
+    padding: var(--s-5) var(--s-3); border-radius: 26px;
+  }
+  .nav.hide { transform: translateX(-120%); }
+  .nav .pill { display: none; }
+  .nav a {
+    flex: none; flex-direction: row; justify-content: flex-start; gap: 13px;
+    height: 46px; padding: 0 14px; border-radius: 14px; color: var(--ink-2);
+    transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  }
+  .nav a span { max-height: none; opacity: 1; font: 600 var(--fs-sm)/1 var(--t); }
+  .nav a svg { width: 20px; height: 20px; }
+  .nav a.on { background: var(--blue-soft); color: var(--blue); }
+  .nav a.on svg { transform: none; }
+  .nav a .badge { position: absolute; right: 12px; top: 50%; margin-top: -9px; }
+  @media (hover: hover) { .nav a:hover { background: var(--mist); } .nav a.on:hover { background: var(--blue-soft); } }
+
+  /* «Спросить» — главное действие, отдельной кнопкой */
+  .nav a.ask {
+    order: -1; margin-bottom: var(--s-3); height: 52px; border-radius: 16px;
+    background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue);
+  }
+  .nav a.ask span { display: block; }
+  .nav a.ask svg { width: 21px; height: 21px; }
+  @media (hover: hover) { .nav a.ask:hover { background: var(--blue-deep); } }
+
+  /* ——— Полоса действий: внутри колонки, а не во всю ширину окна ——— */
+  #actions, .actions {
+    left: clamp(288px, calc(50% - 250px), 380px); right: auto;
+    width: 780px; padding: var(--s-5) var(--s-6) var(--s-6);
+  }
+  #actions .inner { max-width: 520px; margin: 0; }
+
+  /* ——— Содержимое дышит шире ——— */
+  .cloud-box { height: 520px; }
+  .cloud-box.big { height: 620px; }
+  .rail-x > * { flex: 0 0 300px; width: 300px; }
+  .cat-grid { grid-template-columns: repeat(3, 1fr); }
+  .stat-grid { gap: var(--s-6); }
+  .node-photo.full { height: 320px; }
+  .search { max-width: none; }
+
+  /* Шапка экрана шире, заголовок крупнее */
+  .top.screen { min-height: 86px; }
+  .top.screen .h1.one { font-size: var(--fs-3xl); }
+
+  /* ——— Шторка снизу превращается в окно по центру ——— */
+  .sheet .panel {
+    left: 50%; right: auto; bottom: auto; top: 50%; width: 520px; max-width: calc(100vw - 48px);
+    max-height: 84vh; transform: translate(-50%, -46%) scale(.98); border-radius: 24px;
+  }
+  .sheet.open .panel { transform: translate(-50%, -50%) scale(1); }
+  .sheet .panel .grab { display: none; }
+  .sheet .panel .body { padding-top: var(--s-5); }
+
+  /* Всплывающее сообщение — над колонкой, а не над телефонным меню */
+  #toast { bottom: var(--s-6); }
+}
+
+/* Совсем широкие экраны: колонка встаёт по центру, меню прижато к ней */
+@media (min-width: 1500px) {
+  #app { margin-left: calc(50% - 280px); }
+  #actions, .actions { left: calc(50% - 280px); }
+}
