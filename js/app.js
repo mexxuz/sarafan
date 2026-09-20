@@ -78,43 +78,45 @@
                      'Маркетолог', 'Электрик', 'Кондитер'];
 
   // ——— Орбита: вы в центре, 1-й круг рядом, 2-й круг дальше ———
+  // Живые люди и свободные места стоят на одном круге, поделённом поровну,
+  // и плывут вместе: ближний круг в одну сторону, дальний — в другую.
   const orbit = (o) => {
     const box = Math.min(o.size || 320, window.innerWidth - (o.big ? 76 : 44), 400);
     const inner = o.inner || [], outer = o.outer || [];
     let k = 0;
-    const ring = (ids, rPct, size, cls, label) => ids.map((id, i) => {
-      const step = 360 / Math.max(ids.length, 1);
-      const a = -90 + step * i + (cls === 'out' ? step / 2 : 0);
-      const via = '';
-      return `<button class="orb ${cls} ${o.dim && o.dim !== cls ? 'dim' : ''}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px;--i:${k++}" data-act="peek" data-id="${id}" aria-label="${esc(U(id).name)}">${av(id, size, cls === 'in' ? 'r1' : 'r2')}${label ? `<i>${esc(first(id))}${via}</i>` : ''}</button>`;
-    }).join('');
-    // Пустые места на орбите: медленно вращаются, показывают, как сеть будет выглядеть.
-    // У каждого — пример занятия, чтобы было понятно, кого тут находят.
-    const ghosts = (count, rPct, size, cls) => {
-      if (!count) return '';
-      const roles = cls === 'in' ? GHOST_IN : GHOST_OUT;
-      const step = 360 / count;
-      return Array.from({ length: count }, (_, i) => {
-        const a = -90 + step * i + (cls === 'out' ? step / 2 : 0);
-        return `<span class="orb ghost ${cls}" style="--a:${a}deg;--r:${Math.round(box * rPct)}px">
-          <span class="ghost-in"><span class="ghost-av ${size}">${ic('user')}</span>
-          <i class="ghost-tip">${esc(roles[i % roles.length])}</i></span></span>`;
-      }).join('');
-    };
-    const gIn = Math.max(0, (o.ghost ? o.ghost.inner : 0) - inner.length);
-    const gOut = Math.max(0, (o.ghost ? o.ghost.outer : 0) - outer.length);
-    const spin = (gIn || gOut)
-      ? `<div class="spin slow">${ghosts(gIn, 0.295, o.big ? 's' : 'xs', 'in')}</div>
-         <div class="spin rev">${ghosts(gOut, 0.47, 'xs', 'out')}</div>`
-      : '';
 
+    const ring = (ids, ghostCount, rPct, size, cls, withLabel) => {
+      const slots = Math.max(ids.length, ghostCount || 0);
+      if (!slots) return '';
+      const roles = cls === 'in' ? GHOST_IN : GHOST_OUT;
+      const step = 360 / slots;
+      const r = Math.round(box * rPct);
+      let out = '';
+      for (let i = 0; i < slots; i++) {
+        const a = -90 + step * i + (cls === 'out' ? step / 2 : 0);
+        const pos = `--a:${a}deg;--r:${r}px`;
+        if (i < ids.length) {
+          const id = ids[i];
+          out += `<button class="orb ${cls} ${o.dim && o.dim !== cls ? 'dim' : ''}" style="${pos};--i:${k++}"
+            data-act="peek" data-id="${id}" aria-label="${esc(U(id).name)}"><span class="orb-in">
+            ${av(id, size, cls === 'in' ? 'r1' : 'r2')}${withLabel ? `<i>${esc(first(id))}</i>` : ''}</span></button>`;
+        } else {
+          const role = roles[(i - ids.length) % roles.length];
+          out += `<span class="orb ghost ${cls}" style="${pos}"><span class="orb-in">
+            <span class="ghost-av ${size}">${ic('user')}</span><i class="ghost-tip">${esc(role)}</i></span></span>`;
+        }
+      }
+      return out;
+    };
+
+    const g = o.ghost || {};
     return `<div class="orbit" style="width:${box}px;height:${box}px">
       <div class="ring r-in"></div><div class="ring r-out"></div>
-      ${spin}
-      <div class="core">${av(S.me, 'l', 'r1')}${o.cap ? `<span class="cap">${esc(o.cap)}</span>` : ''}</div>
-      ${ring(inner, 0.295, o.big ? 's' : 'xs', 'in', o.labels !== false)}
-      ${ring(outer, 0.47, 'xs', 'out', !!o.big)}</div>`;
+      <div class="spin slow">${ring(inner, g.inner, 0.295, o.big ? 's' : 'xs', 'in', o.labels !== false)}</div>
+      <div class="spin rev">${ring(outer, g.outer, 0.47, 'xs', 'out', !!o.big)}</div>
+      <div class="core">${av(S.me, 'l', 'r1')}${o.cap ? `<span class="cap">${esc(o.cap)}</span>` : ''}</div></div>`;
   };
+
   const orbitPeople = (n1, n2) => {
     const c1 = myContacts();
     const c2 = Object.keys(G.dist).filter((x) => G.dist[x] === 2)
