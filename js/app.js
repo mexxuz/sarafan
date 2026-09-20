@@ -318,32 +318,39 @@
       <p class="txt">${esc(r.text)}</p>${target}</div>`;
   };
 
+  // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто ручается.
+  // Главное — не числа, а чужие слова: ради них сюда и приходят.
   const resultCard = (r, accent) => {
     const u = r.user;
     const iRec = r.rep.near.includes(S.me);
     const others = r.rep.near.filter((a) => a !== S.me);
     const authors = [...new Set(r.rep.recs ? r.rep.recs.map((x) => x.from) : [])]
       .sort((a, b) => (G.dist[a] ?? 9) - (G.dist[b] ?? 9));
-    let reason;
-    if (iRec) reason = 'Вы рекомендуете' + (others.length ? ', и ещё ' + names(others) : '');
-    else if (others.length) reason = 'Рекомендуют: ' + names(others);
-    else if (r.via) reason = 'Рекомендует: ' + esc(U(r.via).name);
-    else if (r.circle === 1) reason = 'Ваш контакт';
-    else reason = 'Нет общих знакомых';
+    // цитата — от самого близкого человека, его же имя под ней
+    const best = (r.rep.recs || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
+    let who1;
+    if (iRec) who1 = 'Вы ручаетесь' + (others.length ? ' и ещё ' + pl(others.length, 'человек', 'человека', 'человек') : '');
+    else if (others.length) who1 = 'Ручаются: ' + names(others.slice(0, 2));
+    else if (r.via) who1 = 'Ручается ' + esc(first(r.via));
+    else if (r.circle === 1) who1 = 'Ваш контакт';
+    else who1 = 'Общих знакомых нет';
     const otherCats = G.catsOf(u.id).filter((c) => c !== r.cat).length;
+    const numbers = r.rep.count
+      ? `${r.rep.count} ${pl(r.rep.count, 'рекомендация', 'рекомендации', 'рекомендаций').split(' ').pop()} · ${pl(r.rep.independent, 'источник', 'источника', 'источников')}`
+      : 'рекомендаций пока нет';
     return `<a class="card tap pcard ${accent ? 'accent' : ''}" href="#/p/${u.id}?cat=${r.cat}">
       <div class="head">${av(u.id, '', r.circle === 1 ? 'r1' : r.circle === 2 ? 'r2' : '')}
         <div class="grow"><div class="name">${esc(u.name)} ${trustMark(r.rep)}</div>
-          <div class="sub ellip">${reason}</div></div>
+          <div class="job ellip">${esc(cat(r.cat).name)}${otherCats ? ` <span class="more">+${otherCats}</span>` : ''}</div></div>
         ${circleTag(r.circle)}</div>
-      <div class="role">${esc(cat(r.cat).name)}</div>
-      ${r.chain && r.circle > 1 ? `<div style="margin:0 0 10px">${chainLine(r.chain)}</div>` : ''}
-      <div class="meta">${r.rep.count
-        ? `<span class="tag">${pl(r.rep.count, 'рекомендация', 'рекомендации', 'рекомендаций')}</span><span class="tag">${pl(r.rep.independent, 'источник', 'источника', 'источников')}</span>`
-        : '<span class="tag">рекомендаций пока нет</span>'}${otherCats ? `<span class="tag">+${otherCats}</span>` : ''}
-        ${r.rep.suspicious ? '<span class="tag warm">одна тесная группа</span>' : ''}</div>
-      <div class="foot">${stack(authors)}<span class="grow"></span>
-        <span class="go">Открыть ${ic('arrow')}</span></div></a>`;
+      ${u.busy ? '<div class="chips" style="margin-top:10px"><span class="tag warm">сейчас не берёт</span></div>' : ''}
+      ${best ? `<p class="quote">«${esc(best.text)}»</p>
+        <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
+    : `<p class="quote empty">${r.circle === 1 ? 'Вы знакомы, но за него пока никто не ручался.' : 'За этого человека пока никто не ручался.'}</p>`}
+      ${r.rep.suspicious ? '<div class="chips" style="margin-top:8px"><span class="tag warm">одна тесная группа</span></div>' : ''}
+      <div class="foot">${authors.length ? stack(authors) : ''}
+        <span class="grow"><span class="nums ellip">${numbers}</span><span class="who-line ellip">${who1}</span></span>
+        ${ic('arrow', 'arr')}</div></a>`;
   };
 
   const incomingRequests = () => S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !(q.skip || []).includes(S.me))
