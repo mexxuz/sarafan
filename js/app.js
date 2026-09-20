@@ -624,12 +624,6 @@
       <p class="cloud-gain">${op.total1
     ? `Через ${pl(op.total1, 'знакомого', 'знакомых', 'знакомых')} вам открыто <b>${pl(op.total2, 'человек', 'человека', 'человек')}</b>, которых вы не знаете лично${nodesAll().length ? ` и <b>${pl(nodesAll().length, 'проверенное место', 'проверенных места', 'проверенных мест')}</b>` : ''}`
     : 'Позовите первого знакомого — и его книжка откроется вам целиком'}</p>
-      <div class="cloud-legend">
-        <span><i class="lg-me"></i>вы</span>
-        <span><i class="lg-1"></i>${pl(op.total1, 'контакт', 'контакта', 'контактов')}</span>
-        <span><i class="lg-2"></i>${pl(op.total2, 'человек', 'человека', 'человек')} через них</span>
-        <span><i class="lg-place"></i>места</span>
-        <span><i class="lg-co"></i>фирмы</span></div>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
       <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
