@@ -373,17 +373,24 @@
 .cloud-box {
   position: relative; z-index: 0;
   margin: calc(-1 * var(--head-h, 66px)) calc(-1 * var(--s-5)) 0;
-  height: 420px; background: none;
+  height: 430px;
+  background: radial-gradient(75% 55% at 50% 42%, rgba(47, 123, 255, .08) 0%, rgba(47, 123, 255, .03) 45%, rgba(47, 123, 255, 0) 72%);
 }
 .cloud-box.big { height: 66vh; min-height: 420px; margin-top: var(--s-2); }
-.cloud-where {
-  position: relative; z-index: 1; margin-top: calc(-1 * var(--s-4));
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  font: 700 var(--fs-sm)/1.2 var(--t); color: var(--ink-2);
-}
-.cloud-where svg { width: 15px; height: 15px; color: var(--blue); }
+
 .cloud-box.big { height: 62vh; min-height: 380px; }
-.cloud-box canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+.cloud-box canvas {
+  width: 100%; height: 100%; display: block; touch-action: none;
+  /* к краям облако растворяется в фоне: без этого низ выглядел обрезанным ножом */
+  -webkit-mask-image:
+    radial-gradient(130% 96% at 50% 46%, #000 52%, rgba(0, 0, 0, .55) 78%, transparent 100%),
+    linear-gradient(to bottom, #000 62%, rgba(0, 0, 0, .35) 88%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(130% 96% at 50% 46%, #000 52%, rgba(0, 0, 0, .55) 78%, transparent 100%),
+    linear-gradient(to bottom, #000 62%, rgba(0, 0, 0, .35) 88%, transparent 100%);
+  mask-composite: intersect;
+}
 .cloud-full {
   position: absolute; right: 14px; bottom: 14px; width: 32px; height: 32px; border-radius: 50%;
   display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue);

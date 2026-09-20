@@ -548,7 +548,6 @@
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
-      <div class="cloud-where">${ic('pin')}${esc(U(S.me).city)} · ${pl(op.total1 + op.total2, 'человек', 'человека', 'человек')}</div>
       <p class="cloud-gain">${op.total1
     ? `Через ${pl(op.total1, 'знакомого', 'знакомых', 'знакомых')} вам открыто <b>${pl(op.total2, 'человек', 'человека', 'человек')}</b>, которых вы не знаете лично${nodesAll().length ? ` и <b>${pl(nodesAll().length, 'проверенное место', 'проверенных места', 'проверенных мест')}</b>` : ''}`
     : 'Позовите первого знакомого — и его книжка откроется вам целиком'}</p>

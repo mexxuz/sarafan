@@ -130,7 +130,7 @@
 
 /* Что сеть даёт прямо сейчас — под облаком */
 .cloud-gain {
-  position: relative; z-index: 1; margin: 6px auto 0; max-width: 300px; text-align: center;
+  position: relative; z-index: 1; margin: calc(-1 * var(--s-6)) auto 0; max-width: 300px; text-align: center;
   font: 500 var(--fs-xs)/1.45 var(--t); color: var(--ink-3);
 }
 .cloud-gain b { color: var(--ink); font-weight: 700; }
