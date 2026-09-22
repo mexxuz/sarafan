@@ -2196,7 +2196,8 @@
           <label class="field"><span>${heard ? 'Что о нём сказали' : 'Почему рекомендуете'}</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="${heard ? 'Кто советовал и что сказал: «Азиз хвалил, чинил ему кондиционер»' : 'Одной фразой, как сказали бы в чате'}">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           ${heard ? '' : quickChips()}
           <p class="why">${ic('spark')}${heard ? 'Сами вы с ним не работали — поэтому запись останется только у вас и в чужую репутацию не пойдёт' : 'Знакомые найдут его, когда будут искать такого же — и не придётся отвечать в чате заново'}</p>
-          <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>${heard ? 'Сохранить для себя' : 'Записать'}</button></div>`;
+          <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>${heard ? 'Сохранить для себя' : 'Записать'}</button>
+            ${d ? `<button class="btn ghost block" data-act="skipDraft" data-id="${d.id}">Не сохранять${more ? ' — к следующему' : ''}</button>` : ''}</div>`;
       },
       submit: async () => {
         const p = { id: 'p' + uid(), name: f.name.trim(), cat: f.cat, rel: f.rel, text: f.text.trim(), code: 'r-' + uid(), at: Date.now(),
@@ -2479,6 +2480,13 @@
     },
     openDraft: (d) => sheetOutsider('', d.id),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
+    // Нажали «Сохранить» в чате по ошибке — черновик убираем, открываем следующий, если есть
+    skipDraft: async (d) => {
+      closeSheet();
+      await mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Не сохранили');
+      const next = (S.drafts || []).find((x) => x.id !== d.id);
+      if (next) setTimeout(() => sheetOutsider(null, next.id), 350);
+    },
     dropDraft: (d) => mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Убрали'),
     submitAskRec: () => SH.submit(),
     askLink: () => sheetAskLink(),
