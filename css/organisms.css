@@ -562,3 +562,6 @@
 .chat-tip p { margin: 4px 0 0; font-size: var(--fs-xs); line-height: 1.5; color: var(--ink-2); }
 .chat-tip code { font: 600 var(--fs-xs)/1 var(--t); color: var(--blue); background: var(--blue-soft); padding: 2px 6px; border-radius: 6px; white-space: nowrap; }
 
+
+/* Вставка совета из переписки: пунктир — сюда кладут, а не пишут */
+.field.paste .textarea { border: 1.5px dashed var(--ink-4, #b6c2d3); background: var(--mist); min-height: 64px; }

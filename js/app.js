@@ -764,7 +764,8 @@
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Увидят ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} и их знакомые — без спама в общем чате</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
       <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
         <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку: видно, кто рекомендует. Под карточкой есть «Сохранить себе» — любой в чате сохранит человека одним нажатием.</p>
-        <p>Добавьте бота в домовой или родительский чат: под ответом с телефоном он поставит ту же кнопку, а через сутки уберёт.</p></div></div>
+        <p>Добавьте бота в домовой или родительский чат: под ответом с телефоном он поставит ту же кнопку, а через сутки уберёт.</p>
+        <p>Контакт прислали в личке — перешлите боту, можно сразу несколько. Или скопируйте и вставьте в «Записать человека».</p></div></div>
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
@@ -2171,7 +2172,7 @@
   // Рекомендовать человека, которого ещё нет в сети
   function sheetOutsider(catId, draftId) {
     const d = (S.drafts || []).find((x) => x.id === draftId);
-    const f = { name: d ? d.name : '', cat: (d && d.cat) || catId || '', rel: '', text: d ? d.text : '',
+    const f = { name: d ? d.name : '', cat: (d && d.cat) || catId || '', rel: d && /посоветовал|прислал/.test(d.text || '') ? 'heard' : '', text: d ? d.text : '',
       phone: d ? (d.phone || (d.username ? '@' + d.username : '')) : '', allCats: true, done: null };
     openSheet({
       F: f,
@@ -2183,10 +2184,12 @@
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
             <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
             <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым контактом, а рекомендация появится в профиле.</div>
-            <div class="s-foot"><button class="btn ghost block" data-act="closeSheet">Позову позже</button></div>`;
+            <div class="s-foot">${f.next ? `<button class="btn primary block" data-act="openDraft" data-id="${f.next}">Следующий из переписки</button>` : ''}<button class="btn ghost block" data-act="closeSheet">Позову позже</button></div>`;
         }
         const heard = f.rel === 'heard';
-        return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? 'Проверьте и сохраните — через год найдёте за секунду' : 'Даже если про Сарафан он ещё не знает')}
+        const more = (S.drafts || []).filter((x) => x.id !== draftId).length;
+        return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? (more ? `Проверьте и сохраните — дальше ещё ${more}` : 'Проверьте и сохраните — через год найдёте за секунду') : 'Даже если про Сарафан он ещё не знает')}
+          ${d ? '' : `<label class="field paste"><span>Скопировали совет в переписке? Вставьте — разберём сами</span><textarea class="textarea" rows="2" data-paste placeholder="Рустам, электрик, +998 90 123 45 67 — делал у нас проводку"></textarea></label>`}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
           <label class="field"><span>Телефон или ник — видите только вы</span><input class="input" data-bind="phone" maxlength="40" placeholder="+998… или @ник" value="${esc(f.phone)}"></label>
           ${catChips(f, [])}${relChips(f, true)}
@@ -2208,7 +2211,14 @@
           S.pendingInvites.push(p); save();
         }
         if (draftId) S.drafts = (S.drafts || []).filter((x) => x.id !== draftId);
-        if (p.private) { closeSheet(); toast('Сохранили для себя: ' + p.name); if (LIVE) refresh(); return; }
+        const next = draftId && (S.drafts || [])[0];
+        if (p.private) {
+          closeSheet(); toast('Сохранили для себя: ' + p.name);
+          if (next) setTimeout(() => sheetOutsider(null, next.id), 350);
+          if (LIVE) refresh();
+          return;
+        }
+        f.next = next ? next.id : null;
         f.done = p; drawSheet();
       },
       onClose: () => commit(),
@@ -2693,6 +2703,32 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && SH) ACT.closeSheet();
     if (e.key === 'Enter' && e.target.matches('[role=link]')) e.target.click();
+  });
+  // Вставили совет из переписки — раскладываем по полям: имя, телефон, сфера, текст
+  let pasteTimer = null;
+  document.addEventListener('input', (e) => {
+    if (!e.target.matches('[data-paste]') || !SH) return;
+    const raw = e.target.value.trim();
+    clearTimeout(pasteTimer);
+    if (raw.length < 6) return;
+    pasteTimer = setTimeout(async () => {
+      const sheet = SH;
+      let r = null;
+      try { r = LIVE ? await window.API.post('/parse', { text: raw }) : null; } catch (err) { r = null; }
+      if (!r) {   // без сервера — хотя бы телефон и ник
+        const ph = raw.match(/\+?\d[\d\s\-()]{7,}\d/); const nk = raw.match(/@([A-Za-z0-9_]{5,32})/);
+        r = { name: '', phone: ph ? ph[0] : '', username: nk ? nk[1] : '', cat: '' };
+      }
+      if (sheet !== SH) return;
+      const f = SH.F;
+      if (r.name && !f.name) f.name = r.name;
+      if (!f.phone) f.phone = r.phone || (r.username ? '@' + r.username : '');
+      if (r.cat && (S.cats || []).some((c) => c.id === r.cat)) f.cat = r.cat;
+      if (!f.text) f.text = raw;
+      if (!f.rel) f.rel = 'heard';
+      drawSheet();
+      toast(r.name || r.phone ? 'Разобрали — проверьте поля' : 'Имя не нашли — впишите сами');
+    }, 500);
   });
   document.addEventListener('input', (e) => {
     const k = e.target.dataset.bind;
