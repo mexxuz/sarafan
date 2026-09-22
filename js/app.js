@@ -2131,7 +2131,7 @@
   async function sheetAskLink() {
     let res;
     try { res = await window.API.post('/invites/ask', {}); } catch (e) { toast(e.message); return; }
-    const tgLink = `https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${res.code}`;
+    const tgLink = `https://t.me/${S.bot || 'sarafanibot'}?startapp=${res.code}`;
     const webLink = `${location.origin}${location.pathname}?code=${res.code}`;
     const link = window.API.inTelegram ? tgLink : tgLink;
     openSheet({
@@ -2438,7 +2438,7 @@
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
     submitShare: () => SH.submit(),
-    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
+    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
     tgSend: (d) => tgShareLink(d.url, d.text),
     addPhrase: (d) => {
       const t = (SH.F.text || '').trim();
@@ -2594,7 +2594,7 @@
     addFact: (d) => sheetFact(d.id),
     submitFact: () => SH.submit(),
     delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
-    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
+    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
       `${n.name} — советую, посмотри в Сарафане:`); },
     toggleWord: (d) => {
       const cur = howList(SH.F[d.k]);
