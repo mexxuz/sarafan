@@ -17,6 +17,8 @@
 /* Шапка главной: вы · ваша сеть · уведомления */
 .head-bar { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-5) 0 var(--s-3); }
 .head-bar.over { position: relative; z-index: 2; min-height: var(--head-h, 66px); }
+/* то, что лежит над облаком сети, должно ловить нажатия раньше облака */
+.over-cloud { position: relative; z-index: 3; }
 .head-bar .logo { font: 800 var(--fs-lg)/1 var(--t); letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
 .head-bar .grow { flex: 1; min-width: 0; }
 .head-bar .lbl { font-size: var(--fs-xs); color: var(--ink-3); }

@@ -742,7 +742,7 @@
         <div class="logo grow">${logoMark}сарафан</div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
-      ${(S.drafts || []).length ? `<button class="link-row wide" data-act="openDraft" data-id="${S.drafts[0].id}" style="margin-top:12px">${ic('send')}
+      ${(S.drafts || []).length ? `<button class="link-row wide over-cloud" data-act="openDraft" data-id="${S.drafts[0].id}" style="margin-top:12px">${ic('send')}
         <span class="grow"><b>Из переписки: ${pl(S.drafts.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</b><i>${esc(S.drafts[0].name || 'Совет, который вы переслали')} — допишите в один экран</i></span>${ic('arrow')}</button>` : ''}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
