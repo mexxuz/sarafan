@@ -519,7 +519,7 @@
       h.reply && ['reply', HOW.reply[h.reply] || esc(h.reply)],
     ].filter(Boolean);
     if (!rows.length) return '';
-    return `<div class="sec-title"><h2 class="h2">Как с ним работать</h2>${id === S.me ? '<button class="btn sm" data-act="editMe">Изменить</button>' : ''}</div>
+    return `<div class="sec-title"><h2 class="h2">${id === S.me ? 'Как с вами работать' : 'Как с ним работать'}</h2>${id === S.me ? '<button class="btn sm" data-act="editMe">Изменить</button>' : ''}</div>
       <div class="card how">${rows.map(([k, v]) => `<div class="how-row"><span>${HOW_LABEL[k]}</span><b>${v}</b></div>`).join('')}</div>`;
   }
 
@@ -532,7 +532,7 @@
     const shown = list.filter((f) => f.status === 'ok' || (id === S.me && f.status === 'new') || f.from === S.me);
     const canAdd = id !== S.me && G.connected(S.me, id);
     if (!shown.length && !canAdd) return '';
-    return `<div class="sec-title"><h2 class="h2">Что о нём знают</h2>${canAdd ? `<button class="btn sm" data-act="addUserFact" data-id="${id}">Добавить</button>` : ''}</div>
+    return `<div class="sec-title"><h2 class="h2">${id === S.me ? 'Что о вас знают' : 'Что о нём знают'}</h2>${canAdd ? `<button class="btn sm" data-act="addUserFact" data-id="${id}">Добавить</button>` : ''}</div>
       ${shown.length ? `<div class="card">${shown.map((f) => `<div class="fact">
         <p>${esc(f.text)}</p>
         <div class="row"><span class="tiny muted grow">${esc(full(f.from))}${f.status === 'new' && id !== S.me ? ' · ждёт подтверждения' : ''} · ${when(f.at)}</span>
@@ -2109,7 +2109,7 @@
     openSheet({
       F: f,
       valid: () => f.cat && f.text.trim().length >= MIN_TEXT,
-      render: () => `${sheetHead(null, 'Пару слов о ' + esc(info.name), info.already ? 'Вы уже рекомендовали — можно дополнить' : 'Ваши слова увидят знакомые, когда будут искать такого мастера')}
+      render: () => `${sheetHead(S.users[info.user] ? info.user : null, esc(info.name) + ' просит пару слов', info.already ? 'Вы уже рекомендовали — можно дополнить' : 'Ваши слова увидят знакомые, когда будут искать такого мастера')}
         ${catChips(f, prefer)}${relChips(f)}
         <label class="field"><span>Как всё прошло</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
         ${quickChips()}
