@@ -260,3 +260,42 @@
 .sc-places .f1 { animation-delay: 700ms; }
 .sc-places .f2 { animation-delay: 1000ms; }
 .sc-places .f3 { animation-delay: 1300ms; align-items: center; color: var(--good); background: var(--good-soft); font-weight: 600; }
+
+/* ——— 5. Прямо в чате: вопрос в переписке, ответ карточкой ——— */
+.sc-chat .chat-win {
+  position: absolute; inset: 0; margin: 0 auto; max-width: 300px; padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 8px; justify-content: center;
+  border-radius: 22px; background: linear-gradient(180deg, #eef3fa, #e6edf6);
+  box-shadow: inset 0 0 0 1px rgba(20, 30, 50, .05);
+}
+.sc-chat .msg {
+  max-width: 86%; padding: 9px 12px; border-radius: 16px; text-align: left; font-style: normal;
+  font: 500 var(--fs-xs)/1.35 var(--t); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 30, 50, .08);
+  animation: rise 460ms var(--ease) backwards;
+}
+.sc-chat .msg s { display: block; text-decoration: none; font: 700 10px/1 var(--t); color: var(--blue); margin-bottom: 4px; }
+.sc-chat .msg.in { align-self: flex-start; background: #fff; border-bottom-left-radius: 5px; }
+.sc-chat .msg.out { align-self: flex-end; background: #dcebff; border-bottom-right-radius: 5px; }
+.sc-chat .msg:nth-child(1) { animation-delay: 200ms; }
+.sc-chat .card-msg { animation-delay: 1500ms; }
+.sc-chat .msg:nth-child(4) { animation-delay: 2300ms; }
+.sc-chat .card-msg b { display: block; font: 700 var(--fs-xs)/1.3 var(--t); }
+.sc-chat .card-msg em { display: block; font-style: normal; margin-top: 4px; font-size: var(--fs-xxs); color: var(--ink-2); }
+.sc-chat .card-msg u {
+  display: block; margin-top: 8px; padding: 7px 0; text-align: center; text-decoration: none; border-radius: 10px;
+  background: rgba(255, 255, 255, .7); font: 700 var(--fs-xxs)/1 var(--t); color: var(--blue);
+}
+/* строка ввода: набирается «@sarafanibot педиатр» */
+.sc-chat .typing {
+  align-self: stretch; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+  background: #fff; font: 600 var(--fs-xxs)/1 var(--t); color: var(--blue); overflow: hidden;
+  animation: rise 400ms var(--ease) 700ms backwards;
+}
+.sc-chat .typing span {
+  display: inline-block; white-space: nowrap; overflow: hidden; width: 0;
+  animation: type 700ms steps(20) 900ms forwards;
+}
+.sc-chat .typing i { width: 1.5px; height: 12px; background: var(--blue); animation: caret 900ms steps(1) infinite; }
+@keyframes type { to { width: 128px; } }
+@keyframes caret { 50% { opacity: 0; } }
+

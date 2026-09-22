@@ -72,6 +72,7 @@ window.API = (function () {
       return data;
     },
     pulse: () => call('/pulse'),
+    get: (path) => call(path),
     post: (path, body) => call(path, body || {}),
 
     // ——— вход в браузере ———

@@ -241,6 +241,26 @@
     return { path: p.split('/').filter(Boolean), params: new URLSearchParams(q || '') };
   };
   const go = (h) => { location.hash = h; };
+
+  // Ссылка из чата: «код-приглашения_p12». До черты — вход в сеть, после — чья карточка.
+  // Человек пришёл не «в приложение», а к конкретному человеку — туда и ведём.
+  const startParam = () => String((tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param)
+    || qs.get('startapp') || qs.get('tgWebAppStartParam') || qs.get('code') || '');
+  let pendingLanding = startParam();
+  // по ссылке мастера человек пришёл написать одну фразу — демо ему сейчас ни к чему
+  if (pendingLanding.startsWith('a-')) { try { localStorage.setItem('sarafan.tour', '1'); } catch (e) { /* приватный режим */ } }
+  function applyLanding() {
+    const raw = pendingLanding;
+    if (!raw || !S || !S.onboarded) return false;
+    pendingLanding = '';
+    if (raw.startsWith('a-')) { go('#/rec/' + raw.split('_')[0]); return true; }
+    const legacy = raw.match(/^([poq])_(\d+)/);
+    const tail = legacy ? legacy[1] + legacy[2] : (raw.split('_')[1] || '');
+    const m = tail.match(/^([poq])(\d+)$/);
+    if (!m) return false;
+    go(`#/${m[1]}/${m[2]}`);
+    return true;
+  }
   let F = {}; // состояние форм на странице
   let lastHash = null;
 
@@ -261,7 +281,22 @@
       html = Profile(id, params); nav = false;
     }
     else if (name === 'ask') { html = Ask(); active = 'ask'; }
-    else if (name === 'q' && id) { html = Request(id); nav = false; }
+    else if (name === 'q' && id) {
+      html = Request(id); nav = false;
+      // «Знаю кого» из сообщения бота: сразу открываем ответ, без лишних нажатий
+      const rq = S.requests.find((x) => x.id === id);
+      if (hashChanged && params.get('answer') && rq && rq.from !== S.me && !rq.answers.some((a) => a.from === S.me)) {
+        setTimeout(() => sheetAnswer(id), 300);
+      }
+    }
+    else if (name === 'draft' && id) {
+      html = Home(); active = 'home';
+      if (hashChanged) setTimeout(() => { history.replaceState(null, '', '#/'); lastHash = location.hash; sheetOutsider('', id); }, 300);
+    }
+    else if (name === 'rec' && id) {
+      html = Home(); active = 'home';
+      if (hashChanged) setTimeout(() => { history.replaceState(null, '', '#/'); lastHash = location.hash; sheetAskRec(id); }, 300);
+    }
     else if (name === 'net') { html = Network(params); active = 'net'; }
     else if (name === 'new') { html = News(); active = 'new'; }
     else if (name === 'o' && id) { html = Node(id); nav = false; }
@@ -707,6 +742,8 @@
         <div class="logo grow">${logoMark}сарафан</div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
+      ${(S.drafts || []).length ? `<button class="link-row wide" data-act="openDraft" data-id="${S.drafts[0].id}" style="margin-top:12px">${ic('send')}
+        <span class="grow"><b>Из переписки: ${pl(S.drafts.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</b><i>${esc(S.drafts[0].name || 'Совет, который вы переслали')} — допишите в один экран</i></span>${ic('arrow')}</button>` : ''}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
@@ -723,7 +760,9 @@
       ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
       <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
-      ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Запрос получат ${pl(c1.length, 'человек', 'человека', 'человек')} из вашего круга</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
+      ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Увидят ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} и их знакомые — без спама в общем чате</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
+      <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
+        <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку: видно, кто рекомендует. А совет, который прислали вам, перешлите боту — он запишет его в ваш круг.</p></div></div>
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
@@ -740,15 +779,15 @@
     return `<div class="card" style="margin-top:18px">
       <div class="eyebrow">ваш круг</div>
       <h2 class="h2" style="margin:6px 0 6px">Запишите своих проверенных</h2>
-      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик, юрист — те, чьи имена вы диктуете знакомым по памяти. Здесь они не потеряются, а ваши знакомые увидят их, когда будут искать такого же человека.</p>
+      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик — те, кого вы советуете в чатах по памяти. Запишите один раз: знакомые найдут их сами, а вам не придётся отвечать на один и тот же вопрос снова.</p>
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
-        <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)} · записан ${when(p.at)}</div></div>
-        <button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button></div>`).join('')}</div>` : ''}
+        <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)}${p.private ? ' · для себя' : ''} · ${p.phone ? esc(p.phone) : 'записан ' + when(p.at)}</div></div>
+        ${p.private ? '' : `<button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button>`}</div>`).join('')}</div>` : ''}
       <button class="btn primary block" data-act="outsider">${ic('user')}Записать человека</button>
       <div class="btn-row" style="margin-top:8px">
         <button class="btn" data-act="newNode" data-v="place">${ic('pin')}Место</button>
         <button class="btn" data-act="newNode" data-v="company">${ic('house')}Фирму</button></div>
-      ${waiting.length ? '' : '<p class="tiny muted" style="text-align:center;margin:10px 0 0">Достаточно имени и пары слов — за что вы его советуете</p>'}</div>`;
+      ${waiting.length ? '' : '<p class="tiny muted" style="text-align:center;margin:10px 0 0">Достаточно имени и одной фразы — как в чате</p>'}</div>`;
   }
 
   // ——— Облако сети ———
@@ -844,7 +883,8 @@
           <button class="btn ghost sm block" style="margin-top:10px" data-act="newNode" data-v="place">${ic('plus')}Записать новое</button></div>
         <label class="field"><span>Почему именно это место</span>
           <textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинили там машину дважды, делают в срок и не навязывают лишнего">${esc(f.text)}</textarea>
-          <p class="hint" data-count="text" data-min="20"></p></label>
+          <p class="hint" data-count="text" data-min="8"></p></label>
+          ${quickChips()}
         <div class="s-foot"><button class="btn primary block" data-act="submitAnswerPlace" data-id="${qid}" data-submit>${ic('send')}Отправить ответ</button></div>`,
       submit: () => {
         const n = nodeById(f.node);
@@ -1541,6 +1581,10 @@
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="btn sm" data-act="editMe">Изменить</button></div>
       <div class="p-head">${av(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1></div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
+      ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
+        <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
+        <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
+        <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
       ${howView(S.me)}
       ${factsView(S.me)}
       ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
@@ -1557,9 +1601,10 @@
         <button class="btn block" data-act="openShowcase">Открыть витрину</button></div>`}
       <div class="sec-title"><h2 class="h2">Вас рекомендуют</h2></div>
       <div class="card">${repRows(S.me)}</div>
-      <div class="sec-title"><h2 class="h2">Вы как рекомендатель</h2></div>
-      <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${rs.answers}</b><span>${plural(rs.answers, 'ответ', 'ответа', 'ответов')} на запросы</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')}</span></div></div>
-        <p class="small muted" style="margin:12px 0 0">Это вторая репутация: насколько хорошо вы советуете людей. Её видят все, кто смотрит ваши рекомендации.</p></div>
+      <div class="sec-title"><h2 class="h2">Ваши советы помогают</h2></div>
+      <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
+        ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
+        <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
       <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
       <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
@@ -1665,7 +1710,7 @@
       key: 'write',
       eyebrow: 'ваш круг',
       title: 'Запишите своих проверенных',
-      gain: 'Часовщик, педиатр, электрик — имена, которые вы диктуете знакомым по памяти, перестают теряться',
+      gain: 'Имена, которые вы советуете в чатах по памяти, больше не теряются — и знакомые находят их сами, без вопроса',
       scene: `<div class="sc sc-write">
         <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
           <path class="w1" d="M131 118Q115 105 95 100"/>
@@ -1703,7 +1748,7 @@
       key: 'ask',
       eyebrow: 'запрос',
       title: 'Спросите свой круг',
-      gain: 'Вместо сорока вариантов из поиска — одно имя — то, которое советует знакомый',
+      gain: 'Вопрос видят знакомые ваших знакомых — без спама в общем чате. Ответ приходит с именем того, кто рекомендует',
       scene: `<div class="sc sc-ask">
         <span class="bubble">Нужен педиатр${ic('ask')}</span>
         <div class="mates">
@@ -1732,7 +1777,23 @@
           <i class="fact f2"><u>к кому</u>Спросить Дилю, она держит столы</i>
           <i class="fact f3">${ic('seal')}Эстелла и ещё двое рекомендуют</i></div></div>`,
     },
+    {
+      key: 'chat',
+      eyebrow: 'прямо в чате',
+      title: 'Советуйте, не выходя из чата',
+      gain: 'Спросили в переписке — наберите @sarafanibot педиатр и отправьте карточку. Видно, кто рекомендует, открывать ничего не нужно',
+      scene: `<div class="sc sc-chat">
+        <div class="chat-win">
+          <div class="msg in"><s>Дилноза</s>Кто знает хорошего педиатра?</div>
+          <div class="typing"><span>@sarafanibot педиатр</span><i></i></div>
+          <div class="msg out card-msg"><b>Нигора Ахмедова — педиатр</b>
+            <em>Рекомендует Азиз: «водит к ней дочку»</em>
+            <u>Открыть в Сарафане</u></div>
+          <div class="msg in"><s>Дилноза</s>Спасибо, записываюсь!</div>
+        </div></div>`,
+    },
   ];
+
 
   function Tour() {
     return `<div class="tour">
@@ -1800,8 +1861,9 @@
         ${rule('net', 'Вам уже открыт чужой круг', inviter
       ? `${esc(first(inviter))} пригласил вас — значит, вам видно всех, кого ${esc(first(inviter))} проверил на себе, и тех, кого проверили его знакомые.`
       : 'Каждый знакомый открывает вам свой список проверенных людей и мест — и списки его знакомых.')}
-        ${rule('ask', 'Спросить дешевле, чем искать', 'Опишите задачу — вопрос уйдёт вашему кругу. Вместо сорока вариантов из интернета вы получите одно имя, которое советуют знакомые.')}
-        ${rule('seal', 'Ваша запись работает на вас', 'Записывая своих проверенных, вы не отдаёте их — вы делаете так, что знакомые перестают спрашивать одно и то же, а вам открываются их находки.')}
+        ${rule('seal', 'Ответили однажды — больше не спрашивают', 'Записали своего педиатра — знакомые найдут его сами, когда понадобится. А через год и вы найдёте его за секунду, а не в переписке.')}
+        ${rule('ask', 'Вопрос без спама в общем чате', 'Опишите задачу — её увидят ваши знакомые и их знакомые, а не весь чат. Ответ придёт с именем того, кто рекомендует.')}
+        ${rule('chat', 'Работает прямо в чатах', `В любой переписке наберите @${esc(S.bot || 'sarafanibot')} педиатр и отправьте карточку из своего круга. Ничего открывать не нужно.`)}
       </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
@@ -1852,7 +1914,7 @@
     $$('[data-submit]', scope).forEach((b) => { b.disabled = !valid; });
   }
   const sheetHead = (id, title, sub) => `<div class="s-head">${id ? av(id) : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
-  const relChips = (F) => `<div class="field"><span>Откуда знаете</span><div class="chips">${Object.entries(REL).map(([k, v]) => `<button class="chip ${F.rel === k ? 'on' : ''}" data-act="set" data-k="rel" data-v="${k}">${v}</button>`).join('')}</div></div>`;
+  const relChips = (F, heard) => `<div class="field"><span>Откуда знаете</span><div class="chips">${Object.entries(heard ? { heard: 'Мне посоветовали', ...REL } : REL).map(([k, v]) => `<button class="chip ${F.rel === k ? 'on' : ''}" data-act="set" data-k="rel" data-v="${k}">${v}</button>`).join('')}</div></div>`;
   const catChips = (F, preferred) => {
     const list = F.allCats ? S.cats.map((c) => c.id) : [...new Set([...(preferred || []), ...(F.cat ? [F.cat] : [])])];
     const chips = list.map((c) => `<button class="chip ${F.cat === c ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c}">${esc(cat(c).name)}</button>`).join('');
@@ -1890,7 +1952,10 @@
   const pairWith = (c, id) => (c.a === S.me && c.b === id) || (c.b === S.me && c.a === id);
 
   const recsToday = () => G.recsFrom(S.me).filter((r) => Date.now() - r.at < 864e5).length;
-  const REC_LIMIT = 5, MIN_TEXT = 40;
+  const REC_LIMIT = 5, MIN_TEXT = 15;
+  // Частые фразы одним нажатием: рекомендация не должна быть дороже ответа в чате
+  const QUICK = ['Сам пользуюсь', 'Сделал быстро и аккуратно', 'Честные цены', 'Всегда на связи', 'Советую близким'];
+  const quickChips = () => `<div class="chips quick">${QUICK.map((q) => `<button class="chip" data-act="addPhrase" data-v="${q}">+ ${q}</button>`).join('')}</div>`;
 
   // Рекомендовать знакомого
   function sheetRecommend(id, catId) {
@@ -1908,7 +1973,8 @@
         const limit = !e && recsToday() >= REC_LIMIT;
         return `${sheetHead(id, e ? 'Изменить запись' : 'Рекомендовать', esc(U(id).name))}
           ${catChips(f, prefer)}${relChips(f)}
-          <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что человек сделал, как работал, какой был результат. Например: «Сделал логотип за неделю, сам предложил три варианта»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
+          <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой, как сказали бы в чате: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
+          ${quickChips()}
           <div class="field"><span>Есть ли у вас свой интерес</span><div class="chips">${[
           ['', 'Нет, просто советую'], ['family', 'Это мой родственник'], ['staff', 'Работает у меня'], ['money', 'Я на этом зарабатываю'],
         ].map(([k, l]) => `<button class="chip ${f.interest === k ? 'on' : ''}" data-act="set" data-k="interest" data-v="${k}">${l}</button>`).join('')}</div>
@@ -2000,7 +2066,7 @@
     const f = { person: '', text: '', asRec: true };
     openSheet({
       F: f,
-      valid: () => f.person && f.text.trim().length >= 20,
+      valid: () => f.person && f.text.trim().length >= 8,
       render: () => {
         const c = cands.find((x) => x.id === f.person);
         const canRec = c && !c.mine && !!q.cat;
@@ -2028,37 +2094,100 @@
     });
   }
 
+
+  // Мастер прислал клиенту ссылку «порекомендуйте меня»: одна фраза — и готово
+  async function sheetAskRec(code) {
+    let info;
+    try { info = await window.API.get('/invites/ask/' + encodeURIComponent(code)); } catch (e) { toast(e.message || 'Ссылка устарела'); return; }
+    if (info.self) {
+      toast('Это ваша ссылка — отправьте её клиентам');
+      go('#/me');
+      return;
+    }
+    const prefer = info.cats || [];
+    const f = { cat: prefer[0] || '', rel: 'client', text: '', allCats: !prefer.length };
+    openSheet({
+      F: f,
+      valid: () => f.cat && f.text.trim().length >= MIN_TEXT,
+      render: () => `${sheetHead(null, 'Пару слов о ' + esc(info.name), info.already ? 'Вы уже рекомендовали — можно дополнить' : 'Ваши слова увидят знакомые, когда будут искать такого мастера')}
+        ${catChips(f, prefer)}${relChips(f)}
+        <label class="field"><span>Как всё прошло</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
+        ${quickChips()}
+        <p class="why">${ic('spark')}Хороших мастеров находят по словам клиентов, а не по рекламе. Ваша фраза — лучшее спасибо</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitAskRec" data-submit>${ic('seal')}Рекомендовать</button></div>`,
+      submit: async () => {
+        try {
+          const res = await window.API.post('/invites/ask/recommend', { code, cat: f.cat, rel: f.rel, text: f.text.trim() });
+          closeSheet();
+          toast('Спасибо! ' + info.name.split(' ')[0] + ' увидит вашу рекомендацию');
+          await refresh();
+          go('#/p/' + res.user);
+        } catch (e) { toast(e.message); }
+      },
+    });
+  }
+
+  // Мастер просит клиентов: ссылка, по которой клиент пишет о нём одну фразу
+  async function sheetAskLink() {
+    let res;
+    try { res = await window.API.post('/invites/ask', {}); } catch (e) { toast(e.message); return; }
+    const tgLink = `https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${res.code}`;
+    const webLink = `${location.origin}${location.pathname}?code=${res.code}`;
+    const link = window.API.inTelegram ? tgLink : tgLink;
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'Попросите довольных клиентов', res.got ? `Вас уже рекомендуют ${pl(res.got, 'человек', 'человека', 'человек')}` : 'Первая рекомендация — самая важная')}
+        <p class="small" style="color:var(--ink-2);margin:0 0 12px">Отправьте ссылку в чат, где договаривались о работе. Клиент напишет одну фразу — и вас найдут его знакомые. Про Сарафан ему знать не нужно: ссылка сама всё объяснит.</p>
+        <div class="invite-card"><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${esc(link.replace('https://', ''))}</span></div>
+          <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc('Если вам понравилась моя работа — напишите, пожалуйста, пару слов. Это займёт минуту:')}" data-url="${esc(link)}">${ic('send')}Отправить</button>
+            <button class="btn ghost sm" data-act="copy" data-v="${esc(link)}">${ic('copy')}Скопировать</button></div></div>
+        ${window.API.inTelegram ? '' : `<p class="hint" style="margin-top:10px">Для тех, у кого нет Telegram: <a class="link" href="${esc(webLink)}" target="_blank" rel="noopener">${esc(webLink.replace(/^https?:\/\//, ''))}</a></p>`}
+        <p class="why">${ic('spark')}Одна ссылка на всех: её можно отправлять каждому клиенту снова и снова</p>
+        <div class="s-foot"><button class="btn ghost block" data-act="closeSheet">Готово</button></div>`,
+    });
+  }
+
   // Рекомендовать человека, которого ещё нет в сети
-  function sheetOutsider(catId) {
-    const f = { name: '', cat: catId || '', rel: '', text: '', allCats: true, done: null };
+  function sheetOutsider(catId, draftId) {
+    const d = (S.drafts || []).find((x) => x.id === draftId);
+    const f = { name: d ? d.name : '', cat: (d && d.cat) || catId || '', rel: '', text: d ? d.text : '',
+      phone: d ? (d.phone || (d.username ? '@' + d.username : '')) : '', allCats: true, done: null };
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 2 && f.cat && f.rel && f.text.trim().length >= MIN_TEXT,
       render: () => {
         if (f.done) {
           const link = `t.me/${S.bot || 'sarafanibot'}?start=${f.done.code}`;
-          return `${sheetHead(null, 'Осталось отправить ссылку', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
+          return `${sheetHead(null, 'Записали. Позвать его?', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
             <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
             <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым контактом, а рекомендация появится в профиле.</div>
-            <div class="s-foot"><button class="btn ghost block" data-act="closeSheet">Готово</button></div>`;
+            <div class="s-foot"><button class="btn ghost block" data-act="closeSheet">Позову позже</button></div>`;
         }
-        return `${sheetHead(null, 'Рекомендовать того, кого здесь нет', 'Например, человека, который про Сарафан ещё не знает')}
+        const heard = f.rel === 'heard';
+        return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? 'Проверьте и сохраните — через год найдёте за секунду' : 'Даже если про Сарафан он ещё не знает')}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
-          ${catChips(f, [])}${relChips(f)}
-          <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что человек сделал и почему вы ему доверяете">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
-          <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>Получить ссылку-приглашение</button></div>`;
+          <label class="field"><span>Телефон или ник — видите только вы</span><input class="input" data-bind="phone" maxlength="40" placeholder="+998… или @ник" value="${esc(f.phone)}"></label>
+          ${catChips(f, [])}${relChips(f, true)}
+          <label class="field"><span>${heard ? 'Что о нём сказали' : 'Почему рекомендуете'}</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="${heard ? 'Кто советовал и что сказал: «Азиз хвалил, чинил ему кондиционер»' : 'Одной фразой, как сказали бы в чате'}">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
+          ${heard ? '' : quickChips()}
+          <p class="why">${ic('spark')}${heard ? 'Сами вы с ним не работали — поэтому запись останется только у вас и в чужую репутацию не пойдёт' : 'Знакомые найдут его, когда будут искать такого же — и не придётся отвечать в чате заново'}</p>
+          <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>${heard ? 'Сохранить для себя' : 'Записать'}</button></div>`;
       },
       submit: async () => {
-        const p = { id: 'p' + uid(), name: f.name.trim(), cat: f.cat, rel: f.rel, text: f.text.trim(), code: 'r-' + uid(), at: Date.now() };
+        const p = { id: 'p' + uid(), name: f.name.trim(), cat: f.cat, rel: f.rel, text: f.text.trim(), code: 'r-' + uid(), at: Date.now(),
+          phone: (f.phone || '').trim(), private: f.rel === 'heard' };
         if (LIVE) {
           try {
-            const res = await window.API.post('/recommendations/outside', { name: p.name, cat: p.cat, rel: p.rel, text: p.text });
+            const res = await window.API.post('/recommendations/outside', { name: p.name, cat: p.cat, rel: p.rel, text: p.text,
+              phone: p.phone, draft: draftId || '' });
             p.code = res.code;
           } catch (e) { toast(e.message); return; }
         } else {
           S.pendingInvites.push(p); save();
         }
+        if (draftId) S.drafts = (S.drafts || []).filter((x) => x.id !== draftId);
+        if (p.private) { closeSheet(); toast('Сохранили для себя: ' + p.name); if (LIVE) refresh(); return; }
         f.done = p; drawSheet();
       },
       onClose: () => commit(),
@@ -2309,8 +2438,18 @@
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
     submitShare: () => SH.submit(),
-    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=p_${d.id}_from_${S.me}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
+    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
     tgSend: (d) => tgShareLink(d.url, d.text),
+    addPhrase: (d) => {
+      const t = (SH.F.text || '').trim();
+      if (t.includes(d.v)) return;
+      SH.F.text = t ? t.replace(/[.!]?$/, '. ') + d.v : d.v;
+      drawSheet();
+    },
+    openDraft: (d) => sheetOutsider('', d.id),
+    dropDraft: (d) => mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Убрали'),
+    submitAskRec: () => SH.submit(),
+    askLink: () => sheetAskLink(),
     intro: (d) => sheetIntro(d.id, d.cat, d.via, d.q),
     submitIntro: () => SH.submit(),
     write: (d) => toast(tg ? 'Откроем чат в Telegram' : `В рабочей версии откроется чат с ${U(d.id).name.split(' ')[0]} в Telegram`),
@@ -2455,7 +2594,7 @@
     addFact: (d) => sheetFact(d.id),
     submitFact: () => SH.submit(),
     delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
-    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=o_${d.id}`,
+    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}/app?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
       `${n.name} — советую, посмотри в Сарафане:`); },
     toggleWord: (d) => {
       const cur = howList(SH.F[d.k]);
@@ -2501,7 +2640,7 @@
       const body = { name: F.name.trim(), about: me.about || '', role: F.cats.length ? 'both' : 'client', cats: F.cats };
       const hello = me.invitedBy ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
       mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
-        .then(() => go('#/'));
+        .then(() => { if (!applyLanding()) go('#/'); });
     },
   };
 
@@ -2558,6 +2697,7 @@
       <div class="skeleton" style="height:150px;margin-top:16px"></div>
       <p class="small muted" style="text-align:center;margin-top:18px">Открываем вашу сеть…</p></div>`;
     refresh().then(() => {
+      applyLanding();
       // В Telegram сразу оставляем ключ для браузера: потом можно работать и без Telegram
       if (window.API.inTelegram && !window.API.hasSession()) window.API.keepMeIn().catch(() => {});
       watchLive();
