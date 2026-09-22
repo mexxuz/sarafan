@@ -760,12 +760,33 @@
       ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
       <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
+      ${savedList()}
       ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Увидят ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} и их знакомые — без спама в общем чате</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
       <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
-        <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку: видно, кто рекомендует. А совет, который прислали вам, перешлите боту — он запишет его в ваш круг.</p></div></div>
+        <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку: видно, кто рекомендует. Под карточкой есть «Сохранить себе» — любой в чате сохранит человека одним нажатием.</p>
+        <p>Добавьте бота в домовой или родительский чат: под ответом с телефоном он поставит ту же кнопку, а через сутки уберёт.</p></div></div>
       ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
+  }
+
+  // ——— Сохранено из чатов ———
+  // Нажали «Сохранить себе» под карточкой в переписке — человек или место здесь,
+  // даже если он не из ваших кругов. Видно, кто советовал.
+  function savedList() {
+    const items = (S.saved || []).filter((x) => (x.kind === 'person' ? U(x.id) : nodeById(x.id))).slice(0, 8);
+    if (!items.length) return '';
+    const by = (x) => { const f = x.from && U(x.from); return f ? (x.from === S.me ? 'ваша рекомендация' : 'советует ' + full(x.from)) : 'из переписки'; };
+    return `<div class="sec-title"><h2 class="h2">Сохранено из чатов</h2></div>
+      <p class="sec-note">Вы нажали «Сохранить себе» под советом в переписке</p>
+      <div class="card">${items.map((x) => {
+    const n = x.kind === 'place' ? nodeById(x.id) : null;
+    const pic = n ? `<span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>` : av(x.id, 's');
+    const title = n ? n.name : full(x.id);
+    const sub = (n ? cat(n.cat).who : who(x.id)) + ' · ' + by(x);
+    return `<div class="person"><a class="grow row" href="#/${n ? 'o' : 'p'}/${x.id}" style="min-width:0">${pic}<div class="grow"><div class="name ellip">${esc(title)}</div><div class="sub ellip">${esc(sub)}</div></div></a>
+      <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="dropSaved" data-kind="${x.kind}" data-id="${x.id}" aria-label="Убрать из сохранённого">${ic('x')}</button></div>`;
+  }).join('')}</div>`;
   }
 
   // ——— Свой список проверенных ———
@@ -2447,6 +2468,7 @@
       drawSheet();
     },
     openDraft: (d) => sheetOutsider('', d.id),
+    dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropDraft: (d) => mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Убрали'),
     submitAskRec: () => SH.submit(),
     askLink: () => sheetAskLink(),
