@@ -3147,7 +3147,7 @@
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой, как сказали бы в чате: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           ${quickChips()}
           ${f.cat ? `<div class="field"><span>Что ещё важно знать — можно несколько</span><div class="chips">${tagsFor(f.cat).map((t) => `<button class="chip ${f.tags.includes(t) ? 'on' : ''}" data-act="toggle" data-k="tags" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>
-            <p class="hint">По этим меткам знакомые и ищут: «педиатр, не назначает лишнего»</p></div>` : ''}
+            <p class="hint">По этим меткам знакомые и ищут: «${esc(cat(f.cat).who.toLowerCase())}, ${esc(tagsFor(f.cat)[0])}»</p></div>` : ''}
           <div class="field"><span>Есть ли у вас свой интерес</span><div class="chips">${[
           ['', 'Нет, просто советую'], ['family', 'Это мой родственник'], ['staff', 'Работает у меня'], ['money', 'Я на этом зарабатываю'],
         ].map(([k, l]) => `<button class="chip ${f.interest === k ? 'on' : ''}" data-act="set" data-k="interest" data-v="${k}">${l}</button>`).join('')}</div>
@@ -3438,7 +3438,7 @@
           <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${f.role === 'client' ? '' : catPick(f, 'cats', 'who', 'Чем занимаетесь')}
-        ${f.role === 'client' ? '' : f.cats.map((c) => `<div class="field"><span>${esc(cat(c).who)} — узкая специальность, если есть</span>
+        ${f.role === 'client' ? '' : f.cats.filter((c) => FOCUS_HINT[c] || f['focus_' + c]).map((c) => `<div class="field"><span>${esc(cat(c).who)} — узкая специальность, если есть</span>
           <input class="input" data-bind="focus_${c}" maxlength="60" placeholder="${esc((FOCUS_HINT[c] || ['например, детский'])[0])}" value="${esc(f['focus_' + c] || '')}">
           ${FOCUS_HINT[c] ? `<div class="chips" style="margin-top:6px">${FOCUS_HINT[c].map((h) => `<button class="chip" data-act="focusPick" data-c="${c}" data-v="${esc(h)}">${esc(h)}</button>`).join('')}</div>` : ''}</div>`).join('')}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
