@@ -1506,7 +1506,7 @@
         : `<label class="field" style="margin-top:0"><span>Фирма</span><input class="input" data-live="1" placeholder="Название фирмы" autocomplete="off"></label><div class="stack partner-find">${listHtml()}</div>`)}
         ${catPick(f, 'cat', 'name', 'Сфера')}
         <label class="field"><span>За что ценим — одной фразой</span><input class="input" data-bind="text" maxlength="200" placeholder="Бумага всегда в наличии, привозят за день" value="${esc(f.text)}"></label>
-        <div class="field"><span>Кто вёл дело</span><div class="chips">${[S.me, ...staff.filter((u) => u !== S.me)].slice(0, 8).map((u) => `<button class="chip ${f.via === u && !f.viaName ? 'on' : ''}" data-act="pickWho" data-k="via" data-v="${u}">${u === S.me ? 'Я' : esc(first(u))}</button>`).join('')}</div>
+        <div class="field"><span>Кто вёл дело</span><div class="chips">${[S.me, ...staff.filter((u) => u !== S.me)].slice(0, 8).map((u) => `<button class="chip ${f.via === u && !f.viaName ? 'on' : ''}" data-act="pickVia" data-v="${u}">${u === S.me ? 'Я' : esc(first(u))}</button>`).join('')}${(S.waiting || []).filter((w) => w.node === fid).slice(0, 8).map((w) => `<button class="chip ${f.viaName === w.name ? 'on' : ''}" data-act="pickVia" data-name="${esc(w.name)}">${esc(w.name.split(' ')[0])}</button>`).join('')}</div>
           <input class="input" style="margin-top:8px" data-bind="viaName" maxlength="60" placeholder="Или имя: менеджер Раксана" value="${esc(f.viaName)}"></div>
         <div class="s-foot"><button class="btn primary block" data-act="submitPartner" data-submit>Добавить</button></div>`,
       onLive: (v) => {
@@ -3253,6 +3253,7 @@
     submitPartner: () => SH.submit(),
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
+    pickVia: (d) => { if (d.name) { SH.F.viaName = d.name; } else { SH.F.via = d.v; SH.F.viaName = ''; } drawSheet(); },
     pickPartnerNode: (d) => { SH.F.node = d.id; SH.F.nodeName = d.name; drawSheet(); },
     dropPartner: (d) => mutate(() => { S.partners = (S.partners || []).filter((x) => x.id !== d.id); }, '/firms/partner/delete', { id: d.id }, 'Убрали'),
     // выбрать человека в окне: номер кладём как есть — общее «set» превращало «1» в «да»
