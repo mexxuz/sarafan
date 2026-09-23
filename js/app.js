@@ -61,6 +61,25 @@
     } catch (e) { /* сервер недоступен — попробуем в следующий раз */ }
   };
 
+  // Свежая версия приложения. Telegram держит открытую страницу в памяти до 10 минут после выкладки —
+  // сверяем метку версии с сервером страниц и, если вышла новая, тихо перезагружаемся на неё.
+  // Пока открыта шторка — не трогаем: человек что-то пишет
+  const MY_VER = ((document.querySelector('script[src*="js/app.js"]') || {}).src || '').match(/v=(\d+)/);
+  const checkVersion = async () => {
+    if (!MY_VER || SH) return;
+    try {
+      const v = (await (await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' })).text()).trim();
+      if (!/^\d+$/.test(v) || v <= MY_VER[1]) return;
+      const u = new URL(location.href);
+      if (u.searchParams.get('v') === v) return;           // уже пробовали — не крутимся по кругу
+      u.searchParams.set('v', v);
+      location.replace(u.toString());
+    } catch (e) { /* нет связи — проверим в следующий раз */ }
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
+  setInterval(checkVersion, 60000);
+  setTimeout(checkVersion, 1500);
+
   const watchLive = () => {
     if (!LIVE) return;
     clearInterval(pulseTimer);
