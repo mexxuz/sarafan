@@ -106,7 +106,7 @@
   const founderAv = (id, size, ring = '') => (isFounder(id)
     ? `<span class="founder-av">${av(id, size, 'founder')}<svg class="founder-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>`
     : av(id, size, ring));
-  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель Сарафана</div>' : '');
+  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' : '');
   const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
   const ringOf = (id) => { const d = G.dist[id]; return d === 1 ? 'r1' : d === 2 ? 'r2' : d === undefined ? '' : 'r3'; };
 
