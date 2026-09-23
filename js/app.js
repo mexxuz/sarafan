@@ -941,7 +941,7 @@
         staff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
         waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
         // Подрядчики фирмы — бледные кружки-разделы с числом: полсотни точек облако бы утопили
-        if (!onlyPlaces) {
+        {
           const secs = new Map();
           partnersOf(n.id).forEach((x) => { const k = (x.section || '').split(' › ')[0]; secs.set(k, (secs.get(k) || 0) + 1); });
           [...secs].slice(0, 6).forEach(([k, c]) => {
@@ -953,12 +953,14 @@
       });
     }
     if (onlyPlaces) {
-      // срез «только места»: сами места и те, кто их советует, — остальные люди уходят
-      const keep = new Set([S.me]);
-      edges.forEach((e) => { if (String(e.b).startsWith('o')) { keep.add(e.a); keep.add(e.b); } });
-      const kept = nodes.filter((n) => keep.has(n.id));
+      // срез «только места»: вы, места и фирмы, а вокруг фирм — разделы подрядчиков. Людей нет
+      const kept = nodes.filter((n) => n.id === S.me || String(n.id).startsWith('o') || n.sec);
       const ids = new Set(kept.map((n) => n.id));
-      return { nodes: kept, edges: edges.filter((e) => ids.has(e.a) && ids.has(e.b)) };
+      const keptEdges = edges.filter((e) => ids.has(e.a) && ids.has(e.b));
+      // место, связанное с вами не напрямую, держим у центра еле видной нитью — иначе улетит
+      kept.filter((n) => String(n.id).startsWith('o') && !keptEdges.some((e) => (e.a === S.me && e.b === n.id) || (e.b === S.me && e.a === n.id)))
+        .forEach((n) => keptEdges.push({ a: S.me, b: n.id, kind: 'wait', len: 90 }));
+      return { nodes: kept, edges: keptEdges };
     }
     return { nodes, edges };
   }
