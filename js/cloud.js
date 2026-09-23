@@ -450,7 +450,7 @@ window.Cloud = function (canvas, opts) {
   let frames = 0;
   // Большая сеть раскладывается, а потом плывёт: каждая точка тихо покачивается вокруг своего места —
   // без толкотни, поэтому хаоса нет. Навели на точку или коснулись — всё замирает, и движение, и мерцание
-  const big = () => nodes.length > 60;
+  const big = () => !!opts.sky || nodes.length > 60;
   let settleUntil = 260;
   let animT = 0, lastNow = 0, wasPhysics = true;
   function tick() {

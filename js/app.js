@@ -895,7 +895,7 @@
 
   // ——— Облако сети ———
   // Кого показываем: вы, ваши контакты, их знакомые, места и фирмы вокруг них.
-  function cloudData(limitRing, withPlaces, maxFar, onlyPlaces) {
+  function cloudData(limitRing, withPlaces, maxFar, onlyPlaces, sky) {
     const ring = (id) => (id === S.me ? 0 : Math.min(G.dist[id] ?? 9, 9));
     let people = Object.keys(S.users).filter((id) => ring(id) <= (limitRing || 2));
     if (maxFar) {
@@ -991,7 +991,7 @@
     // кого больше рекомендуют — ярче и крупнее. Места и фирмы — фиолетовые и голубые звёзды.
     // Никаких колец: люди сами сбиваются в скопления по тому, кто с кем знаком, — как созвездия.
     // Связи со звёздами — едва заметные нити; наведите на звезду — загорится её созвездие
-    if (!onlyPlaces && people.length > 60) {
+    if (!onlyPlaces && (sky || people.length > 60)) {
       const isPlace = (id) => String(id).startsWith('o');
       // Коллеги связаны через фирму, а не каждый с каждым: фирма — узел созвездия, сотрудники — лучи от неё.
       // Фирмы, где работаете вы или ваши знакомые, — значки внутри вашего созвездия, а не звёзды
@@ -1023,7 +1023,7 @@
           : e.kind === 'work' ? { ...e, len: 46 } : e));
       return { nodes, edges: sky };
     }
-    if (onlyPlaces && people.length > 60) {
+    if (onlyPlaces && (sky || people.length > 60)) {
       // «Только места» в большой сети — тоже небо. В центре — созвездие ваших мест: что советуете вы
       // и ваши знакомые — значками. Места связаны между собой, если их советует или в них работает
       // один и тот же человек: так видно «места одной компании». Линия от вас — только к вашим местам
@@ -1230,8 +1230,8 @@
       if (!el) return;
       if (cloud) cloud.stop();
       cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5, wheelZoom: id !== 'homecloud',
-        safeTop: id === 'homecloud' ? 92 : 0 });
-      cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces));
+        safeTop: id === 'homecloud' ? 92 : 0, sky: id === 'bigcloud' });   // экран облака — всегда звёздное небо
+      cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces, id === 'bigcloud'));
       cloud.start();
     }, 30);
   }
