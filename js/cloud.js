@@ -548,6 +548,9 @@ window.Cloud = function (canvas, opts) {
   }
 
   canvas.addEventListener('wheel', (e) => {
+    // На главной облако — часть страницы: колёсико листает страницу, приближают с Ctrl или щипком.
+    // На своём экране облако во весь экран — там колёсико приближает сразу.
+    if (!opts.wheelZoom && !e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     const b = canvas.getBoundingClientRect();
     zoomAt({ x: e.clientX - b.left, y: e.clientY - b.top }, e.deltaY < 0 ? 1.08 : 0.93);

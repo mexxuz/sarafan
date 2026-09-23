@@ -372,14 +372,14 @@
       if (el.dataset.rail) return;
       el.dataset.rail = '1';
 
+      // Колёсико листает страницу, а не ленту: иначе, стоило курсору оказаться над лентой,
+      // страница вставала. Вбок — перетаскиванием, тачпадом или Shift + колёсико.
       el.addEventListener('wheel', (e) => {
-        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // трекпад уже умеет вбок
+        if (!e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
         const max = el.scrollWidth - el.clientWidth;
         if (max < 4) return;
-        const next = el.scrollLeft + e.deltaY;
-        if ((next < 0 && el.scrollLeft <= 0) || (next > max && el.scrollLeft >= max)) return;  // край — листаем страницу
         e.preventDefault();
-        el.scrollLeft = Math.max(0, Math.min(max, next));
+        el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + e.deltaY));
       }, { passive: false });
 
       let sx = 0, sl = 0, moved = 0, drag = false;
@@ -1003,7 +1003,7 @@
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
-      cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5,
+      cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5, wheelZoom: id !== 'homecloud',
         safeTop: id === 'homecloud' ? 92 : 0 });
       cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces));
       cloud.start();
