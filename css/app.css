@@ -1,29 +1,30 @@
 ﻿/* Сарафан — дизайн-система по слоям.
    Порядок важен: каждый следующий слой опирается на предыдущий.
    1 Основа (значения + сброс) → 2 Атомы → 3 Молекулы → 4 Организмы → 5 Шаблоны */
-@import url('tokens.css?v=202609232022');
-@import url('atoms.css?v=202609232022');
-@import url('molecules.css?v=202609232022');
-@import url('organisms.css?v=202609232022');
-@import url('templates.css?v=202609232022');
-@import url('tour.css?v=202609232022');
-@import url('desktop.css?v=202609232022');
+@import url('tokens.css?v=202609232025');
+@import url('atoms.css?v=202609232025');
+@import url('molecules.css?v=202609232025');
+@import url('organisms.css?v=202609232025');
+@import url('templates.css?v=202609232025');
+@import url('tour.css?v=202609232025');
+@import url('desktop.css?v=202609232025');
 
 /* ——— СЛОЙ 1. ОСНОВА: сброс и холст ——— */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; }
 /* Страница никогда не шире экрана: вращающиеся кольца знакомых на «Моей сети» при повороте
    вылезали за край, страница уезжала вбок — и нижнее меню вместе с ней (правка 23.09) */
-html, body { overflow-x: hidden; overflow-x: clip; }
+/* «clip», а не «hidden»: hidden у body превращал страницу в отдельную прокручиваемую рамку —
+   колёсико упиралось в неё и дальше не шло, страница не листалась (правка 23.09, вечер) */
+html, body { overflow-x: clip; }
 /* Край страницы не пружинит и не растягивается: на Android страница тянулась, на iPhone отскакивала */
-html, body { overscroll-behavior: none; }
+html { overscroll-behavior: none; }
 body {
   background: var(--sky-2);
   color: var(--ink);
   font: 400 var(--fs-md)/1.5 var(--t);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 body::before {
   content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
