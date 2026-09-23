@@ -670,3 +670,8 @@ body.viewing-as #app { padding-top: 48px; }
 .face-rail .face i { font: 400 10px/1.2 var(--t); font-style: normal; color: var(--ink-4); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .face-rail .face .av { margin-bottom: 2px; }
 .face-rail .face span { font: 500 var(--fs-xxs)/1.2 var(--t); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* «Позвать знакомых» — один блок: ссылка, контакты Telegram, позвать с рекомендацией, кто ждёт */
+.invite-one .link-row.wide { margin-top: var(--s-2); }
+.invite-one .invite-wait { margin-top: var(--s-4); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.invite-one .face-rail { margin-left: calc(-1 * var(--s-4)); margin-right: calc(-1 * var(--s-4)); padding-left: var(--s-4); padding-right: var(--s-4); }

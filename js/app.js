@@ -1341,15 +1341,6 @@
 
   // ——— Ждут в круге: добавлены из контактов Telegram, но ещё не в Сарафане ———
   // Придут по любой ссылке — Сарафан узнает их и пришлёт заявку от вас.
-  function waitingList() {
-    const list = S.waiting || [];
-    if (!list.length) return '';
-    return `<div class="sec-title"><h2 class="h2">Ждут в вашем круге</h2><span class="tag">${list.length}</span></div>
-      <p class="sec-note">Ещё не в Сарафане. Придут по любой ссылке — сразу получат вашу заявку</p>
-      <div class="card">${list.map((w) => `<button class="person" data-act="openWaiting" data-id="${w.id}" style="width:100%;text-align:left">${waitAv(w, 's')}
-        <div class="grow" style="min-width:0"><div class="name ellip">${esc(w.name || 'Без имени')}</div>
-        <div class="sub ellip">${esc([w.node && nodeById(w.node) ? (cap1(w.job) || 'Работает') + ' в ' + nodeById(w.node).name : '', w.cat ? cat(w.cat).who : '', w.note, w.username ? '@' + w.username : '', 'ждёт с ' + when(w.at)].filter(Boolean).join(' · '))}</div></div>${ic('chev', 'chev')}</button>`).join('')}</div>`;
-  }
   const waitAv = (w, size) => `<span class="av ${size} wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>`;
 
   // Карточка того, кто ждёт в круге: подписать, как вы его знаете, рекомендовать, поторопить
@@ -2349,23 +2340,20 @@
     const allPlaces = [...mineNodes, ...nodesNear().filter((n) => !mineNodes.includes(n))];
     const dim = F.tab === 'c1' ? 'in' : F.tab === 'c2' ? 'out' : null;
 
+    // Всё, чем зовут людей, — в одном блоке: ссылка, контакты Telegram, «позвать и порекомендовать», кто уже ждёт
+    const waiting = S.waiting || [];
     const invite = `
-      <div class="card accent invite-strong">
-        <div class="eyebrow">сильное приглашение</div>
-        <h2 class="h2" style="margin:6px 0 8px">Позовите и сразу порекомендуйте</h2>
-        <p class="small" style="margin:0 0 4px;color:rgba(255,255,255,.88)">Напишите рекомендацию заранее — человек войдёт по вашей ссылке, и она уже будет ждать у него в профиле. Так сеть с первого дня наполняется доверием, а не просто людьми.</p>
-        <p class="small" style="margin:8px 0 0;color:rgba(255,255,255,.72)">Каждый приглашённый открывает вам свой список проверенных — и списки его знакомых.</p>
-        <button class="btn primary block" style="margin-top:14px" data-act="outsider">${ic('seal')}Написать рекомендацию</button>
-      </div>
-
-      <div class="card" style="margin-top:10px">
-        <div class="eyebrow">просто позвать</div>
-        <div class="row" style="margin-top:8px"><div class="grow"><div class="h3">Ваша личная ссылка</div>
-          <div class="small muted" style="margin-top:2px">Осталось мест: ${left} из ${inv.max}</div></div></div>
+      <div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Позвать знакомых</h2><span class="small muted">мест: ${left} из ${inv.max}</span></div>
+      <div class="card invite-one">
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
-        <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
-        <div class="dots plain">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
-        <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы человека рекомендуете: это отдельное действие.</p>
+        <div class="btn-row"><button class="btn primary sm" data-act="sendInvite">${ic('send')}Отправить ссылку</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
+        <p class="tiny muted" style="margin:8px 2px 0">Кто войдёт по ссылке — сразу ваш контакт</p>
+        <button class="link-row wide" data-act="pickCircle">${ic('user')}
+          <span class="grow"><b>Отметить из контактов Telegram</b><i>Придут в Сарафан — и сразу окажутся вашими знакомыми</i></span>${ic('arrow')}</button>
+        <button class="link-row wide" data-act="outsider">${ic('seal')}
+          <span class="grow"><b>Позвать и сразу порекомендовать</b><i>Рекомендация будет ждать его в профиле, когда он войдёт</i></span>${ic('arrow')}</button>
+        ${waiting.length ? `<div class="invite-wait"><div class="small" style="font-weight:600">Ждут в круге · ${waiting.length}</div>
+          <div class="face-rail" style="margin-top:6px">${waiting.map((w) => `<button class="face" data-act="openWaiting" data-id="${w.id}">${waitAv(w, 'l')}<span>${esc((w.name || 'Без имени').split(' ')[0])}</span><i>${esc(w.cat ? cat(w.cat).who : w.node && nodeById(w.node) ? nodeById(w.node).name : 'ждёт')}</i></button>`).join('')}</div></div>` : ''}
       </div>`;
 
     const howto = `<div class="card" style="margin-top:10px">
@@ -2393,9 +2381,6 @@
           <p class="sec-note">Вы знакомы, но ещё не рекомендовали — ваши знакомые не найдут их через вас</p>
           <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div>`;
       })()}
-      <button class="link-row wide" data-act="pickCircle" style="margin:var(--s-3) 0 var(--s-3)">${ic('user')}
-        <span class="grow"><b>Добавить знакомых из Telegram</b><i>Отметьте людей в контактах — без рекомендаций</i></span>${ic('arrow')}</button>
-      ${waitingList()}
       ${invite}
       ${empty ? howto : ''}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
