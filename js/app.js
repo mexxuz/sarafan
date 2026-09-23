@@ -847,6 +847,7 @@
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
+      ${proNudge()}
       ${myList()}
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
@@ -900,14 +901,47 @@
   // Пока сеть мала, искать в ней некого. Но у каждого уже есть люди, которых он советует
   // знакомым: часовщик, педиатр, электрик. Записать их — польза с первой минуты,
   // а сеть вырастает сама: запись станет первой рекомендацией, когда человек войдёт.
+  // Знакомые, которых вы ещё не рекомендовали: касание — и сразу запись. Порекомендовали — ушёл из ряда
+  function todoRail() {
+    const c1 = myContacts();
+    const mine = new Set(G.recsFrom(S.me).map((r) => r.to));
+    const todo = c1.filter((id) => !mine.has(id));
+    if (!todo.length) return '';
+    return `<div class="todo-rail"><div class="small" style="font-weight:600">Вы знакомы, но ещё не рекомендовали · ${todo.length}</div>
+      <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div></div>`;
+  }
+
+  // Мастеру — первым делом: его ищут, а находят не всегда. Показываем, только когда есть что сказать
+  function proNudge() {
+    const me = U(S.me);
+    if (!LIVE || me.role === 'client' || !G.catsOf(S.me).length) return '';
+    const miss = (S.demand || []).filter((d) => d.searched > d.found).slice(0, 2);
+    const main = G.catsOf(S.me)[0];
+    const rep = G.reputation(S.me, main);
+    const lines = miss.length
+      ? miss.map((d) => `<div class="demand-row"><b>${d.searched}</b><span>${esc(cat(d.cat).who)} искали за неделю ${pl(d.searched, 'человек', 'человека', 'человек')} из вашей сети — <b>вас увидели ${d.found}</b></span></div>`).join('')
+      : rep.independent < 3 ? `<p class="small" style="margin:0">${rep.independent
+        ? `${esc(cat(main).who)}: ещё ${pl(3 - rep.independent, 'независимая рекомендация', 'независимые рекомендации', 'независимых рекомендаций')} — и отметка «надёжно». Таких находят первыми`
+        : `${esc(cat(main).who)}: вас ещё никто не рекомендовал — поэтому в поиске знакомых вас нет`}</p>` : '';
+    if (!lines) return '';
+    return `<div class="card pro-nudge" style="margin-top:18px"><div class="eyebrow">вас ищут</div>
+      <div class="demand">${lines}</div>
+      <button class="btn primary block" style="margin-top:12px" data-act="askLink">${ic('send')}Попросить довольных клиентов</button>
+      <p class="tiny muted" style="margin:8px 0 0;text-align:center">Одна ссылка на всех — клиент пишет фразу, и вас находят его знакомые</p></div>`;
+  }
+
   function myList() {
     const waiting = S.pendingInvites || [];
     const mineRecs = G.recsFrom(S.me);
-    if (mineRecs.length >= 5 && waiting.length === 0) return '';   // сеть уже живая
+    if (mineRecs.length >= 5 && waiting.length === 0) {   // сеть уже живая — остаётся только ряд тех, кого не записали
+      const rail = todoRail();
+      return rail ? `<div class="card" style="margin-top:18px">${rail}</div>` : '';
+    }
     return `<div class="card" style="margin-top:18px">
       <div class="eyebrow">ваш круг</div>
       <h2 class="h2" style="margin:6px 0 6px">Запишите своих проверенных</h2>
       <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик — те, кого вы советуете в чатах по памяти. Запишите один раз: знакомые найдут их сами, а вам не придётся отвечать на один и тот же вопрос снова.</p>
+      ${todoRail()}
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)}${p.private ? ' · для себя' : ''} · ${p.phone ? esc(p.phone) : 'записан ' + when(p.at)}</div></div>
         ${p.private ? '' : `<button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button>`}
@@ -2663,16 +2697,7 @@
     return screenHead('Моя сеть',
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
       `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
-      ${(() => {
-        // Главное дело в сети — записать, за что цените своего человека: тогда знакомые найдут его через вас.
-        // В ряду — только те, кого вы ещё не рекомендовали; нажатие сразу открывает запись
-        const mine = new Set(G.recsFrom(S.me).map((r) => r.to));
-        const todo = c1.filter((id) => !mine.has(id));
-        if (!todo.length) return '';
-        return `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Запишите своих</h2><span class="small muted">${c1.length - todo.length} из ${c1.length}</span></div>
-          <p class="sec-note">Вы знакомы, но ещё не рекомендовали — ваши знакомые не найдут их через вас</p>
-          <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div>`;
-      })()}
+
       ${invite}
       ${empty ? howto : ''}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
@@ -2700,9 +2725,7 @@
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
-        ${(S.demand || []).length ? `<div class="demand">${S.demand.slice(0, 3).map((d) => `<div class="demand-row"><b>${d.searched}</b><span>${esc(cat(d.cat).who)} искали за неделю ${pl(d.searched, 'человек', 'человека', 'человек')} из вашей сети — <b>вас увидели ${d.found}</b></span></div>`).join('')}
-          <p class="small" style="margin:8px 0 12px">Чем больше клиентов вас рекомендуют, тем чаще вы в поиске у их знакомых</p></div>`
-    : '<p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>'}
+        <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
         <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
       ${workView(S.me)}
       ${howView(S.me)}

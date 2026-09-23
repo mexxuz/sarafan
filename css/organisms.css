@@ -697,3 +697,8 @@ body.viewing-as #app { padding-top: 48px; }
 .demand { margin: 4px 0 0; }
 .demand-row { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; font-size: var(--fs-sm); color: var(--ink-2); }
 .demand-row > b { font: 700 22px/1 var(--t); color: var(--ink); min-width: 32px; font-variant-numeric: tabular-nums; }
+
+/* Ряд «кого ещё не рекомендовали» в карточке на главной */
+.todo-rail { margin: 0 0 14px; }
+.card .todo-rail .face-rail { margin-left: calc(-1 * var(--s-4)); margin-right: calc(-1 * var(--s-4)); padding-left: var(--s-4); padding-right: var(--s-4); margin-top: 8px; }
+.card > .todo-rail:only-child { margin: 0; }
