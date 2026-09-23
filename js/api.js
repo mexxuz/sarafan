@@ -16,6 +16,13 @@ window.API = (function () {
   let session = '';
   try { session = localStorage.getItem(KEY) || ''; } catch (e) { /* приватный режим */ }
 
+  // «Посмотреть глазами»: основатель видит приложение так, как его видит выбранный человек.
+  // Живёт до закрытия приложения — случайно остаться в чужом взгляде нельзя
+  const VA_KEY = 'sarafan.viewAs';
+  let viewAs = null;
+  try { viewAs = JSON.parse(sessionStorage.getItem(VA_KEY) || 'null'); } catch (e) { viewAs = null; }
+  const NO_CHANGES = 'Режим просмотра: здесь ничего не меняется. Выйдите из него сверху';
+
   const saveSession = (t) => {
     session = t || '';
     try { t ? localStorage.setItem(KEY, t) : localStorage.removeItem(KEY); } catch (e) { /* */ }
@@ -29,6 +36,7 @@ window.API = (function () {
   };
 
   const call = async (path, body) => {
+    if (body && viewAs && !path.startsWith('/view')) throw new Error(NO_CHANGES);
     const r = await fetch(base + '/api' + path, {
       method: body ? 'POST' : 'GET',
       headers: {
@@ -36,6 +44,7 @@ window.API = (function () {
         'X-Init-Data': who(),
         'X-Session': session,
         'X-Invite-Code': qs.get('code') || qs.get('tgWebAppStartParam') || '',
+        'X-View-As': viewAs ? viewAs.id : '',
       },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -58,6 +67,7 @@ window.API = (function () {
     bootstrap: () => call('/bootstrap'),
     // картинка работы уходит файлом, а не текстом
     upload: async (path, file, fields) => {
+      if (viewAs) throw new Error(NO_CHANGES);
       const form = new FormData();
       if (file) form.append('file', file);   // правку можно отправить и без картинки
       Object.entries(fields || {}).forEach(([k, v]) => form.append(k, v));
@@ -72,6 +82,13 @@ window.API = (function () {
       return data;
     },
     pulse: () => call('/pulse'),
+    viewAs: () => viewAs,
+    setViewAs: (v) => {
+      viewAs = v || null;
+      try { v ? sessionStorage.setItem(VA_KEY, JSON.stringify(v)) : sessionStorage.removeItem(VA_KEY); } catch (e) { /* */ }
+    },
+    // список ролей спрашиваем своими глазами, даже если сейчас смотрим чужими
+    viewRoles: async () => { const keep = viewAs; viewAs = null; try { return await call('/view/roles'); } finally { viewAs = keep; } },
     get: (path) => call(path),
     post: (path, body) => call(path, body || {}),
 

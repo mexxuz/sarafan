@@ -75,6 +75,7 @@
     try {
       await window.API.post(path, body);
       await refresh();
+      if (SH && SH._stale) { SH._stale = false; drawSheet(); }
       if (okMsg) toast(okMsg);
     } catch (e) {
       toast(e.message);
@@ -209,6 +210,7 @@
     shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
+    eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
     phone: '<path d="M6.5 4h3l1.5 4-2 1.5a11 11 0 0 0 5.5 5.5L16 13l4 1.5v3A2 2 0 0 1 18 19.5 15.5 15.5 0 0 1 4.5 6 2 2 0 0 1 6.5 4z"/>',
     chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -1356,7 +1358,48 @@
 
   // ——— Правка прямо из приложения — только для основателя ———
   // Кнопка в углу: написал, приложил скриншот — правка уходит в разработку, ответ придёт в бота.
+  // Полоса сверху, пока смотрите чужими глазами: кем смотрите и как выйти
+  function drawViewAsBar() {
+    const va = window.API && window.API.viewAs && window.API.viewAs();
+    let bar = $('#viewas');
+    if (!va) {
+      if (bar) bar.remove();
+      document.body.classList.remove('viewing-as');
+      // «Другой» из полосы: вернулись своими глазами — сразу снова выбор
+      let again = false;
+      try { again = sessionStorage.getItem('sarafan.viewAsPick') === '1'; if (again) sessionStorage.removeItem('sarafan.viewAsPick'); } catch (e) { /* */ }
+      if (again && LIVE && isFounder(S.me)) setTimeout(sheetViewAs, 300);
+      return;
+    }
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'viewas'; bar.className = 'viewas-bar';
+      document.body.appendChild(bar);
+    }
+    document.body.classList.add('viewing-as');
+    bar.innerHTML = `${ic('eye')}<span class="grow ellip"><b>${esc(va.label)}</b> · ${esc(va.name)}</span>
+      <button data-act="viewAsPick">Другой</button><button data-act="viewAsExit">Выйти</button>`;
+  }
+
+  function sheetViewAs() {
+    const f = { data: null, err: '' };
+    window.API.viewRoles().then((r) => { f.data = r; if (SH && SH.F === f) drawSheet(); })
+      .catch((e) => { f.err = e.message; if (SH && SH.F === f) drawSheet(); });
+    const distWord = (p) => (p.staff ? 'сотрудник вашей фирмы' : p.dist === 1 ? 'ваш знакомый' : p.dist === 2 ? 'знакомый знакомого' : 'не знаком с вами');
+    openSheet({
+      F: f,
+      render: () => `${sheetHead(null, 'Посмотреть глазами других', 'Приложение покажет ровно то, что видит этот человек. Менять ничего нельзя')}
+        ${f.err ? `<p class="small muted">${esc(f.err)}</p>` : !f.data ? '<p class="small muted">Собираю, кто кем вам приходится…</p>' : `
+        <div class="stack" style="gap:8px">${f.data.roles.map((r) => `<button class="link-row wide" data-act="viewAsGo" data-id="${r.user}" data-label="${esc(r.label)}" data-name="${esc(r.name)}">${ic('eye')}
+          <span class="grow"><b>${esc(r.label)}</b><i>${esc(r.hint)}</i></span>${ic('arrow')}</button>`).join('')}</div>
+        ${f.data.people.length ? `<div class="sec-title"><h2 class="h2">Или конкретный человек</h2></div>
+        <div class="card">${f.data.people.map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(p.name)}">
+          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div>${ic('arrow')}</button>`).join('')}</div>` : ''}`}`,
+    });
+  }
+
   function drawFixBtn() {
+    drawViewAsBar();
     let b = $('#fixbtn');
     const show = LIVE && isFounder(S.me);
     if (!show) { if (b) b.hidden = true; return; }
@@ -2167,6 +2210,8 @@
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
       <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
+      ${LIVE && isFounder(S.me) ? `<button class="link-row wide" data-act="viewAsOpen" style="margin-top:20px">${ic('eye')}
+        <span class="grow"><b>Посмотреть глазами других</b><i>Как Сарафан видят сотрудник, знакомый, знакомый знакомого и посторонний</i></span>${ic('arrow')}</button>` : ''}
       <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
@@ -2436,10 +2481,16 @@
 
   // ——— Шторка ———
   let SH = null;
+  // Стопка окон: окно, открытое из другого окна, ложится сверху, а «закрыть» возвращает к предыдущему
+  const SHSTACK = [];
   function openSheet(obj) {
+    const el = $('#sheet');
+    const panel = $('#sheet .panel');
+    const layered = SH && panel && el.classList.contains('open');
+    if (layered) { SH._scroll = panel.scrollTop; SHSTACK.push(SH); }
     SH = obj;
     const fb = $('#fixbtn'); if (fb) fb.hidden = true;
-    const el = $('#sheet');
+    if (layered) { panel.scrollTop = 0; drawSheet(); return; }
     el.hidden = false;
     el.innerHTML = '<div class="shade" data-act="closeSheet"></div><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="body"></div></div>';
     drawSheet();
@@ -2457,12 +2508,21 @@
   const catchUp = () => { if (missedWhileBusy) { missedWhileBusy = false; setTimeout(checkPulse, 400); } };
 
   function closeSheet() {
+    if (SHSTACK.length && $('#sheet .panel')) {
+      const prev = SHSTACK.pop();
+      SH = prev; SH._stale = true;          // пока были наверху, данные могли поменяться
+      drawSheet();
+      $('#sheet .panel').scrollTop = prev._scroll || 0;
+      return;
+    }
+    SHSTACK.length = 0;
     const el = $('#sheet'); el.classList.remove('open');
     setTimeout(() => { if (!el.classList.contains('open')) { el.hidden = true; el.innerHTML = ''; } }, 300);
     SH = null;
     catchUp();
     if (typeof drawFixBtn === 'function') drawFixBtn();
   }
+  function closeAllSheets() { SHSTACK.length = 0; if (SH) closeSheet(); }
   function syncForm() {
     const scope = SH ? $('#sheet') : $('#app');
     const data = SH ? SH.F : F;
@@ -3086,8 +3146,8 @@
     goto: (d) => go(d.h),
     back: () => goBack(),
     // С глубокого экрана — сразу на главную, не щёлкая «назад» по цепочке
-    goHome: () => { if (SH) closeSheet(); navBack = true; go('#/'); },
-    closeSheet: (d) => { const s = SH; closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
+    goHome: () => { closeAllSheets(); navBack = true; go('#/'); },
+    closeSheet: (d) => { const s = SH; if (d && d.go) closeAllSheets(); else closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
     peek: (d) => sheetPeek(d.id),
     set: (d) => {
       const v = d.v === '1' ? true : d.v === '' ? false : d.v;
@@ -3299,6 +3359,10 @@
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
     partnerView: (d) => sheetPartnerView(d.id),
+    viewAsOpen: () => sheetViewAs(),
+    viewAsPick: () => { window.API.setViewAs(null); try { sessionStorage.setItem('sarafan.viewAsPick', '1'); } catch (e) { /* */ } location.hash = '#/me'; location.reload(); },
+    viewAsGo: (d) => { window.API.setViewAs({ id: d.id, label: d.label, name: d.name }); location.hash = '#/'; location.reload(); },
+    viewAsExit: () => { window.API.setViewAs(null); location.hash = '#/me'; location.reload(); },
     toggleSec: (d) => { if (openSecs.has(d.k)) openSecs.delete(d.k); else openSecs.add(d.k); render(); },
     openTg: (d) => { const link = 'https://t.me/' + d.u; if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank'); },
     pickVia: (d) => { if (d.name) { SH.F.viaName = d.name; } else { SH.F.via = d.v; SH.F.viaName = ''; } drawSheet(); },
@@ -3499,7 +3563,7 @@
     if (!inSheet && k === 't') $('#askcats').innerHTML = askCats();
     syncForm();
   });
-  window.addEventListener('hashchange', () => { if (SH) closeSheet(); render(); });
+  window.addEventListener('hashchange', () => { closeAllSheets(); render(); });
 
   if (LIVE) {
     $('#app').innerHTML = `<div class="fade-in" style="padding:24px 20px">

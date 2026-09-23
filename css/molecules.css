@@ -27,7 +27,7 @@
 .chips.scroll::-webkit-scrollbar { display: none; }
 
 /* Ряд кнопок */
-.btn-row { display: flex; gap: var(--s-2); }
+.btn-row { display: flex; gap: var(--s-3); }
 .btn-row .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
 
 /* Стопка лиц со счётчиком «+N» */
