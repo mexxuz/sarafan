@@ -1461,25 +1461,50 @@
   // С кем работает фирма: подрядчики и поставщики — от имени фирмы, видно, кто вёл дело
   const partnersOf = (fid) => (S.partners || []).filter((x) => x.firm === fid);
   const partnerFirms = (kind, id) => (S.partners || []).filter((x) => (kind === 'user' ? x.user === id : x.node === id) && nodeById(x.firm));
+  // Разделы открываются по нажатию: у фирмы бывает полсотни подрядчиков
+  const openSecs = new Set();
   function partnersBlock(n) {
     const list = partnersOf(n.id);
     const member = nodePeople(n.id).some((x) => x.user === S.me && !x.past && x.confirmed);
     const iOwn = nodePeople(n.id).some((x) => x.user === S.me && !x.past && x.confirmed && x.role === 'owner');
     if (!list.length && !member) return '';
     const who = (x) => (x.user ? full(x.user) : x.node && nodeById(x.node) ? nodeById(x.node).name : x.name || 'Без имени');
-    const pic = (x) => (x.user ? av(x.user, 's') : `<span class="node-ic ${x.node && nodeById(x.node) ? nodeById(x.node).kind : 'company'}" style="width:34px;height:34px">${ic(x.user ? 'user' : x.node ? 'house' : 'user')}</span>`);
-    const href = (x) => (x.user ? '#/p/' + x.user : x.node ? '#/o/' + x.node : '');
-    const via = (x) => (x.via ? 'вела ' + first(x.via) : x.viaName ? 'вёл(а) ' + x.viaName : '');
+    const pic = (x) => (x.user ? av(x.user, 's') : x.node ? `<span class="node-ic ${nodeById(x.node) ? nodeById(x.node).kind : 'company'}" style="width:34px;height:34px">${ic('house')}</span>`
+      : `<span class="av s" style="--h:${hue(x.id)}" aria-hidden="true">${esc(((x.name || '?').match(/[A-Za-zА-Яа-яЁё0-9]/) || ['?'])[0].toUpperCase())}</span>`);
+    const via = (x) => (x.source === 'import' ? '' : x.via === S.me ? 'через вас' : x.via ? 'вёл(а) ' + first(x.via) : x.viaName ? 'вёл(а) ' + x.viaName : '');
+    const top = (x) => (x.section || '').split(' › ')[0];
+    const rest = (x) => (x.section || '').split(' › ').slice(1).join(' › ');
+    const reach = (x) => (x.inside ? [x.phone, x.username ? '@' + x.username : ''].filter(Boolean).join(' · ') : '');
+    const row = (x) => {
+      const link = x.user ? `href="#/p/${x.user}"` : x.node ? `href="#/o/${x.node}"`
+        : x.inside && x.username ? `href="#" data-act="openTg" data-u="${esc(x.username)}"`
+          : x.inside && x.phone ? `href="tel:${esc(x.phone.replace(/[^\d+]/g, ''))}"` : '';
+      const sub = [rest(x) || (x.cat ? cat(x.cat).who : ''), x.text, via(x), reach(x)].filter(Boolean).join(' · ');
+      return `<div class="person">${link ? `<a class="grow row" ${link} style="min-width:0">` : '<div class="grow row" style="min-width:0">'}${pic(x)}
+          <div class="grow" style="min-width:0"><div class="name ellip">${esc(who(x))}</div>
+          ${sub ? `<div class="sub ellip">${esc(sub)}</div>` : ''}</div>${link ? '</a>' : '</div>'}
+          ${x.by === S.me || iOwn ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropPartner" data-id="${x.id}" aria-label="Убрать">${ic('x')}</button>` : ''}</div>`;
+    };
+    const groups = [];
+    list.slice().sort((a, b) => (top(a) ? 1 : 0) - (top(b) ? 1 : 0)).forEach((x) => {
+      const k = top(x);
+      let g = groups.find((y) => y.k === k);
+      if (!g) groups.push(g = { k, items: [] });
+      g.items.push(x);
+    });
+    const body = groups.length > 1 || (groups[0] && groups[0].k)
+      ? groups.map((g) => {
+        const key = n.id + ':' + g.k, open = openSecs.has(key) || g.items.length <= 3;
+        return `<div class="partner-sec"><button class="partner-sec-head" data-act="toggleSec" data-k="${esc(key)}">
+            <b>${esc(g.k || 'Отмечены вручную')}</b><span class="tag">${g.items.length}</span><span class="grow"></span>${g.items.length > 3 ? `<span class="tiny muted">${open ? 'Свернуть' : 'Показать'}</span>` : ''}</button>
+          ${open ? g.items.map(row).join('') : `<p class="tiny muted" style="margin:0 0 6px">${esc(g.items.slice(0, 4).map((x) => who(x).split(' ')[0]).join(', '))}${g.items.length > 4 ? ' и ещё ' + (g.items.length - 4) : ''}</p>`}</div>`;
+      }).join('')
+      : list.map(row).join('');
     return `<div class="sec-title"><h2 class="h2">С кем работает</h2>${list.length ? `<span class="tag">${list.length}</span>` : ''}</div>
-      <p class="sec-note">Подрядчики и поставщики ${n.kind === 'company' ? 'фирмы' : 'места'} — рекомендация от ${esc(n.name)}, а не личная</p>
-      <div class="card">${list.slice(0, 30).map((x) => `<div class="person">${href(x) ? `<a class="grow row" href="${href(x)}" style="min-width:0">` : '<div class="grow row" style="min-width:0">'}${pic(x)}
-          <div class="grow"><div class="name ellip">${esc(who(x))}</div>
-          <div class="sub ellip">${esc([x.cat ? cat(x.cat).who : '', x.text, via(x), x.inside && x.phone ? x.phone : ''].filter(Boolean).join(' · ') || (x.source === 'import' ? 'из контактов фирмы' : ''))}</div></div>${href(x) ? '</a>' : '</div>'}
-          ${x.by === S.me || iOwn ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropPartner" data-id="${x.id}" aria-label="Убрать">${ic('x')}</button>` : ''}</div>`).join('')
-        || '<p class="small muted" style="margin:0 0 4px">Пока пусто. Добавьте подрядчиков и поставщиков, с которыми работает фирма — знакомые смогут на них выйти</p>'}
-        ${list.length > 30 ? `<p class="tiny muted" style="margin:8px 0 0">и ещё ${list.length - 30}</p>` : ''}
+      <p class="sec-note">Подрядчики и поставщики ${n.kind === 'company' ? 'фирмы' : 'места'} — рекомендация от ${esc(n.name)}, а не личная${member && list.some((x) => x.source === 'import') ? '. Телефоны и заметки видят только сотрудники' : ''}</p>
+      <div class="card">${body || '<p class="small muted" style="margin:0 0 4px">Пока пусто. Добавьте подрядчиков и поставщиков, с которыми работает фирма — знакомые смогут на них выйти</p>'}
         ${member ? `<div class="btn-row" style="margin-top:12px"><button class="btn sm ghost" data-act="addPartner" data-id="${n.id}">${ic('plus')}Добавить подрядчика</button></div>
-        <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл контактов из телефона (.vcf) или таблицу (.csv)</p>` : ''}</div>`;
+        <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл: контакты из телефона (.vcf), таблицу (.csv) или карту XMind</p>` : ''}</div>`;
   }
 
   function sheetPartner(fid) {
@@ -3253,6 +3278,8 @@
     submitPartner: () => SH.submit(),
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
+    toggleSec: (d) => { if (openSecs.has(d.k)) openSecs.delete(d.k); else openSecs.add(d.k); render(); },
+    openTg: (d) => { const link = 'https://t.me/' + d.u; if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank'); },
     pickVia: (d) => { if (d.name) { SH.F.viaName = d.name; } else { SH.F.via = d.v; SH.F.viaName = ''; } drawSheet(); },
     pickPartnerNode: (d) => { SH.F.node = d.id; SH.F.nodeName = d.name; drawSheet(); },
     dropPartner: (d) => mutate(() => { S.partners = (S.partners || []).filter((x) => x.id !== d.id); }, '/firms/partner/delete', { id: d.id }, 'Убрали'),

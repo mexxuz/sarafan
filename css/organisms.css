@@ -628,3 +628,9 @@
 .peek-people .faces { display: flex; }
 .peek-people .stack-face { margin-left: -8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper); line-height: 0; }
 .peek-people .stack-face:first-child { margin-left: 0; }
+
+/* С кем работает фирма: разделы из загруженной карты — «Материалы», «Печать»… */
+.partner-sec + .partner-sec { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+.partner-sec-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 0; background: none; border: 0;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.partner-sec-head b { font-weight: 600; font-size: 15px; }
