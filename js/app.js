@@ -2270,7 +2270,7 @@
     const f = { name: me.name, about: me.about, cats: [...me.cats], role: me.role || 'both',
       avail: S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open'),
       area: how.area || '', visit: how.visit || '', hours: how.hours || '',
-      langs: how.langs || '', pay: how.pay || '', reply: how.reply || '', busyDays: '' };
+      langs: how.langs || '', pay: how.pay || '', reply: how.reply || '', busyDays: '', cardPhone: S.cardPhone || '' };
     const hidden = S.blocked || [];
     openSheet({
       F: f,
@@ -2290,7 +2290,9 @@
           <div class="chips" style="margin-top:8px">${Object.entries(HOW.pay).map(([k, l]) => `<button class="chip ${howList(f.pay).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="pay" data-v="${k}">${l}</button>`).join('')}</div>
           <div class="chips" style="margin-top:8px">${Object.entries(HOW.langs).map(([k, l]) => `<button class="chip ${howList(f.langs).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="langs" data-v="${k}">${l}</button>`).join('')}</div>
           <input class="input" style="margin-top:8px" data-bind="hours" maxlength="80" placeholder="Когда удобно писать: будни до 20:00" value="${esc(f.hours || '')}">
-          <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>`}
+          <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>
+        <label class="field"><span>Телефон для карточки в чатах</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone || '')}">
+          <p class="hint">Когда вас советуют через @${esc(S.bot || 'sarafanibot')}, в чат придёт настоящий контакт: позвонить или сохранить в телефон одним нажатием. Не хотите — оставьте пустым</p></label>`}
         <div class="field"><span>Как вы видны сети</span><div class="chips">${[
           ['open', 'Беру работу'], ['busy', 'Сейчас занят'], ['hidden', 'Не показывать меня'],
         ].map(([k, l]) => `<button class="chip ${f.avail === k ? 'on' : ''}" data-act="set" data-k="avail" data-v="${k}">${l}</button>`).join('')}</div>
@@ -2306,10 +2308,10 @@
         const body = { name: f.name.trim(), about: f.about.trim(), role: f.role, availability: f.avail,
           cats: f.role === 'client' ? [] : f.cats,
           area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
-          langs: f.langs, pay: f.pay, reply: f.reply,
+          langs: f.langs, pay: f.pay, reply: f.reply, cardPhone: (f.cardPhone || '').trim(),
           busyUntil: f.avail === 'busy' && f.busyDays ? Date.now() + Number(f.busyDays) * 864e5 : null };
         closeSheet();
-        mutate(() => { S.availability = f.avail; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden',
+        mutate(() => { S.availability = f.avail; S.cardPhone = body.cardPhone; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden',
           how: { area: body.area, visit: body.visit, hours: body.hours, langs: body.langs, pay: body.pay, reply: body.reply } }); },
           '/profile', body, 'Сохранено');
       },
