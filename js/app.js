@@ -1377,7 +1377,7 @@
       document.body.appendChild(bar);
     }
     document.body.classList.add('viewing-as');
-    bar.innerHTML = `${ic('eye')}<span class="grow ellip"><b>${esc(va.label)}</b> · ${esc(va.name)}</span>
+    bar.innerHTML = `${ic('eye')}<span class="grow ellip"><b>${esc(va.label)}</b>${va.name && !va.name.startsWith('Гость') ? ' · ' + esc(va.name) : ''}</span>
       <button data-act="viewAsPick">Другой</button><button data-act="viewAsExit">Выйти</button>`;
   }
 
