@@ -208,7 +208,7 @@ window.Cloud = function (canvas, opts) {
     });
     // Чем дальше человек, тем он бледнее: свои в полную силу, знакомые знакомых
     // вполсилы, дальние — едва намечены.
-    const depth = (n) => (n.self || n.ring <= 1 ? 1 : n.ring === 2 ? 0.6 : 0.36);
+    const depth = (n) => (n.self || n.fc || n.ring <= 1 ? 1 : n.ring === 2 ? 0.6 : 0.36);   // создатель — всегда в полную силу
 
     const lit = hover || held;
     const near = new Set();
