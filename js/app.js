@@ -1675,7 +1675,6 @@
           <div class="small muted" style="margin-top:2px">Осталось мест: ${left} из ${inv.max}</div></div></div>
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
         <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
-        <button class="link-row wide" data-act="pickCircle" style="margin-top:10px">${ic('user')}<span class="grow"><b>Позвать из контактов Telegram</b><i>Отметьте знакомых — без рекомендаций. Кто уже здесь, получит заявку</i></span>${ic('arrow')}</button>
         <div class="dots plain">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
         <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы человека рекомендуете: это отдельное действие.</p>
       </div>`;
@@ -1699,6 +1698,8 @@
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
       `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
+      <button class="ask-hero" data-act="pickCircle" style="margin-top:var(--s-3);width:100%;text-align:left"><span class="ic">${ic('user')}</span>
+        <span class="grow"><div class="t1">Добавить знакомых из Telegram</div><div class="t2">Отметьте людей в контактах — без рекомендаций. Кто уже в Сарафане, получит заявку, остальным — приглашение</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</button>
       ${invite}
       ${empty ? howto : ''}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
