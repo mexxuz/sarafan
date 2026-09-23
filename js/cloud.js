@@ -176,7 +176,9 @@ window.Cloud = function (canvas, opts) {
     vouch: 'rgba(47,123,255,.24)',
     knowHot: 'rgba(96,116,150,.5)',
     vouchHot: 'rgba(47,123,255,.8)',
-    both: 'rgba(47,123,255,.46)',                // взаимно: двое рекомендуют друг друга
+    both: 'rgba(47,123,255,.46)',
+    work: 'rgba(120,96,255,.5)',                  // человек — его фирма: фиолетовый пунктир
+    workHot: 'rgba(120,96,255,.9)',                // взаимно: двое рекомендуют друг друга
     me: '#2f7bff',
     ring1: 'rgba(47,123,255,.95)',
     ring2: 'rgba(47,123,255,.42)',
@@ -227,7 +229,10 @@ window.Cloud = function (canvas, opts) {
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.quadraticCurveTo(kx, ky, b.x, b.y);
+      ctx.setLineDash(e.kind === 'work' ? [3, 3] : []);
       ctx.stroke();
+      ctx.setLineDash([]);
+      if (e.kind === 'work') return;   // по нити работы огоньки не бегут — это не рекомендация
 
       // По нити плывёт мягкий проблеск — участок линии подсвечивается градиентом
       // и гаснет к краям. Движение заметно боковым зрением, но не отвлекает.

@@ -883,13 +883,16 @@
     if (withPlaces) {
       nodesAll().forEach((n) => {
         const voices = [...new Set([...nodeRecs(n).map((r) => r.from), n.by])].filter((id) => known.has(id));
-        if (!voices.length) return;
+        // кто из видимых людей здесь работает — к ним фиолетовая пунктирная нить
+        const staff = nodePeople(n.id).filter((x) => !x.past && !x.waiting && known.has(x.user)).map((x) => x.user);
+        if (!voices.length && !staff.length) return;
         const id = 'o' + n.id;
         nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company',
           r: n.kind === 'company' ? 8 : 8.5,
           label: n.name.length > 18 ? n.name.slice(0, 17) + '…' : n.name,
           go: '#/o/' + n.id });
-        voices.forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
+        voices.filter((v) => !staff.includes(v)).forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
+        staff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
       });
     }
     if (onlyPlaces) {
@@ -1078,6 +1081,94 @@
       <span>Знакомые узнают место с первого взгляда — вывеску, вход, зал</span>${input}</label>`;
   }
 
+  // ——— Люди фирмы: кто владелец, кто работает, кто работал раньше ———
+  // Через фирму выходят на своего человека, через человека — на фирму.
+  const nodePeople = (nid) => (S.nodePeople || []).filter((x) => x.node === nid);
+  const jobsOf = (uid) => (S.nodePeople || []).filter((x) => x.user === uid && nodeById(x.node));
+  const cap1 = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
+  const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : cap1(x.title) || 'Работает');
+  const jobState = (x) => (x.waiting ? 'ждёт подтверждения' : !x.confirmed ? 'со слов' : '');
+  const recommended = (uid) => (S.recs || []).some((r) => r.to === uid && !r.private);
+
+  // Строка под именем: «Директор · Premium Selection» — до двух текущих мест
+  function jobLine(uid) {
+    const cur = jobsOf(uid).filter((x) => !x.past && (!x.waiting || uid === S.me));
+    if (!cur.length) return '';
+    return `<div class="job-line">${cur.slice(0, 2).map((x) => { const n = nodeById(x.node);
+      return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
+      ${cur.length > 2 ? `<span class="tiny muted">и ещё ${cur.length - 2}</span>` : ''}</div>`;
+  }
+
+  // Блок «Где работает» в профиле: текущие места, ниже — «Раньше»
+  function workView(uid) {
+    const all = jobsOf(uid);
+    const mine = uid === S.me;
+    const cur = all.filter((x) => !x.past && (!x.waiting || mine));
+    const past = all.filter((x) => x.past && (!x.hidden || mine));
+    if (!cur.length && !past.length) return '';
+    const row = (x) => { const n = nodeById(x.node);
+      return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+        <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
+        ${mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
+        ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button>` : ''}</div>`; };
+    return `<div class="sec-title"><h2 class="h2">${mine ? 'Где вы работаете' : 'Где работает'}</h2></div>
+      <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0">Сейчас нигде не отмечен</p>'}
+      ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше</div>${past.map(row).join('')}` : ''}</div>
+      ${mine ? '<p class="tiny muted" style="margin:8px 2px 0">Отметиться в фирме — на её странице: «Я здесь работаю»</p>' : ''}`;
+  }
+
+  // Блок «Люди» на странице фирмы или места
+  function peopleBlock(n) {
+    const all = nodePeople(n.id);
+    const cur = all.filter((x) => !x.past)
+      .sort((a, b) => (b.role === 'owner') - (a.role === 'owner') || b.confirmed - a.confirmed || (G.dist[a.user] ?? 9) - (G.dist[b.user] ?? 9));
+    const past = all.filter((x) => x.past && !x.hidden);
+    const others = (S.nodeOthers || {})[n.id] || 0;
+    const mine = cur.find((x) => x.user === S.me);
+    const hasOwner = cur.some((x) => x.role === 'owner' && x.confirmed);
+    const iOwn = cur.some((x) => x.user === S.me && x.role === 'owner' && x.confirmed);
+    const row = (x) => `<div class="person"><a class="grow row" href="#/p/${x.user}" style="min-width:0">${av(x.user, 's')}
+        <div class="grow"><div class="name ellip">${esc(full(x.user))}</div>
+        <div class="sub ellip">${x.role === 'owner' ? 'Владелец' + (x.title ? ' · ' + esc(x.title) : '') : esc(jobRole(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
+        ${x.canConfirm ? `<button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>` : ''}
+        ${iOwn && x.user !== S.me ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Убрать из фирмы">${ic('x')}</button>` : ''}</div>`;
+    return `<div class="sec-title"><h2 class="h2">Люди</h2>${cur.length ? `<span class="tag">${cur.length + others}</span>` : ''}</div>
+      <p class="sec-note">${n.kind === 'company' ? 'Кто здесь работает — можно выйти на своего человека, а не звонить наугад' : 'Кто здесь работает — владелец, мастера, администраторы'}</p>
+      <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0 0 4px">Пока никто не отметился</p>'}
+        ${others ? `<p class="tiny muted" style="margin:8px 0 0">И ещё ${pl(others, 'человек', 'человека', 'человек')} — не из ваших кругов</p>` : ''}
+        ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><p class="small" style="margin:4px 0 0">${past.map((x) => `<a class="link" href="#/p/${x.user}">${esc(full(x.user))}</a>`).join(', ')}</p>` : ''}
+        ${mine ? '' : `<div class="btn-row" style="margin-top:12px"><button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>
+          ${hasOwner ? '' : `<button class="btn sm ghost" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}Это моя ${n.kind === 'company' ? 'фирма' : 'точка'}</button>`}</div>`}</div>`;
+  }
+
+  function sheetWorkJoin(nid, role) {
+    const n = nodeById(nid);
+    if (!n) return;
+    const hasOwner = nodePeople(nid).some((x) => !x.past && x.role === 'owner' && x.confirmed);
+    const f = { role: role === 'owner' && !hasOwner ? 'owner' : 'staff', title: '' };
+    openSheet({
+      F: f,
+      valid: () => true,
+      render: () => `${sheetHead(null, esc(n.name), f.role === 'owner' ? 'Это ваша фирма' : 'Вы здесь работаете')}
+        <div class="field" style="margin-top:0"><span>Кто вы здесь</span><div class="chips">
+          <button class="chip ${f.role === 'staff' ? 'on' : ''}" data-act="set" data-k="role" data-v="staff">Работаю здесь</button>
+          ${hasOwner ? '' : `<button class="chip ${f.role === 'owner' ? 'on' : ''}" data-act="set" data-k="role" data-v="owner">Владелец</button>`}</div></div>
+        <label class="field"><span>${f.role === 'owner' ? 'Должность, если хотите' : 'Кем'}</span><input class="input" data-bind="title" maxlength="60"
+          placeholder="${f.role === 'owner' ? 'директор, основатель' : 'мастер, врач, администратор'}" value="${esc(f.title)}"></label>
+        <p class="why">${ic('spark')}${f.role === 'owner'
+    ? 'Подтвердит ваш знакомый или тот, кто записал фирму. После этого вы сможете подтверждать сотрудников и править карточку'
+    : hasOwner ? 'Подтвердит владелец. До этого отметку видите только вы и он'
+      : 'Видно сразу, с пометкой «со слов», — пока не подтвердит коллега или владелец'}</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitWork" data-submit>Отметиться</button></div>`,
+      submit: () => {
+        closeSheet();
+        mutate(() => { (S.nodePeople = S.nodePeople || []).push({ id: 'w' + uid(), node: nid, user: S.me, role: f.role, title: f.title.trim(),
+          confirmed: false, past: false, hidden: false, waiting: hasOwner, at: Date.now() }); },
+        '/nodes/people/join', { node: nid, role: f.role, title: f.title.trim() }, 'Отмечено');
+      },
+    });
+  }
+
   function Node(id) {
     const n = nodeById(id);
     if (!n) return '<div class="empty"><h2 class="h2">Место не найдено</h2><a class="btn" href="#/">На главную</a></div>';
@@ -1107,6 +1198,8 @@
         <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
         <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек рекомендует', 'человека рекомендуют', 'человек рекомендуют')}</span></div>
         <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
+
+      ${peopleBlock(n)}
 
       <div class="sec-title"><h2 class="h2">Что об этом знают</h2><button class="btn sm" data-act="addFact" data-id="${n.id}">Добавить</button></div>
       ${facts.length ? `<div class="card">${Object.keys(byKind).map((k) => `<div class="fact-group">
@@ -1436,11 +1529,12 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1>${founderTag(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1>${founderTag(id)}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${workView(id)}
       ${howView(id)}
       ${factsView(id)}
       ${showcaseView(id)}
@@ -1628,12 +1722,13 @@
     const thanks = S.requests.flatMap((q) => q.answers).filter((a) => a.from === S.me && a.thanked).length;
     const indep = G.groupsOf([...new Set(inRecs.map((r) => r.from))]).length;
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="btn sm" data-act="editMe">Изменить</button></div>
-      <div class="p-head">${founderAv(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
         <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
         <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
+      ${workView(S.me)}
       ${howView(S.me)}
       ${factsView(S.me)}
       ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
@@ -2678,6 +2773,14 @@
       `${d.name}, я записал вас в Сарафан — сети рекомендаций по знакомым. Моя рекомендация уже ждёт в вашем профиле:`),
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
+    submitWork: () => SH.submit(),
+    workJoin: (d) => sheetWorkJoin(d.id, d.v),
+    workConfirm: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) { x.confirmed = true; x.waiting = false; x.canConfirm = false; } },
+      '/nodes/people/confirm', { id: d.id }, 'Подтверждено'),
+    workLeave: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.past = true; },
+      '/nodes/people/leave', { id: d.id }, 'Готово: ' + (d.name || 'убрали')),
+    workHide: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.hidden = !!d.v; },
+      '/nodes/people/hide', { id: d.id, hidden: !!d.v }, d.v ? 'Скрыто от других' : 'Снова видно'),
     // «Не показывайте меня этому человеку»: перестают видеть друг друга, он не узнаёт
     hideFrom: (d) => {
       const name = U(d.id).name;
