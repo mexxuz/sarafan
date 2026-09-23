@@ -137,13 +137,15 @@ window.Cloud = function (canvas, opts) {
       n.vx += (dx / d) * pull / wide;
       n.vy += (dy / d) * pull;
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
-      // медленное плавание: каждый узел ходит по своей маленькой петле
-      if (!calm) {
+      // медленное плавание: каждый узел ходит по своей маленькой петле. В большой сети — нет:
+      // сотни плавающих точек толкают друг друга без конца, и облако не успокаивается
+      if (!calm && !big()) {
         const t = now * 0.0004 * n.sp + n.ph;
         n.vx += Math.cos(t) * 0.035;
         n.vy += Math.sin(t * 1.17) * 0.035;
       }
-      n.vx *= 0.86; n.vy *= 0.86;
+      const damp = big() ? 0.8 : 0.86;
+      n.vx *= damp; n.vy *= damp;
       n.x += n.vx; n.y += n.vy;
       // Под шапкой с логотипом и портретом узел не достать — мягко выталкиваем оттуда
       const screenY = n.y * cam.scale + cam.y;
@@ -420,14 +422,17 @@ window.Cloud = function (canvas, opts) {
 
   // ——— жизнь ———
   let frames = 0;
+  // Большая сеть раскладывается и замирает: движется только то, что тянут, и соседи — пока не улягутся
+  const big = () => nodes.length > 60;
+  let settleUntil = 260;
   function tick() {
     frames++;
     now = performance.now();
     if (frames % 30 === 0) size();          // страховка: размер мог поменяться незаметно
     // симуляция остывает, как в настоящих графах: сначала расходятся, потом замирают
     // и лишь едва дрейфуют — движение есть, ряби нет
-    const heat = calm ? 0 : Math.max(0.012, 0.3 * Math.pow(0.975, frames));
-    step(heat);
+    const heat = calm ? 0 : big() ? 0.3 * Math.pow(0.975, frames) : Math.max(0.012, 0.3 * Math.pow(0.975, frames));
+    if (!big() || frames < settleUntil || held) step(heat);
 
     nodes.forEach((n, i) => {
       if (n.delay > 0) { n.delay -= 1; return; }
@@ -457,6 +462,7 @@ window.Cloud = function (canvas, opts) {
   function start() {
     stop();
     frames = 0;
+    settleUntil = 260;
     if (calm) { nodes.forEach((n) => { n.born = 1; n.delay = 0; }); for (let i = 0; i < 240; i++) step(0); draw(); return; }
     raf = requestAnimationFrame(tick);
   }
@@ -529,6 +535,7 @@ window.Cloud = function (canvas, opts) {
     if (e && e.pointerId != null) touches.delete(e.pointerId);
     if (touches.size < 2) pinch = 0;
     if (held && moved < 6 && opts.onPick) opts.onPick(held);
+    if (held) settleUntil = frames + 90;   // отпустили точку — соседи ещё немного укладываются и снова замирают
     held = null; pointer.down = false;
     canvas.style.cursor = 'grab';
     if (e && canvas.hasPointerCapture && e.pointerId != null) {

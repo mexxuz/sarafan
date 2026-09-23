@@ -982,21 +982,39 @@
       });
       const keep = edges.filter((e) => !isPlace(e.a) && !isPlace(e.b)
         && (!known.has(e.a) || !known.has(e.b) || (R(e.a) <= 1 && R(e.b) <= 1)));
+      // у каждого знакомого — пятёрка самых рекомендуемых из его круга, остальные сворачиваются в «+N»
+      const kids = new Map();
+      const drop = new Set();
       people.filter((id) => R(id) === 2).forEach((id) => {
         const via = (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x));
-        if (!via.length) return;
+        if (!via.length) { drop.add(id); return; }
         const p = via.find((x) => vouched.has(x + '>' + id)) || via[0];
-        keep.push({ a: p, b: id, kind: vouched.has(p + '>' + id) ? 'vouch' : 'know', len: 30 });
+        if (!kids.has(p)) kids.set(p, []);
+        kids.get(p).push(id);
       });
+      const extra = [];
+      kids.forEach((list, p) => {
+        list.sort((a, b) => G.recsTo(b).length - G.recsTo(a).length);
+        list.slice(0, 5).forEach((id) => keep.push({ a: p, b: id, kind: vouched.has(p + '>' + id) ? 'vouch' : 'know', len: 28 }));
+        const rest = list.slice(5);
+        rest.forEach((id) => drop.add(id));
+        if (rest.length) {
+          extra.push({ id: 'more' + p, ring: 2, kind: 'person', ghost: true, r: 9, initials: '+' + rest.length,
+            label: 'ещё ' + rest.length, more: { parent: p, count: rest.length } });
+          keep.push({ a: p, b: 'more' + p, kind: 'wait', len: 26 });
+        }
+      });
+      // места: одной нитью к ближайшему советчику, на полотне — два десятка самых советуемых
       const best = {};
       edges.filter((e) => isPlace(e.b) && known.has(e.a)).forEach((e) => { if (!best[e.b] || R(e.a) < R(best[e.b].a)) best[e.b] = e; });
-      const drop = new Set();
-      nodes.filter((n) => isPlace(n.id)).forEach((n) => {
-        const e = best[n.id];
-        if (!e || R(e.a) > 1) { drop.add(n.id); return; }
-        keep.push({ ...e, len: 34 });
-      });
-      return { nodes: nodes.filter((n) => !drop.has(n.id)), edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
+      nodes.filter((n) => isPlace(n.id)).map((n) => ({ n, e: best[n.id], k: nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length }))
+        .sort((a, b) => b.k - a.k)
+        .forEach((x, i) => {
+          if (!x.e || R(x.e.a) > 1 || drop.has(x.e.a) || i >= 24) { drop.add(x.n.id); return; }
+          keep.push({ ...x.e, len: 34 });
+        });
+      return { nodes: [...nodes.filter((n) => !drop.has(n.id)), ...extra],
+        edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
     }
     if (onlyPlaces) {
       // срез «только места»: вы, места и фирмы. Людей нет
@@ -1016,6 +1034,7 @@
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
     if (n.fc) { sheetFounder(); return; }
+    if (n.more) { toast(`Ещё ${n.more.count} человек через ${first(n.more.parent)} — они найдутся в поиске`); return; }
     if (n.anon) { toast('Этого человека вы не знаете — он просто звено в цепочке до создателя'); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
