@@ -826,6 +826,9 @@
       <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
       <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
       ${savedList()}
+      <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
+        <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку. Под ней «Сохранить себе» — любой в чате сохранит человека одним нажатием. Контакт прислали в личке — перешлите боту</p>
+        <button class="btn ghost xs" style="margin-top:8px" data-act="chatHelp">Всё, что умеет бот в чатах</button></div></div>
 `;
   }
 
@@ -2628,9 +2631,7 @@
       <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
         ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
-      <button class="link-row wide" data-act="chatHelp" style="margin-top:20px">${ic('chat')}
-        <span class="grow"><b>Сарафан в чатах</b><i>Советовать в переписке, сохранять из чата, пересылать контакты боту</i></span>${ic('arrow')}</button>
-      <button class="link-row wide" data-act="tourOpen">${ic('spark')}
+      <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
