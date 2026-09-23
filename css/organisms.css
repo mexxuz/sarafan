@@ -49,7 +49,10 @@
   font: 500 var(--fs-sm)/1.5 var(--t); color: var(--ink-2); margin: var(--s-3) 0 0;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.pcard .quote.empty { color: var(--ink-4); }
+.pcard .quote.none { color: var(--ink-4); }
+.pcard .quote.plain { color: var(--ink-2); font-weight: 400; }
+.pcard .pc-addr { display: flex; align-items: center; gap: 5px; margin-top: 8px; font: 500 var(--fs-xxs)/1.3 var(--t); color: var(--ink-3); }
+.pcard .pc-addr svg { width: 13px; height: 13px; flex: none; }
 .pcard .by { font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-4); margin-top: 7px; }
 .pcard .foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); padding-top: var(--s-3); border-top: 1px solid var(--line); }
 .pcard .foot .grow { flex: 1; min-width: 0; }
@@ -62,7 +65,7 @@
 .card.accent.pcard .job { color: #fff; }
 .card.accent.pcard .job .more { color: rgba(255, 255, 255, .7); }
 .card.accent.pcard .quote { color: rgba(255, 255, 255, .92); }
-.card.accent.pcard .quote.empty, .card.accent.pcard .by,
+.card.accent.pcard .quote.none, .card.accent.pcard .pc-addr, .card.accent.pcard .by,
 .card.accent.pcard .who-line { color: rgba(255, 255, 255, .75); }
 .card.accent.pcard .nums { color: rgba(255, 255, 255, .88); }
 .card.accent.pcard .arr { color: rgba(255, 255, 255, .8); }

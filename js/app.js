@@ -682,7 +682,7 @@
       <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
         <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
-    : `<p class="quote empty">${r.circle === 1 ? 'Вы знакомы, но его пока никто не рекомендовал.' : 'Этого человека пока никто не рекомендовал.'}</p>`}
+    : `<p class="quote none">${r.circle === 1 ? 'Вы знакомы, но его пока никто не рекомендовал.' : 'Этого человека пока никто не рекомендовал.'}</p>`}
       <div class="foot">${authors.length ? stack(authors) : ''}
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
@@ -1302,10 +1302,12 @@
 
   const nodeCard = (n, accent) => {
     const recs = nodeRecs(n);
+    // Рекомендаций нет — показываем, чем место занимается: слова владельца первыми
+    const service = (n.facts || []).filter((f) => f.kind === 'service').sort((a, b) => (b.official ? 1 : 0) - (a.official ? 1 : 0))[0];
     const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
     const who1 = recs.some((r) => r.from === S.me) ? 'Вы рекомендуете'
       : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' рекомендует')
-        : esc(first(n.by)) + ' записал';
+        : n.by === S.me ? 'Вы записали' : esc(first(n.by)) + ' записал(а)';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
       <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}
@@ -1313,9 +1315,11 @@
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         ${n.closed ? '<span class="tag warm">закрылось</span>'
       : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}</div>
-      <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : 'пока только запись'}</div>
+      <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : (n.facts || []).length ? 'пока без рекомендаций' : 'пока только запись'}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p><div class="by ellip">${esc(full(best.from))}</div>`
-    : `<p class="quote empty">${n.address ? esc(n.address) : 'Никто пока не рассказал об этом месте'}</p>`}
+    : service ? `<p class="quote plain">${esc(service.text)}</p><div class="by ellip">${service.official ? 'от владельца' : esc(full(service.from))}</div>`
+      : `<p class="quote none">Никто пока не рассказал об этом месте</p>`}
+      ${n.address ? `<div class="pc-addr ellip">${ic('pin')}${esc(n.address)}</div>` : ''}
       <div class="foot">${recs.length ? stack(recs.map((r) => r.from)) : ''}
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
