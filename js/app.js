@@ -1087,7 +1087,8 @@
   const jobsOf = (uid) => (S.nodePeople || []).filter((x) => x.user === uid && nodeById(x.node));
   const cap1 = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
   const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : cap1(x.title) || 'Работает');
-  const jobState = (x) => (x.waiting ? 'ждёт подтверждения' : !x.confirmed ? 'со слов' : '');
+  // Неподтверждённая отметка: человек написал о себе сам, никто пока не подтвердил
+  const jobState = (x) => (x.waiting ? 'ждёт владельца' : x.confirmed ? '' : x.role === 'owner' ? 'ждёт подтверждения' : 'не подтверждено');
   const recommended = (uid) => (S.recs || []).some((r) => r.to === uid && !r.private);
 
   // Строка под именем: «Директор · Premium Selection» — до двух текущих мест
@@ -1158,7 +1159,7 @@
         <p class="why">${ic('spark')}${f.role === 'owner'
     ? 'Подтвердит ваш знакомый или тот, кто записал фирму. После этого вы сможете подтверждать сотрудников и править карточку'
     : hasOwner ? 'Подтвердит владелец. До этого отметку видите только вы и он'
-      : 'Видно сразу, с пометкой «со слов», — пока не подтвердит коллега или владелец'}</p>
+      : 'Видно сразу, с пометкой «не подтверждено», — пока не подтвердит коллега или владелец'}</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitWork" data-submit>Отметиться</button></div>`,
       submit: () => {
         closeSheet();
