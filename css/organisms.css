@@ -659,6 +659,3 @@ body.viewing-as #app { padding-top: 48px; }
   background: rgba(255, 255, 255, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); pointer-events: none; }
 .map-foot .cloud-legend { margin: 0; }
 @media (min-width: 900px) { .map-foot { bottom: 20px; } }
-
-/* «Моя сеть»: то же звёздное небо, что на главной, только люди и в карточке страницы */
-.cloud-box.net { margin: 0 calc(-1 * var(--s-5)); height: 340px; }

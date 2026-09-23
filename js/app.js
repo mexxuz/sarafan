@@ -378,7 +378,6 @@
     syncBackButton(active, nav);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
-    if (name === 'net' && $('#netcloud')) mountCloud('netcloud', 2, false, 24);   // «Моя сеть»: небо из людей, без мест
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
@@ -2395,9 +2394,7 @@
       <p style="text-align:center;margin-top:14px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>
       ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
       ${empty ? '' : `
-      <div class="sec-title"><h2 class="h2">Кто рядом с вами</h2><button class="link" data-act="goto" data-h="#/map">Всё небо</button></div>
-      <div class="cloud-box net"><canvas id="netcloud" aria-label="Кто рядом с вами"></canvas></div>
-      <p class="tiny muted" style="text-align:center;margin:6px 0 var(--s-5)">Ваши знакомые и люди через них. Коснитесь точки — откроется карточка</p>
+      <div style="height:var(--s-4)"></div>
       <div class="tabs" role="tablist">
         <button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Знакомые<i>${c1.length}</i></button>
         <button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button>
