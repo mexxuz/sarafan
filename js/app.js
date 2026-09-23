@@ -2292,6 +2292,7 @@
           <input class="input" style="margin-top:8px" data-bind="hours" maxlength="80" placeholder="Когда удобно писать: будни до 20:00" value="${esc(f.hours || '')}">
           <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>
         <label class="field"><span>Телефон для карточки в чатах</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone || '')}">
+          ${tg && tg.requestContact ? `<button class="btn sm ghost" style="margin-top:8px" data-act="takePhone">${ic('user')}Взять номер из Telegram</button>` : ''}
           <p class="hint">Когда вас советуют в чате, номер будет в карточке — нажмут и позвонят. Не хотите — оставьте пустым</p></label>`}
         <div class="field"><span>Как вы видны сети</span><div class="chips">${[
           ['open', 'Беру работу'], ['busy', 'Сейчас занят'], ['hidden', 'Не показывать меня'],
@@ -2497,6 +2498,16 @@
     },
     openDraft: (d) => sheetOutsider('', d.id),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
+    // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
+    takePhone: () => {
+      tg.requestContact((ok, res) => {
+        const raw = ok && res && res.responseUnsafe && res.responseUnsafe.contact && res.responseUnsafe.contact.phone_number;
+        if (!raw) { if (ok === false) toast('Номер не взяли — можно вписать руками'); return; }
+        if (!SH) return;
+        SH.F.cardPhone = (String(raw).startsWith('+') ? '' : '+') + raw;
+        drawSheet(); toast('Номер вписан — нажмите «Сохранить»');
+      });
+    },
     // Нажали «Сохранить» в чате по ошибке — черновик убираем, открываем следующий, если есть
     skipDraft: async (d) => {
       closeSheet();
