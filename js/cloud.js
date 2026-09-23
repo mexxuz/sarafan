@@ -261,11 +261,12 @@ window.Cloud = function (canvas, opts) {
       ctx.globalAlpha = (dim ? 0.24 : 1) * ease * (lit && near.has(n.id) ? 1 : depth(n));
 
       // ореол: свои светятся чуть заметнее — иерархия без лишних обводок
-      if (!dim && (n.self || n.ring <= 1 || n.glow > 0.02)) {
+      if (!dim && (n.self || n.founder || n.ring <= 1 || n.glow > 0.02)) {
         const halo = ctx.createRadialGradient(n.x, n.y, R * 0.6, n.x, n.y, R * (2.4 + n.glow));
         const power = (n.self ? 0.2 : n.ring === 1 ? 0.12 : 0.06) + n.glow * 0.18;
-        halo.addColorStop(0, `rgba(47,123,255,${power})`);
-        halo.addColorStop(1, 'rgba(47,123,255,0)');
+        const tone = n.founder ? '232,165,40' : '47,123,255';   // основатель светится тёплым золотом
+        halo.addColorStop(0, `rgba(${tone},${n.founder ? power + 0.08 : power})`);
+        halo.addColorStop(1, `rgba(${tone},0)`);
         ctx.fillStyle = halo;
         ctx.beginPath();
         ctx.arc(n.x, n.y, R * (2.4 + n.glow), 0, Math.PI * 2);
@@ -322,6 +323,27 @@ window.Cloud = function (canvas, opts) {
       ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
       ctx.strokeStyle = ringColor(n);
       ctx.lineWidth = n.self ? 2.4 : n.ring === 1 ? 1.8 : 1.1;
+      ctx.stroke();
+    }
+
+    // создатель сети — «нулевой пациент»: второе золотое кольцо и звёздочка сверху
+    if (n.founder) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + 3.2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(232,165,40,.95)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      const sx = n.x, sy = n.y - n.r - 3.2, sr = Math.max(4.2, n.r * 0.24);
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? sr * 0.45 : sr;
+        ctx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#f0ad2b';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
 

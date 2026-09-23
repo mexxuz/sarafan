@@ -847,8 +847,9 @@
         r: id === S.me ? 21 : ring(id) === 1 ? 15 : ring(id) === 2 ? 10 : 7.5,
         photo: U(id).photo || null,
         trusted: !!(rep0 && rep0.independent >= 3),
+        founder: (S.founders || []).includes(id),
         initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
-        label: id === S.me ? 'вы' : first(id),
+        label: (id === S.me ? 'вы' : first(id)) + ((S.founders || []).includes(id) ? ' · основатель' : ''),
         go: id === S.me ? '#/me' : '#/p/' + id,
       };
     });
