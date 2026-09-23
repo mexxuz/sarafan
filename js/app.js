@@ -1230,8 +1230,8 @@
       if (!el) return;
       if (cloud) cloud.stop();
       cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5, wheelZoom: id !== 'homecloud',
-        safeTop: id === 'homecloud' ? 92 : 0, sky: id === 'bigcloud' });   // экран облака — всегда звёздное небо
-      cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces, id === 'bigcloud'));
+        safeTop: id === 'homecloud' ? 92 : 0, sky: true });   // и на главной, и на экране облака — звёздное небо
+      cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces, true));
       cloud.start();
     }, 30);
   }
