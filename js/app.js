@@ -2020,8 +2020,7 @@
       </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        <div class="field"><span>Чем занимаетесь</span>
-          <div class="chips">${S.cats.map((c) => `<button class="chip ${F.cats.includes(c.id) ? 'on' : ''}" data-act="toggleCat" data-v="${c.id}">${esc(c.who)}</button>`).join('')}</div>
+        ${catPick(F, 'cats', 'who', 'Чем занимаетесь').replace('</div></div>', '</div>')}
           <p class="hint">Можно пропустить: в чём вы сильны, решат рекомендации знакомых</p></div>
         <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${F.name.trim() ? '' : 'disabled'}>Войти в сеть</button>
         <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
@@ -2068,17 +2067,76 @@
   }
   const sheetHead = (id, title, sub) => `<div class="s-head">${id ? founderAv(id, 'l') : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
   const relChips = (F, heard) => `<div class="field"><span>Откуда знаете</span><div class="chips">${Object.entries(heard ? { heard: 'Мне посоветовали', ...REL } : REL).map(([k, v]) => `<button class="chip ${F.rel === k ? 'on' : ''}" data-act="set" data-k="rel" data-v="${k}">${v}</button>`).join('')}</div></div>`;
-  const catChips = (F, preferred) => {
-    const list = F.allCats ? S.cats.map((c) => c.id) : [...new Set([...(preferred || []), ...(F.cat ? [F.cat] : [])])];
-    const chips = list.map((c) => `<button class="chip ${F.cat === c ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c}">${esc(cat(c).name)}</button>`).join('');
-    const more = F.allCats ? '' : `<button class="chip" data-act="set" data-k="allCats" data-v="1">${list.length ? 'Другая…' : 'Выбрать'}</button>`;
-    const own = F.own
-      ? `<div class="row" style="margin-top:8px"><input class="input" data-bind="ownName" placeholder="Например: таможенный брокер" maxlength="40" value="${esc(F.ownName || '')}">
-         <button class="btn sm" data-act="saveOwnCat">Добавить</button></div>
-         <p class="hint">Новая сфера появится у всех — пишите так, как человека назвали бы вслух</p>`
-      : `<button class="chip" data-act="set" data-k="own" data-v="1">Своей сферы нет в списке</button>`;
-    return `<div class="field"><span>В какой сфере</span><div class="chips">${chips}${more}${F.own ? '' : own}</div>${F.own ? own : ''}</div>`;
+  // ——— Сфера: одно поле с подсказками вместо длинного списка ———
+  // Печатаете — под полем подходящие сферы, в том числе похожие по смыслу. Нужной нет —
+  // «Добавить» заводит новую для всех. Одна сфера (место, фирма, запись) или несколько (профиль).
+  const normCat = (t) => String(t || '').toLowerCase().replace(/ё/g, 'е').trim();
+  const catWords = (c) => [c.name, c.who, ...(c.words || [])].map(normCat).filter(Boolean);
+  const catMatch = (c, q) => {
+    let best = 0;
+    catWords(c).forEach((h) => {
+      const parts = h.split(/[\s,-]+/);
+      if (h === q) best = Math.max(best, 100);
+      else if (h.startsWith(q)) best = Math.max(best, 80);
+      else if (parts.some((w) => w.startsWith(q))) best = Math.max(best, 70);
+      else if (h.includes(q)) best = Math.max(best, 50);
+      // похожие по корню: «ремонт» найдёт «ремонтник», «стоматолог» — «стоматология»
+      else if (q.length >= 4 && parts.some((w) => w.length >= 4 && (w.startsWith(q.slice(0, 4)) || q.startsWith(w.slice(0, 4))))) best = Math.max(best, 30);
+    });
+    return best;
   };
+  const catScore = (c, query) => {
+    const q = normCat(query);
+    if (!q) return 0;
+    const words = q.split(/\s+/).filter((w) => w.length >= 2);
+    const whole = catMatch(c, q);
+    const each = words.length > 1 ? Math.min(...words.map((w) => catMatch(c, w))) * 0.9 : 0;
+    return Math.max(whole, each);
+  };
+  // чем чаще сфера встречается в сети, тем выше в подсказках
+  const catPopularity = () => {
+    const n = {};
+    Object.keys(S.users || {}).forEach((id) => G.catsOf(id).forEach((c) => { n[c] = (n[c] || 0) + 1; }));
+    nodesAll().forEach((x) => { if (x.cat) n[x.cat] = (n[x.cat] || 0) + 1; });
+    return n;
+  };
+  const capFirst = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
+
+  // key: 'cat' — одна сфера, 'cats' — несколько; label: как подписывать — 'name' (сфера) или 'who' (занятие)
+  const catPick = (F, key, label = 'name', title = 'В какой сфере') => {
+    const chosen = key === 'cats' ? (F.cats || []) : (F.cat ? [F.cat] : []);
+    const show = (id) => esc(cat(id)[label] || cat(id).name);
+    return `<div class="field catpick"><span>${title}</span>
+      ${chosen.length ? `<div class="chips" style="margin-bottom:8px">${chosen.map((id) => `<span class="chip on">${show(id)}
+        <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать">${ic('x')}</button></span>`).join('')}</div>` : ''}
+      <input class="input" data-catq="${key}" data-label="${label}" autocomplete="off" maxlength="40"
+        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: дизайнер, юрист…' : 'Начните печатать: типография, юрист…'}">
+      <div class="cat-sugg"></div></div>`;
+  };
+
+  function catSuggest(input) {
+    const box = input.parentElement.querySelector('.cat-sugg');
+    if (!box) return;
+    const key = input.dataset.catq, label = input.dataset.label || 'name';
+    const data = input.closest('#sheet') ? (SH && SH.F) : F;
+    const chosen = key === 'cats' ? ((data && data.cats) || []) : [];
+    const q = input.value.trim();
+    const pop = catPopularity();
+    let list;
+    if (!q) {   // пустое поле — самые частые в вашей сети, чтобы было с чего начать
+      list = S.cats.filter((c) => !chosen.includes(c.id)).sort((a, b) => (pop[b.id] || 0) - (pop[a.id] || 0)).slice(0, 6);
+    } else {
+      list = S.cats.map((c) => ({ c, s: catScore(c, q) })).filter((x) => x.s > 0 && !chosen.includes(x.c.id))
+        .sort((a, b) => b.s - a.s || (pop[b.c.id] || 0) - (pop[a.c.id] || 0)).slice(0, 7).map((x) => x.c);
+    }
+    const exact = q && S.cats.some((c) => normCat(c.name) === normCat(q) || normCat(c.who) === normCat(q));
+    box.innerHTML = list.map((c) => `<button class="sugg" data-act="pickCat" data-k="${key}" data-v="${c.id}">
+        <b>${esc(c[label] || c.name)}</b>${label === 'who' && c.name !== c.who ? `<i>${esc(c.name)}</i>` : label === 'name' && c.who !== c.name ? `<i>${esc(c.who)}</i>` : ''}</button>`).join('')
+      + (q.length >= 3 && !exact ? `<button class="sugg new" data-act="newCat" data-k="${key}" data-name="${esc(capFirst(q))}">${ic('plus')}Добавить «${esc(capFirst(q))}»</button>` : '')
+      + (q && !list.length && q.length < 3 ? '<p class="tiny muted" style="margin:6px 2px">Ещё пару букв…</p>' : '');
+  }
+
+  const catChips = (F) => catPick(F, 'cat');
   // Своя сфера: заводим на сервере и сразу выбираем
   const addOwnCat = async (name) => {
     const low = name.trim().replace(/\s+/g, ' ').toLowerCase();
@@ -2403,10 +2461,7 @@
             ${U(S.me).video ? '<button class="btn sm ghost" data-act="dropVideo" style="margin-left:6px">Убрать</button>' : ''}</div></div>
           <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
-        ${f.role === 'client' ? '' : `<div class="field"><span>Чем занимаетесь</span><div class="chips">${S.cats.map((c) => `<button class="chip ${f.cats.includes(c.id) ? 'on' : ''}" data-act="toggle" data-k="cats" data-v="${c.id}">${esc(c.who)}</button>`).join('')}
-          ${f.own ? '' : '<button class="chip" data-act="set" data-k="own" data-v="1">Своего занятия нет</button>'}</div>
-          ${f.own ? `<div class="row" style="margin-top:8px"><input class="input" data-bind="ownName" placeholder="Например: таможенный брокер" maxlength="40" value="${esc(f.ownName || '')}">
-            <button class="btn sm" data-act="saveOwnJob">Добавить</button></div>` : ''}</div>`}
+        ${f.role === 'client' ? '' : catPick(f, 'cats', 'who', 'Чем занимаетесь')}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
         ${f.role === 'client' ? '' : `<div class="field"><span>Как с вами работать</span>
           <input class="input" data-bind="area" maxlength="80" placeholder="Район: Мирабад, Юнусабад…" value="${esc(f.area || '')}">
@@ -2761,6 +2816,20 @@
     tab: (d) => { F.tab = d.v; render(); },
     sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь находят нужных людей через знакомых.'),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
+    pickCat: (d, el) => {
+      const inSheet = !!el.closest('#sheet');
+      const data = inSheet ? SH.F : F;
+      if (d.k === 'cats') { data.cats = data.cats || []; if (!data.cats.includes(d.v)) data.cats.push(d.v); } else data.cat = d.v;
+      if (inSheet) drawSheet(); else render();
+      setTimeout(() => { const inp = $(`${inSheet ? '#sheet ' : ''}[data-catq="${d.k}"]`); if (inp && d.k === 'cats') inp.focus(); }, 30);
+    },
+    newCat: async (d, el) => {
+      const inSheet = !!el.closest('#sheet');
+      const id = await addOwnCat(d.name || '');
+      if (!id) return;
+      ACT.pickCat({ k: d.k, v: id }, el.isConnected ? el : (inSheet ? $('#sheet') : $('#app')));
+      toast('Сфера добавлена — теперь она есть у всех');
+    },
     saveOwnJob: async () => {
       const id = await addOwnCat(SH.F.ownName || '');
       if (!id) return;
@@ -2925,6 +2994,14 @@
     if (e.key === 'Escape' && SH) ACT.closeSheet();
     if (e.key === 'Enter' && e.target.matches('[role=link]')) e.target.click();
   });
+  document.addEventListener('input', (e) => {
+    if (!e.target.matches('[data-catq]')) return;
+    const t = e.target, v = t.value;
+    if (v && v[0] !== v[0].toUpperCase()) { const pos = t.selectionStart; t.value = capFirst(v); t.setSelectionRange(pos, pos); }
+    catSuggest(t);
+  });
+  document.addEventListener('focusin', (e) => { if (e.target.matches('[data-catq]')) catSuggest(e.target); });
+
   // Вставили совет из переписки — раскладываем по полям: имя, телефон, сфера, текст
   let pasteTimer = null;
   document.addEventListener('input', (e) => {

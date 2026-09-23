@@ -576,3 +576,16 @@
 .job-line a i { font-style: normal; font-size: var(--fs-xxs); color: var(--ink-3); margin-left: 2px; }
 .node-ic.mini { width: 20px; height: 20px; border-radius: 7px; }
 .node-ic.mini svg { width: 12px; height: 12px; }
+
+/* Сфера: одно поле, под ним подсказки — найденные и «Добавить» новую */
+.catpick .chip.on { display: inline-flex; align-items: center; gap: 6px; padding-right: 6px; }
+.catpick .chip-x { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .25); color: inherit; }
+.catpick .chip-x svg { width: 12px; height: 12px; }
+.cat-sugg { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.cat-sugg:empty { display: none; }
+.cat-sugg .sugg { display: flex; align-items: baseline; gap: 8px; text-align: left; padding: 10px 12px; border-radius: var(--r-sm, 10px); background: var(--mist); }
+.cat-sugg .sugg b { font-weight: 600; color: var(--ink); }
+.cat-sugg .sugg i { font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); }
+.cat-sugg .sugg:active { transform: scale(.99); }
+.cat-sugg .sugg.new { color: var(--blue); font-weight: 600; align-items: center; background: var(--blue-soft, #eaf2ff); }
+.cat-sugg .sugg.new svg { width: 16px; height: 16px; }
