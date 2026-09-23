@@ -646,7 +646,9 @@
       const other = r.count - (r.suspicious ? r.bigGroup : 0);
       const bar = r.count ? `<div class="bar-meter">${r.suspicious ? `<i class="grp" style="flex:${r.bigGroup}"></i>` : ''}<i style="flex:${other}"></i><span style="flex:${Math.max(0, 20 - r.count)}"></span></div>` : '';
       const warn = r.suspicious ? `<div class="warn">${ic('alert')}<div>${r.bigGroup} из ${r.count} рекомендаций пришли от людей, которые знакомы между собой и появились в сети в одно время. Мы считаем их одним источником.</div></div>` : '';
-      return `<div class="rep-row ${r.count ? 'on' : ''}"><div class="num">${r.count}</div><div class="grow"><div class="h3">${esc(cat(c).name)}</div><div class="small muted">${sub}</div>${bar}${warn}</div></div>`;
+      const goal = id === S.me && r.independent < 3
+        ? `<div class="tiny" style="margin-top:6px;color:var(--blue)">${r.independent ? `Ещё ${pl(3 - r.independent, 'независимая рекомендация', 'независимые рекомендации', 'независимых рекомендаций')} — и отметка «надёжно»: таких находят первыми` : 'Первая рекомендация — и вас начнут находить в поиске'}</div>` : '';
+      return `<div class="rep-row ${r.count ? 'on' : ''}"><div class="num">${r.count}</div><div class="grow"><div class="h3">${esc(cat(c).name)}</div><div class="small muted">${sub}</div>${bar}${goal}${warn}</div></div>`;
     }).join('');
   };
 
@@ -666,11 +668,17 @@
   const recItem = (r, showTarget) => {
     const author = r.from;
     const d = G.dist[author];
-    const tag = author === S.me ? '<span class="tag brand">Вы</span>' : d === 1 ? circleTag(1) : d === 2 ? circleTag(2) : '';
+    const helped = (U(author) || {}).helped || 0;
+    const tag = (author === S.me ? '<span class="tag brand">Вы</span>' : d === 1 ? circleTag(1) : d === 2 ? circleTag(2) : '')
+      + (helped >= 3 ? `<span class="tag warm" title="Его советы помогли ${helped} людям">советчик</span>` : '');
+    const canThank = author !== S.me && r.to !== S.me && !r.private && LIVE;
+    const thank = canThank ? (r.thanked ? `<span class="tiny muted">${ic('check')} Вы сказали спасибо</span>`
+      : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Сходил(а) по совету — спасибо</button>`) : '';
     const target = showTarget ? `<div class="small muted" style="margin-top:8px">→ <a href="#/p/${r.to}"><b style="color:var(--ink)">${esc(full(r.to))}</b></a></div>` : '';
     return `<div class="rec"><div class="row"><a href="#/p/${author}">${av(author, 's')}</a><div class="grow"><div class="row" style="gap:8px"><a href="#/p/${author}" class="h3 ellip" style="text-decoration:none">${esc(full(author))}</a>${tag}</div><div class="tiny muted">${when(r.at)}${r.edited ? ' · изменена' : ''}</div></div></div>
       <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}${r.anon ? '<span class="tag">без вашего имени</span>' : ''}</div>
-      <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}${target}</div>`;
+      <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}${target}
+      ${thank || r.thanks ? `<div class="row" style="margin-top:10px;gap:10px">${thank}<span class="grow"></span>${r.thanks ? `<span class="tiny muted">спасибо · ${r.thanks}</span>` : ''}</div>` : ''}</div>`;
   };
 
   // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто рекомендует.
@@ -2319,6 +2327,21 @@
       || nodeNear(b).length - nodeNear(a).length || nodeRecs(b).length - nodeRecs(a).length);
   };
 
+  // Сколько людей искали сферу и кого им показали — из этого мастер видит упущенный спрос.
+  // Сам текст запроса не отправляем; одну и ту же сферу — не чаще раза за сессию
+  const searchLogged = new Set();
+  let searchLogTimer = null;
+  const logSearch = (cats, shown) => {
+    if (!LIVE || !cats.length) return;
+    clearTimeout(searchLogTimer);
+    searchLogTimer = setTimeout(() => {
+      const fresh = cats.filter((c) => !searchLogged.has(c));
+      if (!fresh.length) return;
+      fresh.forEach((c) => searchLogged.add(c));
+      window.API.post('/search/log', { cats: fresh, shown }).catch(() => {});
+    }, 1500);
+  };
+
   function searchResults() {
     const q = (F.q || '').trim();
     if (!q && !F.c) {
@@ -2336,6 +2359,7 @@
         <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>`}</a>`; }).join('')}</div>`;
     }
     const all = G.search(q, F.c);
+    logSearch(F.c ? [F.c] : G.matchCats(q).slice(0, 2), all.slice(0, 20).map((r) => r.user.id));
     const bucket = (r) => (r.circle <= 1 ? '1' : r.circle === 2 ? '2' : 'far');
     const counts = { all: all.length, 1: 0, 2: 0, far: 0 };
     all.forEach((r) => counts[bucket(r)]++);
@@ -2604,9 +2628,15 @@
 
     // Всё, чем зовут людей, — в одном блоке: ссылка, контакты Telegram, «позвать и порекомендовать», кто уже ждёт
     const waiting = S.waiting || [];
+    // Белые пятна: без кого трудно жить, а в вашей сети (до знакомых знакомых) никого нет
+    const ESSENTIAL = ['dentist', 'pediatr', 'therapist', 'electric', 'plumb', 'auto', 'lawyer', 'repair', 'account'];
+    const covered = new Set();
+    Object.keys(S.users).forEach((uid) => { if (uid !== S.me && (G.dist[uid] ?? 9) <= 2) G.catsOf(uid).forEach((c) => covered.add(c)); });
+    const gaps = ESSENTIAL.filter((c) => G.catById[c] && !covered.has(c)).slice(0, 4);
     const invite = `
       <div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Позвать знакомых</h2><span class="small muted">мест: ${left} из ${inv.max}</span></div>
       <div class="card invite-one">
+        ${gaps.length ? `<p class="small" style="margin:0 0 10px">В вашей сети пока нет: <b>${gaps.map((c) => esc(cat(c).who.toLowerCase())).join(', ')}</b>. Позовите знакомых — у кого-то из них такие точно есть</p>` : ''}
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
         <div class="btn-row"><button class="btn primary sm" data-act="sendInvite">${ic('send')}Отправить ссылку</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
         <p class="tiny muted" style="margin:8px 2px 0">Кто войдёт по ссылке — сразу ваш контакт</p>
@@ -2670,7 +2700,9 @@
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
-        <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
+        ${(S.demand || []).length ? `<div class="demand">${S.demand.slice(0, 3).map((d) => `<div class="demand-row"><b>${d.searched}</b><span>${esc(cat(d.cat).who)} искали за неделю ${pl(d.searched, 'человек', 'человека', 'человек')} из вашей сети — <b>вас увидели ${d.found}</b></span></div>`).join('')}
+          <p class="small" style="margin:8px 0 12px">Чем больше клиентов вас рекомендуют, тем чаще вы в поиске у их знакомых</p></div>`
+    : '<p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>'}
         <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
       ${workView(S.me)}
       ${howView(S.me)}
@@ -3873,6 +3905,8 @@
     partnerView: (d) => sheetPartnerView(d.id),
     chatHelp: () => sheetChatHelp(),
     busyEdit: () => sheetBusy(),
+    recThank: (d) => mutate(() => { const r = S.recs.find((x) => x.id === d.id); if (r) { r.thanked = true; r.thanks = (r.thanks || 0) + 1; } },
+      '/recommendations/thank', { id: d.id }, 'Спасибо ушло автору совета'),
     workDays: (d) => sheetWorkDays(d.id),
     saveWorkDays: () => SH && SH.save && SH.save(),
     focusPick: (d) => { const k = 'focus_' + d.c; const cur = (SH.F[k] || '').split(',').map((x) => x.trim()).filter(Boolean);
