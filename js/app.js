@@ -3281,6 +3281,16 @@
       if (window.API.inTelegram && !window.API.hasSession()) window.API.keepMeIn().catch(() => {});
       watchLive();
     }).catch((e) => {
+      // Демо — только когда сервер правда не ответил. Если споткнулись о сами данные,
+      // честно пишем об этом, а не подсовываем выдуманных людей вместо ваших
+      const offline = !e.status && /fetch|network|load failed|сервер/i.test(String(e && e.message));
+      if (!e.status && !offline) {
+        console.error(e);
+        $('#app').innerHTML = `<div class="empty" style="padding-top:22vh"><h2 class="h2">Не получилось открыть вашу сеть</h2>
+          <p>Что-то пошло не так на нашей стороне. Попробуйте ещё раз через минуту.</p>
+          <div class="btn-row" style="max-width:320px;margin:0 auto"><button class="btn primary" onclick="location.reload()">Ещё раз</button></div></div>`;
+        return;
+      }
       if (!e.status) {  // сервера нет рядом — показываем демо, чтобы ссылка не была мёртвой
         S = load(); G = window.Graph(S); S.onboarded = true; render();
         toast('Сервер недоступен — показываю демо на выдуманных людях');
