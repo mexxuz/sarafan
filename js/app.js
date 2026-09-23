@@ -131,10 +131,10 @@
   const photo = (id) => (U(id) && U(id).photo)
     ? U(id).photo
     : (LIVE ? '' : `https://randomuser.me/api/portraits/${isFem(id) ? 'women' : 'men'}/${hue(id) % 100}.jpg`);
-  // Создатель сети: в профиле — золотая рамка со звёздочкой, как в облаке, и строка под именем
+  // Создатель сети: в профиле — золотая рамка, как в облаке, и строка под именем
   const isFounder = (id) => (S.founders || []).includes(id);
   const founderAv = (id, size, ring = '') => (isFounder(id)
-    ? `<span class="founder-av">${av(id, size, 'founder')}<svg class="founder-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>`
+    ? `<span class="founder-av">${av(id, size, 'founder')}</span>`
     : av(id, size, ring));
   const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' : '');
   // живая аватарка — только в крупных портретах: в списках десятки роликов разом тяжелы для телефона
@@ -1083,8 +1083,8 @@
     sheetPeek(n.id);
   }
 
-  // Портрет создателя без его записи в сети: золотое кольцо и звезда, как везде
-  const founderCardAv = (fc, size) => `<span class="founder-av"><span class="av ${size} founder" style="--h:${hue(fc.id)}" aria-hidden="true">${esc((fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${fc.photo ? `<img src="${esc(fc.photo)}" alt="" onerror="this.remove()">` : ''}${fc.video && size === 'xl' ? `<video src="${esc(srvUrl(fc.video))}" autoplay muted loop playsinline></video>` : ''}</span><svg class="founder-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>`;
+  // Портрет создателя без его записи в сети: золотое кольцо, как везде
+  const founderCardAv = (fc, size) => `<span class="founder-av"><span class="av ${size} founder" style="--h:${hue(fc.id)}" aria-hidden="true">${esc((fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${fc.photo ? `<img src="${esc(fc.photo)}" alt="" onerror="this.remove()">` : ''}${fc.video && size === 'xl' ? `<video src="${esc(srvUrl(fc.video))}" autoplay muted loop playsinline></video>` : ''}</span></span>`;
   const founderPortrait = (size) => {
     const fc = S.founderCard;
     if (!fc) return '';

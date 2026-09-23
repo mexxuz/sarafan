@@ -367,24 +367,12 @@ window.Cloud = function (canvas, opts) {
       ctx.stroke();
     }
 
-    // создатель сети — «нулевой пациент»: второе золотое кольцо и звёздочка сверху
+    // создатель сети — «нулевой пациент»: второе, золотое кольцо
     if (n.founder) {
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r + 3.2, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(232,165,40,.95)';
       ctx.lineWidth = 1.6;
-      ctx.stroke();
-      const sx = n.x, sy = n.y - n.r - 3.2, sr = Math.max(6.5, n.r * 0.42);
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? sr * 0.45 : sr;
-        ctx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr);
-      }
-      ctx.closePath();
-      ctx.fillStyle = '#f0ad2b';
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
 
