@@ -815,8 +815,6 @@
     : 'Позовите первого знакомого — и его круг откроется вам целиком'}</p>
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
-      <a class="search" href="#/search" style="margin-top:18px;text-decoration:none">${ic('search')}<span class="muted ellip" style="font-size:16px">Юрист, врач, репетитор, дизайнер…</span></a>
-      <div class="chips scroll" style="margin-top:12px">${topCats.map((c) => `<a class="chip" href="#/search?c=${c}">${esc(cat(c).who)}<span class="n">${catCount[c]}</span></a>`).join('')}</div>
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
@@ -824,14 +822,7 @@
       <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
       <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
       ${savedList()}
-      ${op.total1 ? `<div style="margin-top:16px"><a class="ask-hero" href="#/ask" style="text-decoration:none"><span class="ic">${ic('ask')}</span><span class="grow"><div class="t1">Спросить свою сеть</div><div class="t2">Увидят ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} и их знакомые — без спама в общем чате</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a></div>` : ''}
-      <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
-        <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку: видно, кто рекомендует. Под карточкой есть «Сохранить себе» — любой в чате сохранит человека одним нажатием.</p>
-        <p>Добавьте бота в домовой или родительский чат: под ответом с телефоном он поставит ту же кнопку, а через сутки уберёт.</p>
-        <p>Контакт прислали в личке — перешлите боту, можно сразу несколько. Или скопируйте и вставьте в «Записать человека».</p></div></div>
-      ${todo() ? `<div class="sec-title"><h2 class="h2">Просит вашего ответа</h2><span class="badge">${todo()}</span></div>
-        <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
-      ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
+`;
   }
 
   // ——— Черновики из переписки ———
@@ -1090,6 +1081,19 @@
     if (!fc) return '';
     return U(fc.id) ? founderAv(fc.id, size) : founderCardAv(fc, size);
   };
+
+  // Как пользоваться Сарафаном в переписке — нужно один раз, поэтому живёт в профиле, а не на главной
+  function sheetChatHelp() {
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'Сарафан в чатах', 'Советовать не выходя из переписки')}
+        <div class="stack" style="gap:12px">
+          <div class="note"><b>Спросили в чате</b><br>Наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку — видно, кто рекомендует. Под ней «Сохранить себе»: любой в чате сохранит человека одним нажатием</div>
+          <div class="note"><b>Домовой или родительский чат</b><br>Добавьте туда бота: под ответом с телефоном он поставит ту же кнопку, а через сутки уберёт</div>
+          <div class="note"><b>Контакт прислали в личке</b><br>Перешлите боту, можно сразу несколько. Или скопируйте и вставьте в «Записать человека»</div>
+          <div class="note"><b>Много контактов сразу</b><br>Пришлите боту файл: контакты из телефона (.vcf), таблицу (.csv) или карту XMind</div></div>`,
+    });
+  }
 
   function sheetFounder() {
     const fc = S.founderCard;
@@ -2139,9 +2143,7 @@
       }).filter((x) => x.all.length).sort((a, b) => b.close.length - a.close.length || b.all.length - a.all.length);
       const placeBy = {};
       nodesAll().forEach((n) => { if (n.cat) (placeBy[n.cat] = placeBy[n.cat] || []).push(n); });
-      return `${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><span class="small muted">${nodesNear().length}</span></div>
-        <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
-      <div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
+      return `<div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
         <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>`}</a>`; }).join('')}</div>`;
     }
     const all = G.search(q, F.c);
@@ -2218,8 +2220,8 @@
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
       <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1>${founderTag(id)}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
-      <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
-      <div class="card">${how}</div>
+      ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
+      <div class="card">${how}</div>`}
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
       ${partnerOfView('user', id)}
       ${workView(id)}
@@ -2252,7 +2254,6 @@
         ${askTo(c1)}
         <button class="btn primary block" style="margin-top:14px" data-act="postAsk" data-submit ${askValid() ? '' : 'disabled'}>${ic('send')}Отправить запрос</button>
       </div>
-      ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2><span class="small muted">${pl(inc.length, 'запрос', 'запроса', 'запросов')}</span></div><div class="stack">${inc.map((q) => requestCard(q)).join('')}</div>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
   const askValid = () => (F.t || '').trim().length >= 10 && !!F.cat && (!F.quiet || (F.to || []).length > 0);
@@ -2394,7 +2395,6 @@
           <p class="sec-note">Вы знакомы, но ещё не рекомендовали — ваши знакомые не найдут их через вас</p>
           <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div>`;
       })()}
-      ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       <button class="link-row wide" data-act="pickCircle" style="margin:var(--s-3) 0 var(--s-3)">${ic('user')}
         <span class="grow"><b>Добавить знакомых из Telegram</b><i>Отметьте людей в контактах — без рекомендаций</i></span>${ic('arrow')}</button>
       ${waitingList()}
@@ -2448,9 +2448,9 @@
       <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
         ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
-      ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
-      <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
-      <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
+      <button class="link-row wide" data-act="chatHelp" style="margin-top:20px">${ic('chat')}
+        <span class="grow"><b>Сарафан в чатах</b><i>Советовать в переписке, сохранять из чата, пересылать контакты боту</i></span>${ic('arrow')}</button>
+      <button class="link-row wide" data-act="tourOpen">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
@@ -3607,6 +3607,7 @@
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
     partnerView: (d) => sheetPartnerView(d.id),
+    chatHelp: () => sheetChatHelp(),
     answerPartner: (d) => sheetAnswerPartner(d.q, d.id),
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
