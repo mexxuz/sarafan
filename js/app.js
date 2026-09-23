@@ -946,7 +946,7 @@
           partnersOf(n.id).forEach((x) => { const k = (x.section || '').split(' › ')[0]; secs.set(k, (secs.get(k) || 0) + 1); });
           [...secs].slice(0, 6).forEach(([k, c]) => {
             const sid = 'ps' + n.id + ':' + k;
-            nodes.push({ id: sid, ring: 2, ghost: true, r: 5.5, initials: String(c), label: (k || 'Подрядчики') + ' · ' + c, sec: { firm: n.id, key: k } });
+            nodes.push({ id: sid, ring: 2, ghost: true, r: 7, initials: String(c), label: (k || 'Подрядчики') + ' · ' + c, sec: { firm: n.id, key: k } });
             edges.push({ a: id, b: sid, kind: 'wait', len: 30 });
           });
         }
