@@ -1698,8 +1698,8 @@
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
       `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
-      <button class="ask-hero" data-act="pickCircle" style="margin-top:var(--s-3);width:100%;text-align:left"><span class="ic">${ic('user')}</span>
-        <span class="grow"><div class="t1">Добавить знакомых из Telegram</div><div class="t2">Отметьте людей в контактах — без рекомендаций. Кто уже в Сарафане, получит заявку, остальным — приглашение</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</button>
+      <button class="link-row wide" data-act="pickCircle" style="margin:var(--s-3) 0 var(--s-3)">${ic('user')}
+        <span class="grow"><b>Добавить знакомых из Telegram</b><i>Отметьте людей в контактах — без рекомендаций</i></span>${ic('arrow')}</button>
       ${invite}
       ${empty ? howto : ''}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
