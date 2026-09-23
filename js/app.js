@@ -775,11 +775,12 @@
   function draftsCard() {
     const list = S.drafts || [];
     if (!list.length) return '';
-    const line = (d) => [d.name || 'имя не указано', d.cat ? cat(d.cat).who : '', d.phone || (d.username ? '@' + d.username : '')].filter(Boolean).join(' · ');
+    const line = (d) => [d.name || 'имя не указано', d.cat ? cat(d.cat).who : ''].filter(Boolean).join(' · ');
+    const sub = (d) => [d.phone || (d.username ? '@' + d.username : ''), circleShort(d.text)].filter(Boolean).join(' · ') || 'Совет из чата';
     return `<div class="card over-cloud" style="margin-top:12px">
       <div class="eyebrow">из переписки · ${pl(list.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</div>
       <div style="margin-top:6px">${list.slice(0, 6).map((d) => `<div class="person"><button class="grow row" data-act="openDraft" data-id="${d.id}" style="min-width:0;text-align:left"><span class="av s" style="background:var(--mist-2)">${ic('send')}</span>
-        <div class="grow"><div class="name ellip">${esc(line(d))}</div><div class="sub ellip">${esc(circleShort(d.text) || 'Совет из чата')}</div></div></button>
+        <div class="grow"><div class="name ellip">${esc(line(d))}</div><div class="sub ellip">${esc(sub(d))}</div></div></button>
         <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="dropDraft" data-id="${d.id}" aria-label="Не сохранять">${ic('x')}</button></div>`).join('')}</div>
       <p class="tiny muted" style="margin:8px 0 0">Нажмите, чтобы дописать, или крестик — если сохранили по ошибке</p></div>`;
   }
