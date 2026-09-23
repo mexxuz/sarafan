@@ -901,6 +901,13 @@
         go: id === S.me ? '#/me' : '#/p/' + id,
       };
     });
+    // Создатель сети виден всем: у кого нет к нему цепочки — золотая точка на дальнем круге
+    const fc = S.founderCard;
+    if (!onlyPlaces && fc && !U(fc.id)) nodes.push({
+      id: 'fc' + fc.id, ring: 3, kind: 'person', r: 11, founder: true, fc: true,
+      photo: fc.photo || null, video: null,
+      initials: (fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
+      label: 'создатель Сарафана' });
     // кто ждёт в круге — бледный кружок на пунктире: место уже есть, человек ещё не пришёл
     if (!onlyPlaces) (S.waiting || []).slice(0, 12).forEach((w) => nodes.push({
       id: 'w' + w.id, ring: 1, self: false, kind: 'person', ghost: true, r: 11,
@@ -959,9 +966,33 @@
   // чтобы человек не терял из виду всю сеть
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
+    if (n.fc) { sheetFounder(); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
     sheetPeek(n.id);
+  }
+
+  // Портрет создателя без его записи в сети: золотое кольцо и звезда, как везде
+  const founderCardAv = (fc, size) => `<span class="founder-av"><span class="av ${size} founder" style="--h:${hue(fc.id)}" aria-hidden="true">${esc((fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${fc.photo ? `<img src="${esc(fc.photo)}" alt="" onerror="this.remove()">` : ''}${fc.video && size === 'xl' ? `<video src="${esc(srvUrl(fc.video))}" autoplay muted loop playsinline></video>` : ''}</span><svg class="founder-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>`;
+  const founderPortrait = (size) => {
+    const fc = S.founderCard;
+    if (!fc) return '';
+    return U(fc.id) ? founderAv(fc.id, size) : founderCardAv(fc, size);
+  };
+
+  function sheetFounder() {
+    const fc = S.founderCard;
+    if (!fc) return;
+    if (U(fc.id)) { go('#/p/' + fc.id); return; }
+    openSheet({
+      F: {},
+      render: () => `<div class="s-head"><div class="grow"></div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
+        <div style="text-align:center;padding:4px 0 8px">${founderCardAv(fc, 'xl')}
+          <h2 class="h2" style="margin-top:16px">${esc(fc.name)}</h2>
+          <div class="founder-tag" style="margin-top:6px">Создатель Сарафана</div>
+          <p class="small muted" style="margin:14px 8px 0">Сделал Сарафан, чтобы проверенных людей не теряли в чатах, а находили через своих. Пишите: что неудобно, чего не хватает — читаю всё сам</p></div>
+        ${fc.username ? `<div class="s-foot"><button class="btn primary block" data-act="openTg" data-u="${esc(fc.username)}">${ic('send')}Написать создателю</button></div>` : ''}`,
+    });
   }
 
   // Посоветовать подрядчика своей фирмы: спросивший увидит его телефон — вы им делитесь
@@ -2491,6 +2522,13 @@
           <div class="msg in"><s>Дилноза</s>Спасибо, записываюсь!</div>
         </div></div>`,
     },
+    {
+      key: 'founder',
+      eyebrow: 'от создателя',
+      title: 'Сарафан делает Макс',
+      gain: 'Сделал его для себя и друзей — чтобы хороших мастеров не теряли в чатах. Что-то неудобно или не хватает — пишите мне, читаю всё сам',
+      scene: () => `<div class="sc sc-founder">${founderPortrait('xl')}</div>`,
+    },
   ];
 
 
@@ -2501,7 +2539,7 @@
       <button class="tour-skip" data-act="tourEnd">Пропустить</button>
       <div class="glow" aria-hidden="true"></div>
       <div class="scenes">${TOUR.map((t, i) => `<section class="scene" data-scene="${i}">
-        ${t.scene}
+        ${typeof t.scene === 'function' ? t.scene() : t.scene}
         <div class="say"><span class="eyebrow">${t.eyebrow}</span>
           <h2 class="h1">${t.title}</h2>
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
