@@ -2334,6 +2334,39 @@
   }
 
   // ——— Моя сеть ———
+  // Список во вкладках «Моя сеть»: поиск по имени и сфере, кнопки сфер с числом, первые 10 и «Показать ещё»
+  const NET_PAGE = 10;
+  function netList() {
+    const c1 = myContacts();
+    const mineNodes = myNodes();
+    const tab = F.tab || 'c1';
+    const q = normCat(F.nq || '');
+    const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
+    let items;
+    if (tab === 'places') {
+      items = [...mineNodes, ...nodesNear().filter((n) => !mineNodes.includes(n))]
+        .map((n) => ({ key: n.id, cats: n.cat ? [n.cat] : [], hay: normCat([n.name, n.address, n.cat ? cat(n.cat).name : ''].join(' ')), html: () => nodeCard(n) }));
+    } else {
+      const ids = tab === 'c1' ? c1
+        : Object.keys(G.dist).filter((k) => G.dist[k] === 2).sort((a, b) => G.recsTo(b).length - G.recsTo(a).length || U(a).name.localeCompare(U(b).name));
+      items = ids.map((id) => ({ key: id, cats: G.catsOf(id), hay: normCat([U(id).name, ...G.catsOf(id).map((c) => cat(c).name + ' ' + cat(c).who)].join(' ')),
+        html: () => (tab === 'c1'
+          ? personMini(id, myRecTo(id).length ? 'Вы рекомендуете: ' + myRecTo(id).join(', ') : who(id))
+          : personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))) }));
+    }
+    const count = {};
+    items.forEach((x) => x.cats.forEach((c) => { count[c] = (count[c] || 0) + 1; }));
+    const chips = Object.keys(count).sort((a, b) => count[b] - count[a]).slice(0, 10);
+    const shown = items.filter((x) => (!F.ncat || x.cats.includes(F.ncat)) && (!q || x.hay.includes(q)));
+    const limit = F.nmore || NET_PAGE;
+    const body = shown.slice(0, limit).map((x) => x.html()).join('');
+    return `${items.length > 6 && chips.length > 1 ? `<div class="chips scroll" style="margin:0 0 10px">${chips.map((c) => `<button class="chip ${F.ncat === c ? 'on' : ''}" data-act="netCat" data-v="${c}">${esc(tab === 'places' ? cat(c).name : cat(c).who)}<span class="n">${count[c]}</span></button>`).join('')}</div>` : ''}
+      ${!shown.length ? `<div class="card"><p class="muted small" style="margin:0">${items.length ? 'Никого не нашли — попробуйте иначе' : tab === 'places' ? 'Ни вы, ни ваши знакомые пока не записали ни одного места. Чайхана, клиника, автосервис, мастерская — всё, куда вы ходите сами.' : 'Здесь пока пусто'}</p>
+        ${!items.length && tab === 'places' ? `<button class="btn primary block" style="margin-top:12px" data-act="newNode" data-v="place">${ic('plus')}Записать первое</button>` : ''}</div>`
+    : tab === 'places' ? `<div class="stack">${body}</div>` : `<div class="card">${body}</div>`}
+      ${shown.length > limit ? `<p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="netMore">Показать ещё ${Math.min(NET_PAGE * 2, shown.length - limit)} из ${shown.length - limit}</button></p>` : ''}`;
+  }
+
   function Network(params) {
     if (F.tab === undefined) F.tab = params.get('tab') || 'c1';
     const c1 = myContacts();
@@ -2380,9 +2413,6 @@
             <span class="body"><span class="grow"><span class="who">${t}</span><span class="role">${d}</span></span></span></div>`).join('')}
       </div></div>`;
 
-    const people = F.tab === 'c1'
-      ? c1.map((id) => { const r = myRecTo(id); return personMini(id, r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id)); }).join('')
-      : c2.map((id) => personMini(id, who(id) + ' · через ' + first(G.pathTo(id)[1]))).join('');
 
     return screenHead('Моя сеть',
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
@@ -2403,12 +2433,8 @@
         <button class="${F.tab === 'c1' ? 'on' : ''}" data-act="tab" data-v="c1">Знакомые<i>${c1.length}</i></button>
         <button class="${F.tab === 'c2' ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button>
         <button class="${F.tab === 'places' ? 'on' : ''}" data-act="tab" data-v="places">Места<i>${allPlaces.length}</i></button></div>
-      ${F.tab === 'places'
-    ? (allPlaces.length
-      ? `<div class="stack">${allPlaces.map((n) => nodeCard(n)).join('')}</div>`
-      : `<div class="card"><p class="muted small" style="margin:0">Ни вы, ни ваши знакомые пока не записали ни одного места. Чайхана, клиника, автосервис, мастерская — всё, куда вы ходите сами.</p>
-         <button class="btn primary block" style="margin-top:12px" data-act="newNode" data-v="place">${ic('plus')}Записать первое</button></div>`)
-    : `<div class="card">${people || '<p class="muted small" style="margin:0">Здесь пока пусто</p>'}</div>`}`}`;
+      <label class="search" style="margin:12px 0 10px">${ic('search')}<input data-bind="nq" value="${esc(F.nq || '')}" placeholder="${F.tab === 'places' ? 'Найти место: название, сфера, район' : 'Найти среди своих: имя или сфера'}" autocomplete="off" aria-label="Найти"></label>
+      <div id="netlist">${netList()}</div>`}`;
   }
 
   // ——— Мой профиль ———
@@ -3555,7 +3581,9 @@
     closeReq: (d) => mutate(() => { S.requests.find((x) => x.id === d.id).closed = true; },
       '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
-    tab: (d) => { F.tab = d.v; render(); },
+    tab: (d) => { F.tab = d.v; F.ncat = ''; F.nmore = 0; F.nq = ''; render(); },
+    netCat: (d) => { F.ncat = F.ncat === d.v ? '' : d.v; F.nmore = 0; if ($('#netlist')) $('#netlist').innerHTML = netList(); },
+    netMore: () => { F.nmore = (F.nmore || NET_PAGE) + NET_PAGE * 2; if ($('#netlist')) $('#netlist').innerHTML = netList(); },
     sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь находят нужных людей через знакомых.'),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     pickCat: (d, el) => {
@@ -3812,6 +3840,7 @@
       $('#results').innerHTML = searchResults();
     }
     if (!inSheet && k === 't') $('#askcats').innerHTML = askCats();
+    if (!inSheet && k === 'nq' && $('#netlist')) { F.nmore = 0; $('#netlist').innerHTML = netList(); }
     syncForm();
   });
   window.addEventListener('hashchange', () => { closeAllSheets(); render(); });
