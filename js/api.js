@@ -59,7 +59,7 @@ window.API = (function () {
     // картинка работы уходит файлом, а не текстом
     upload: async (path, file, fields) => {
       const form = new FormData();
-      form.append('file', file);
+      if (file) form.append('file', file);   // правку можно отправить и без картинки
       Object.entries(fields || {}).forEach(([k, v]) => form.append(k, v));
       const r = await fetch(base + '/api' + path, {
         method: 'POST',

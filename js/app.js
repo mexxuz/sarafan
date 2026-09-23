@@ -344,6 +344,7 @@
       bar.innerHTML = '';
     }
     drawNav(nav, active);
+    drawFixBtn();
     if (hashChanged) window.scrollTo(0, 0);
     const af = $('[autofocus]', app); if (af && hashChanged) { af.focus(); const v = af.value; af.value = ''; af.value = v; }
     if (hashChanged) countUp(app);
@@ -1293,6 +1294,43 @@
     });
   }
 
+  // ——— Правка прямо из приложения — только для основателя ———
+  // Кнопка в углу: написал, приложил скриншот — правка уходит в разработку, ответ придёт в бота.
+  function drawFixBtn() {
+    let b = $('#fixbtn');
+    const show = LIVE && isFounder(S.me);
+    if (!show) { if (b) b.hidden = true; return; }
+    if (!b) {
+      b = document.createElement('button');
+      b.id = 'fixbtn'; b.className = 'fix-btn'; b.setAttribute('aria-label', 'Отправить правку');
+      b.innerHTML = ic('edit') + '<span>Правка</span>';
+      b.addEventListener('click', () => sheetFix());
+      document.body.appendChild(b);
+    }
+    b.hidden = !!SH;
+  }
+
+  function sheetFix() {
+    const f = { text: '', file: null, screen: location.hash || '#/' };
+    openSheet({
+      F: f,
+      valid: () => f.text.trim().length >= 3 || !!f.file,
+      render: () => `${sheetHead(null, 'Правка', 'Уйдёт в разработку, ответ придёт в бота')}
+        <label class="field"><span>Что поправить</span><textarea class="textarea" data-bind="text" rows="4" maxlength="2000" placeholder="Кнопка кривая, текст непонятный, хочу чтобы…">${esc(f.text)}</textarea></label>
+        <label class="link-row wide" style="cursor:pointer;margin-top:8px">${ic('cam')}<span class="grow"><b>${f.file ? 'Скриншот приложен' : 'Приложить скриншот'}</b><i>${f.file ? esc(f.file.name) : 'Необязательно, но так понятнее'}</i></span>
+          <input type="file" accept="image/*" id="fixfile" hidden></label>
+        <p class="tiny muted" style="margin:8px 2px 0">Экран, на котором вы были, приложу сам: ${esc(f.screen)}</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitFix" data-submit>${ic('send')}Отправить правку</button></div>`,
+      submit: async () => {
+        try {
+          await window.API.upload('/feedback', f.file, { text: f.text.trim(), screen: f.screen, size: innerWidth + '×' + innerHeight });
+          closeSheet(); toast('Правка ушла в разработку');
+        } catch (e) { toast(e.message); }
+      },
+    });
+    setTimeout(() => { const inp = $('#fixfile'); if (inp) inp.onchange = () => { f.file = inp.files && inp.files[0]; drawSheet(); setTimeout(() => { const i2 = $('#fixfile'); if (i2) i2.onchange = inp.onchange; }, 30); }; }, 60);
+  }
+
   function sheetWorkJoin(nid, role) {
     const n = nodeById(nid);
     if (!n) return;
@@ -2184,6 +2222,7 @@
   let SH = null;
   function openSheet(obj) {
     SH = obj;
+    const fb = $('#fixbtn'); if (fb) fb.hidden = true;
     const el = $('#sheet');
     el.hidden = false;
     el.innerHTML = '<div class="shade" data-act="closeSheet"></div><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="body"></div></div>';
@@ -2206,6 +2245,7 @@
     setTimeout(() => { if (!el.classList.contains('open')) { el.hidden = true; el.innerHTML = ''; } }, 300);
     SH = null;
     catchUp();
+    if (typeof drawFixBtn === 'function') drawFixBtn();
   }
   function syncForm() {
     const scope = SH ? $('#sheet') : $('#app');
@@ -3032,6 +3072,7 @@
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
     submitWork: () => SH.submit(),
+    submitFix: () => SH.submit(),
     submitPropose: () => SH.submit(),
     submitPickNode: () => SH.submit(),
     proposePerson: (d) => sheetProposePerson(d.id),
