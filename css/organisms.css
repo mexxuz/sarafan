@@ -662,3 +662,9 @@ body.viewing-as #app { padding-top: 48px; }
   background: rgba(255, 255, 255, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); pointer-events: none; }
 .map-foot .cloud-legend { margin: 0; }
 @media (min-width: 900px) { .map-foot { bottom: 20px; } }
+
+/* «Моя сеть»: знакомые одним рядом — лица и имена, листается вбок */
+.face-rail { display: flex; gap: 14px; overflow-x: auto; margin: var(--s-4) calc(-1 * var(--s-5)) 0; padding: 4px var(--s-5) 8px; scrollbar-width: none; }
+.face-rail::-webkit-scrollbar { display: none; }
+.face-rail .face { flex: none; width: 60px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: var(--ink-2); }
+.face-rail .face span { font: 500 var(--fs-xxs)/1.2 var(--t); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
