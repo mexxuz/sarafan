@@ -209,6 +209,7 @@
     shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
+    phone: '<path d="M6.5 4h3l1.5 4-2 1.5a11 11 0 0 0 5.5 5.5L16 13l4 1.5v3A2 2 0 0 1 18 19.5 15.5 15.5 0 0 1 4.5 6 2 2 0 0 1 6.5 4z"/>',
     chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     seal: '<path d="M12 3.2 19 6v5.5c0 4.2-2.8 7.6-7 9.3-4.2-1.7-7-5.1-7-9.3V6z"/><path d="m8.8 12.1 2.3 2.3 4.1-4.4"/>',
@@ -1476,17 +1477,15 @@
     const rest = (x) => (x.section || '').split(' › ').slice(1).join(' › ');
     const reach = (x) => (x.inside ? [x.phone, x.username ? '@' + x.username : ''].filter(Boolean).join(' · ') : '');
     const row = (x) => {
-      const link = x.user ? `href="#/p/${x.user}"` : x.node ? `href="#/o/${x.node}"`
-        : x.inside && x.username ? `href="#" data-act="openTg" data-u="${esc(x.username)}"`
-          : x.inside && x.phone ? `href="tel:${esc(x.phone.replace(/[^\d+]/g, ''))}"` : '';
-      const sub = [rest(x) || (x.cat ? cat(x.cat).who : ''), x.text, via(x), reach(x)].filter(Boolean).join(' · ');
+      const link = x.user ? `href="#/p/${x.user}"` : x.node ? `href="#/o/${x.node}"` : `href="#" data-act="partnerView" data-id="${x.id}"`;
+      const sub = [rest(x) || (x.cat ? cat(x.cat).who : ''), via(x), reach(x), x.text].filter(Boolean).join(' · ');
       return `<div class="person">${link ? `<a class="grow row" ${link} style="min-width:0">` : '<div class="grow row" style="min-width:0">'}${pic(x)}
           <div class="grow" style="min-width:0"><div class="name ellip">${esc(who(x))}</div>
           ${sub ? `<div class="sub ellip">${esc(sub)}</div>` : ''}</div>${link ? '</a>' : '</div>'}
           ${x.by === S.me || iOwn ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropPartner" data-id="${x.id}" aria-label="Убрать">${ic('x')}</button>` : ''}</div>`;
     };
     const groups = [];
-    list.slice().sort((a, b) => (top(a) ? 1 : 0) - (top(b) ? 1 : 0)).forEach((x) => {
+    list.slice().sort((a, b) => (top(a) ? 1 : 0) - (top(b) ? 1 : 0) || (top(a) ? a.id - b.id : 0)).forEach((x) => {
       const k = top(x);
       let g = groups.find((y) => y.k === k);
       if (!g) groups.push(g = { k, items: [] });
@@ -1505,6 +1504,25 @@
       <div class="card">${body || '<p class="small muted" style="margin:0 0 4px">Пока пусто. Добавьте подрядчиков и поставщиков, с которыми работает фирма — знакомые смогут на них выйти</p>'}
         ${member ? `<div class="btn-row" style="margin-top:12px"><button class="btn sm ghost" data-act="addPartner" data-id="${n.id}">${ic('plus')}Добавить подрядчика</button></div>
         <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл: контакты из телефона (.vcf), таблицу (.csv) или карту XMind</p>` : ''}</div>`;
+  }
+
+  // Контакт фирмы целиком: раздел, заметки и цены, как связаться
+  function sheetPartnerView(pid) {
+    const x = (S.partners || []).find((y) => y.id === pid);
+    if (!x) return;
+    const firm = nodeById(x.firm);
+    const tel = (x.phone || '').match(/\+?[\d\s\-()]{7,}/);
+    const notes = (x.text || '').split(/;\s*/).filter(Boolean);
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, esc(x.name || 'Без имени'), esc([x.section, x.cat ? cat(x.cat).who : ''].filter(Boolean).join(' · ') || 'Контакт фирмы'))}
+        <p class="small muted" style="margin:0 0 12px">${ic('seal')} С ним работает ${firm ? `<a class="link" href="#/o/${firm.id}">${esc(firm.name)}</a>` : 'фирма'}${x.viaName ? ' · вёл(а) ' + esc(x.viaName) : x.via && x.source !== 'import' ? ' · вёл(а) ' + esc(first(x.via)) : ''}</p>
+        ${notes.length ? `<div class="card" style="margin-bottom:12px">${notes.map((t) => `<p class="small" style="margin:4px 0">${esc(t)}</p>`).join('')}</div>` : ''}
+        ${x.inside ? `<div class="stack" style="gap:8px">
+          ${x.username ? `<button class="btn primary block" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать в Telegram · @${esc(x.username)}</button>` : ''}
+          ${tel ? `<a class="btn ${x.username ? 'ghost' : 'primary'} block" href="tel:${esc(tel[0].replace(/[^\d+]/g, ''))}">${ic('phone')}Позвонить · ${esc(tel[0].trim())}</a>` : ''}</div>`
+    : '<p class="small muted">Телефон видят сотрудники фирмы. Чтобы выйти на этот контакт — спросите у них</p>'}`,
+    });
   }
 
   function sheetPartner(fid) {
@@ -3278,6 +3296,7 @@
     submitPartner: () => SH.submit(),
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
+    partnerView: (d) => sheetPartnerView(d.id),
     toggleSec: (d) => { if (openSecs.has(d.k)) openSecs.delete(d.k); else openSecs.add(d.k); render(); },
     openTg: (d) => { const link = 'https://t.me/' + d.u; if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank'); },
     pickVia: (d) => { if (d.name) { SH.F.viaName = d.name; } else { SH.F.via = d.v; SH.F.viaName = ''; } drawSheet(); },
