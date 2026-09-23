@@ -118,7 +118,8 @@ window.Cloud = function (canvas, opts) {
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.max(1, Math.hypot(dx, dy));
       const want = e.len || 92;
-      const f = (d - want) * 0.008 * (e.kind === 'vouch' ? 1.25 : 1);
+      // тонкая нить пересечения почти не тянет: раскладку держат основные
+      const f = (d - want) * 0.008 * (e.faint ? 0.08 : e.kind === 'vouch' ? 1.25 : 1);
       const ux = dx / d, uy = dy / d;
       if (!a.self) { a.vx += ux * f; a.vy += uy * f; }
       if (!b.self) { b.vx -= ux * f; b.vy -= uy * f; }
@@ -223,8 +224,8 @@ window.Cloud = function (canvas, opts) {
       if (grow <= 0.02) return;
       const hot = lit && (e.a === lit.id || e.b === lit.id);
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both : COLOR[e.kind]);
-      ctx.lineWidth = hot ? 1.8 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
-      ctx.globalAlpha = (lit && !hot ? 0.28 : 1) * grow * Math.min(depth(a), depth(b));
+      ctx.lineWidth = hot ? 1.8 : e.faint ? 0.6 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
+      ctx.globalAlpha = (lit && !hot ? 0.28 : e.faint && !hot ? 0.5 : 1) * grow * Math.min(depth(a), depth(b));
       // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const dx = b.x - a.x, dy = b.y - a.y;
@@ -236,7 +237,7 @@ window.Cloud = function (canvas, opts) {
       ctx.setLineDash(e.kind === 'work' ? [3, 3] : e.kind === 'wait' ? [2, 4] : []);
       ctx.stroke();
       ctx.setLineDash([]);
-      if (e.kind === 'work' || e.kind === 'wait') return;   // по нити работы огоньки не бегут — это не рекомендация
+      if (e.kind === 'work' || e.kind === 'wait' || (e.faint && !hot)) return;   // по нити работы огоньки не бегут — это не рекомендация
 
       // По нити плывёт мягкий проблеск — участок линии подсвечивается градиентом
       // и гаснет к краям. Движение заметно боковым зрением, но не отвлекает.

@@ -996,7 +996,9 @@
       });
       const extra = [];
       kids.forEach((list, p) => {
-        list.sort((a, b) => G.recsTo(b).length - G.recsTo(a).length);
+        // первыми — общие: кого знают сразу несколько ваших знакомых. Они и есть мосты между «цветами»
+        const ties = (id) => (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x)).length;
+        list.sort((a, b) => ties(b) - ties(a) || G.recsTo(b).length - G.recsTo(a).length);
         list.slice(0, 5).forEach((id) => keep.push({ a: p, b: id, kind: vouched.has(p + '>' + id) ? 'vouch' : 'know', len: 28 }));
         const rest = list.slice(5);
         rest.forEach((id) => drop.add(id));
@@ -1022,6 +1024,17 @@
           if (!x.e || i >= 40) { drop.add(x.n.id); return; }
           keep.push(x.e);
         });
+      // Пересечения: все остальные связи между теми, кто на облаке, — тонкими нитями. Точки они не тянут,
+      // раскладку держат «цветы», а сеть видна целиком: кто кого знает, кто что советует
+      const seen = new Set(keep.map((e) => [e.a, e.b].sort().join('~')));
+      const onCloud = (id) => id === S.me || ((known.has(id) || isPlace(id)) && !drop.has(id));
+      edges.forEach((e) => {
+        if (e.kind === 'wait' || !onCloud(e.a) || !onCloud(e.b)) return;
+        const k = [e.a, e.b].sort().join('~');
+        if (seen.has(k)) return;
+        seen.add(k);
+        keep.push({ ...e, faint: true, len: 140 });
+      });
       return { nodes: [...nodes.filter((n) => !drop.has(n.id)), ...extra],
         edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
     }
