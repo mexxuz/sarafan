@@ -787,7 +787,7 @@
     const sub = (d) => [d.phone || (d.username ? '@' + d.username : ''), circleShort(d.text)].filter(Boolean).join(' · ') || 'Совет из чата';
     return `<div class="card over-cloud" style="margin-top:12px">
       <div class="eyebrow">из переписки · ${pl(list.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</div>
-      <div style="margin-top:6px">${list.slice(0, 6).map((d) => `<div class="person"><button class="grow row" data-act="openDraft" data-id="${d.id}" style="min-width:0;text-align:left"><span class="av s" style="background:var(--mist-2)">${ic('send')}</span>
+      <div style="margin-top:6px">${list.slice(0, 6).map((d) => `<div class="person"><button class="grow row" data-act="openDraft" data-id="${d.id}" style="min-width:0;text-align:left"><span class="av s" style="background:var(--mist-2)">${d.photo ? `<img src="${esc(srvUrl(d.photo))}" alt="" loading="lazy" onerror="this.remove()">` : ic('send')}</span>
         <div class="grow"><div class="name ellip">${esc(line(d))}</div><div class="sub ellip">${esc(sub(d))}</div></div></button>
         <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="dropDraft" data-id="${d.id}" aria-label="Не сохранять">${ic('x')}</button></div>`).join('')}</div>
       <p class="tiny muted" style="margin:8px 0 0">Нажмите, чтобы дописать, или крестик — если сохранили по ошибке</p></div>`;
@@ -2177,6 +2177,7 @@
 
   // Мастер просит клиентов: ссылка, по которой клиент пишет о нём одну фразу
   async function sheetAskLink() {
+    if (!LIVE) { toast('В демо ссылка не создаётся — в рабочей версии здесь будет ваша личная ссылка'); return; }
     let res;
     try { res = await window.API.post('/invites/ask', {}); } catch (e) { toast(e.message); return; }
     const tgLink = `https://t.me/${S.bot || 'sarafanibot'}?startapp=${res.code}`;
@@ -2217,6 +2218,8 @@
         return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? (more ? `Проверьте и сохраните — дальше ещё ${more}` : 'Проверьте и сохраните — через год найдёте за секунду') : 'Даже если про Сарафан он ещё не знает')}
           ${d ? '' : `<button class="link-row wide" data-act="pickContacts" style="margin-bottom:12px">${ic('send')}<span class="grow"><b>Выбрать из контактов Telegram</b><i>До 10 человек за раз — бот сохранит их в черновики</i></span>${ic('arrow')}</button>`}
           ${d ? '' : `<label class="field paste"><span>Скопировали совет в переписке? Вставьте — разберём сами</span><textarea class="textarea" rows="2" data-paste data-bind="paste" placeholder="Рустам, электрик, +998 90 123 45 67 — делал у нас проводку">${esc(f.paste || '')}</textarea></label>`}
+          ${d && d.photo ? `<div class="row" style="gap:12px;margin-bottom:12px"><span class="av l"><img src="${esc(srvUrl(d.photo))}" alt=""></span>
+            <div class="grow small muted">Так он выглядит в Telegram${d.username ? ` · @${esc(d.username)}` : ''}. Имя взято из его профиля — впишите, как знаете его вы</div></div>` : ''}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
           <label class="field"><span>Телефон или ник — видите только вы</span><input class="input" data-bind="phone" maxlength="40" placeholder="+998… или @ник" value="${esc(f.phone)}"></label>
           ${catChips(f, [])}${relChips(f, true)}
