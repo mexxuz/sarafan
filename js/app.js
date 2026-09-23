@@ -940,21 +940,11 @@
         voices.filter((v) => !staff.includes(v)).forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
         staff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
         waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
-        // Подрядчики фирмы — бледные кружки-разделы с числом: полсотни точек облако бы утопили
-        {
-          const secs = new Map();
-          partnersOf(n.id).forEach((x) => { const k = (x.section || '').split(' › ')[0]; secs.set(k, (secs.get(k) || 0) + 1); });
-          [...secs].slice(0, 6).forEach(([k, c]) => {
-            const sid = 'ps' + n.id + ':' + k;
-            nodes.push({ id: sid, ring: 2, ghost: true, r: 7, initials: String(c), label: (k || 'Подрядчики') + ' · ' + c, sec: { firm: n.id, key: k } });
-            edges.push({ a: id, b: sid, kind: 'wait', len: 30 });
-          });
-        }
       });
     }
     if (onlyPlaces) {
-      // срез «только места»: вы, места и фирмы, а вокруг фирм — разделы подрядчиков. Людей нет
-      const kept = nodes.filter((n) => n.id === S.me || String(n.id).startsWith('o') || n.sec);
+      // срез «только места»: вы, места и фирмы. Людей нет
+      const kept = nodes.filter((n) => n.id === S.me || String(n.id).startsWith('o'));
       const ids = new Set(kept.map((n) => n.id));
       const keptEdges = edges.filter((e) => ids.has(e.a) && ids.has(e.b));
       // место, связанное с вами не напрямую, держим у центра еле видной нитью — иначе улетит
@@ -969,7 +959,6 @@
   // чтобы человек не терял из виду всю сеть
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
-    if (n.sec) { openSecs.add(n.sec.firm + ':' + n.sec.key); go('#/o/' + n.sec.firm); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
     sheetPeek(n.id);
