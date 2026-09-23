@@ -1163,7 +1163,8 @@
   const cap1 = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
   const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : cap1(x.title) || 'Работает');
   // Неподтверждённая отметка: человек написал о себе сам, никто пока не подтвердил
-  const jobState = (x) => (x.waiting ? 'ждёт владельца' : x.confirmed ? '' : x.role === 'owner' ? 'ждёт подтверждения' : 'не подтверждено');
+  const jobState = (x) => (x.accepted === false ? (x.user === S.me ? 'отметил ' + (x.by && U(x.by) ? first(x.by) : 'знакомый') : 'ждёт его согласия')
+    : x.waiting ? 'ждёт владельца' : x.confirmed ? '' : x.role === 'owner' ? 'ждёт подтверждения' : 'не подтверждено');
   const recommended = (uid) => (S.recs || []).some((r) => r.to === uid && !r.private);
 
   // Строка под именем: «Директор · Premium Selection» — до двух текущих мест
@@ -1181,16 +1182,20 @@
     const mine = uid === S.me;
     const cur = all.filter((x) => !x.past && (!x.waiting || mine));
     const past = all.filter((x) => x.past && (!x.hidden || mine));
-    if (!cur.length && !past.length) return '';
+    const addBtn = `<button class="btn sm ghost" style="margin-top:10px" data-act="pickNode" data-id="${uid}">${ic('house')}${mine ? 'Отметиться в фирме' : 'Указать, где работает'}</button>`;
+    if (!cur.length && !past.length) {
+      return mine ? `<div class="sec-title"><h2 class="h2">Где вы работаете</h2></div><div class="card"><p class="small muted" style="margin:0">Найдите свою фирму по названию — знакомые выйдут через вас на неё и наоборот</p>${addBtn}</div>`
+        : `<div style="margin-top:12px">${addBtn}</div>`;
+    }
     const row = (x) => { const n = nodeById(x.node);
       return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
         <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
-        ${mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
+        ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
+    : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
         ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button>` : ''}</div>`; };
     return `<div class="sec-title"><h2 class="h2">${mine ? 'Где вы работаете' : 'Где работает'}</h2></div>
       <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0">Сейчас нигде не отмечен</p>'}
-      ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше</div>${past.map(row).join('')}` : ''}</div>
-      ${mine ? '<p class="tiny muted" style="margin:8px 2px 0">Отметиться в фирме — на её странице: «Я здесь работаю»</p>' : ''}`;
+      ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше</div>${past.map(row).join('')}` : ''}${addBtn}</div>`;
   }
 
   // Блок «Люди» на странице фирмы или места
@@ -1213,8 +1218,79 @@
       <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0 0 4px">Пока никто не отметился</p>'}
         ${others ? `<p class="tiny muted" style="margin:8px 0 0">И ещё ${pl(others, 'человек', 'человека', 'человек')} — не из ваших кругов</p>` : ''}
         ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><p class="small" style="margin:4px 0 0">${past.map((x) => `<a class="link" href="#/p/${x.user}">${esc(full(x.user))}</a>`).join(', ')}</p>` : ''}
-        ${mine ? '' : `<div class="btn-row" style="margin-top:12px"><button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>
-          ${hasOwner ? '' : `<button class="btn sm ghost" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}Это моя ${n.kind === 'company' ? 'фирма' : 'точка'}</button>`}</div>`}</div>`;
+        <div class="btn-row" style="margin-top:12px">${mine ? '' : `<button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>`}
+          <button class="btn sm ghost" data-act="proposePerson" data-id="${n.id}">${ic('plus')}Добавить человека</button></div>
+        ${mine || hasOwner ? '' : `<button class="btn ghost xs" style="margin-top:6px" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}Это моя ${n.kind === 'company' ? 'фирма' : 'точка'}</button>`}</div>`;
+  }
+
+  // Отметить другого человека в фирме: выбираем из знакомых по имени
+  function sheetProposePerson(nid) {
+    const n = nodeById(nid);
+    if (!n) return;
+    const taken = new Set(nodePeople(nid).filter((x) => !x.past).map((x) => x.user));
+    const f = { q: '', user: '', title: '' };
+    const people = () => Object.keys(S.users).filter((id) => id !== S.me && !taken.has(id))
+      .filter((id) => !f.q.trim() || normCat(U(id).name).includes(normCat(f.q)))
+      .sort((a, b) => (G.dist[a] ?? 9) - (G.dist[b] ?? 9)).slice(0, 8);
+    const peopleHtml = () => people().map((id) => `<button class="person" data-act="set" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}
+          <div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(who(id))}</div></div></button>`).join('') || '<p class="small muted">Никого не нашли среди ваших кругов</p>';
+    openSheet({
+      F: f,
+      valid: () => !!f.user,
+      render: () => `${sheetHead(null, 'Кто работает в «' + esc(n.name) + '»', 'Отметите — ему придёт вопрос «это так?»')}
+        ${f.user ? `<div class="person" style="margin-bottom:8px">${av(f.user, 's')}<div class="grow"><div class="name">${esc(full(f.user))}</div><div class="sub">${esc(who(f.user))}</div></div>
+          <button class="btn ghost xs" data-act="set" data-k="user" data-v="">Другой</button></div>`
+    : `<label class="field"><span>Кого</span><input class="input" data-live="1" placeholder="Начните печатать имя" value="${esc(f.q)}" autocomplete="off"></label>
+        <div class="stack person-find" style="margin-top:6px">${peopleHtml()}</div>`}
+        <label class="field"><span>Кем работает</span><input class="input" data-bind="title" maxlength="60" placeholder="мастер, менеджер, врач" value="${esc(f.title)}"></label>
+        <p class="why">${ic('spark')}Пока он не согласится, отметку видите только вы, он и владелец фирмы</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitPropose" data-submit>Отметить</button></div>`,
+      submit: () => {
+        closeSheet();
+        mutate(null, '/nodes/people/propose', { node: nid, user: f.user, title: f.title.trim() }, 'Отметили — ждём его согласия');
+      },
+      onLive: (v) => { f.q = v; const box = $('#sheet .person-find'); if (box) box.innerHTML = peopleHtml(); },
+    });
+  }
+
+  // Найти фирму по названию — среди всех в Сарафане. Себя — сразу отметить, другого — предложить
+  function sheetPickNode(uid) {
+    const mine = uid === S.me;
+    const f = { q: '', node: '', name: '', title: '', items: [] };
+    let t = null;
+    const search = () => {
+      clearTimeout(t);
+      t = setTimeout(async () => {
+        if (f.q.trim().length < 2) { f.items = []; drawList(); return; }
+        try { f.items = LIVE ? (await window.API.get('/nodes/find?q=' + encodeURIComponent(f.q.trim()))).items
+          : nodesAll().filter((n) => normCat(n.name).includes(normCat(f.q))).map((n) => ({ id: n.id, name: n.name, kind: n.kind, address: n.address }));
+        } catch (e) { f.items = []; }
+        drawList();
+      }, 250);
+    };
+    const listHtml = () => (f.q.trim().length < 2 ? '<p class="tiny muted" style="margin:6px 2px">Название, хотя бы две буквы</p>'
+      : f.items.map((n) => `<button class="person" data-act="pickNodeFor" data-id="${n.id}" data-name="${esc(n.name)}" style="width:100%;text-align:left">
+          <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+          <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc([n.address, n.people ? pl(n.people, 'человек', 'человека', 'человек') + ' отмечены' : ''].filter(Boolean).join(' · ') || NODE_KIND[n.kind])}</div></div></button>`).join('')
+        + `<button class="link-row wide" data-act="newNode" data-v="company" style="margin-top:6px">${ic('plus')}<span class="grow"><b>Нет в списке — записать фирму</b><i>${f.items.length ? 'Если нужной среди найденных нет' : 'Такой фирмы в Сарафане ещё нет'}</i></span>${ic('arrow')}</button>`);
+    const drawList = () => { const box = $('#sheet .node-find'); if (box) box.innerHTML = listHtml(); };
+    openSheet({
+      F: f,
+      valid: () => !!f.node,
+      render: () => `${sheetHead(null, mine ? 'Где вы работаете' : 'Где работает ' + esc(first(uid)), mine ? 'Найдите фирму по названию' : 'Отметите — ему придёт вопрос «это так?»')}
+        ${f.node ? `<div class="person" style="margin-bottom:8px"><span class="node-ic company" style="width:34px;height:34px">${ic('house')}</span><div class="grow"><div class="name">${esc(f.name)}</div></div>
+          <button class="btn ghost xs" data-act="set" data-k="node" data-v="">Другая</button></div>`
+    : `<label class="field"><span>Фирма</span><input class="input" data-live="1" placeholder="Premium Selection, Ремстрой…" value="${esc(f.q)}" autocomplete="off"></label>
+        <div class="node-find">${listHtml()}</div>`}
+        <label class="field"><span>${mine ? 'Кем вы там' : 'Кем работает'}</span><input class="input" data-bind="title" maxlength="60" placeholder="${mine ? 'директор, мастер, менеджер' : 'мастер, менеджер, врач'}" value="${esc(f.title)}"></label>
+        <div class="s-foot"><button class="btn primary block" data-act="submitPickNode" data-submit>${mine ? 'Отметиться' : 'Отметить'}</button></div>`,
+      submit: () => {
+        closeSheet();
+        if (mine) mutate(null, '/nodes/people/join', { node: f.node, role: 'staff', title: f.title.trim() }, 'Отмечено');
+        else mutate(null, '/nodes/people/propose', { node: f.node, user: uid, title: f.title.trim() }, 'Отметили — ждём его согласия');
+      },
+      onLive: (v) => { f.q = v; search(); },
+    });
   }
 
   function sheetWorkJoin(nid, role) {
@@ -1435,7 +1511,7 @@
     const res = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
       && Date.now() - i.at > 3 * 864e5).length;
     // кто отметился в вашей фирме или просит подтвердить, что он владелец
-    const work = (S.nodePeople || []).filter((x) => x.canConfirm).length;
+    const work = (S.nodePeople || []).filter((x) => x.canConfirm || x.canAccept).length;
     return { asks, pend, inc, res, work };
   };
   const todo = () => { const t = todoCounts(); return t.asks + t.pend + t.inc + t.res + t.work; };
@@ -1457,7 +1533,7 @@
     const howItWent = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
       && Date.now() - i.at > 3 * 864e5).slice(0, 1);
     const ev = feed();
-    const work = (S.nodePeople || []).filter((x) => x.canConfirm && nodeById(x.node));
+    const work = (S.nodePeople || []).filter((x) => (x.canConfirm || x.canAccept) && nodeById(x.node));
     const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length && !work.length;
     return screenHead('Новое', todo() ? 'Ждут вашего ответа' : 'Движение доверия вокруг вас') + `
       ${nothing ? `<div class="empty" style="padding-top:18vh"><h2 class="h2">Пока тихо</h2>
@@ -1468,8 +1544,8 @@
       ${work.length ? `<div class="sec-title"><h2 class="h2">Отметились в фирме</h2><span class="badge">${work.length}</span></div>
       <div class="card">${work.map((x) => { const n = nodeById(x.node);
     return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0">${av(x.user, 's')}<div class="grow"><div class="name ellip">${esc(full(x.user))}</div>
-      <div class="sub ellip">${x.role === 'owner' ? 'Владелец' : esc(jobRole(x))} · ${esc(n.name)}</div></div></a>
-      <button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>
+      <div class="sub ellip">${x.canAccept ? `${x.by && U(x.by) ? esc(first(x.by)) : 'Знакомый'} отметил вас · ` : ''}${x.role === 'owner' ? 'Владелец' : esc(jobRole(x))} · ${esc(n.name)}</div></div></a>
+      <button class="btn xs" data-act="${x.canAccept ? 'acceptWork' : 'workConfirm'}" data-id="${x.id}">${x.canAccept ? 'Да, работаю' : 'Подтвердить'}</button>
       <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Не подтверждать">${ic('x')}</button></div>`; }).join('')}
       <p class="tiny muted" style="margin:8px 0 0">Подтвердите, если это правда: так знакомые выходят на своего человека в фирме</p></div>` : ''}
       ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
@@ -2956,6 +3032,13 @@
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
     submitWork: () => SH.submit(),
+    submitPropose: () => SH.submit(),
+    submitPickNode: () => SH.submit(),
+    proposePerson: (d) => sheetProposePerson(d.id),
+    pickNode: (d) => sheetPickNode(d.id),
+    pickNodeFor: (d) => { SH.F.node = d.id; SH.F.name = d.name; drawSheet(); },
+    acceptWork: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) { x.accepted = true; x.canAccept = false; } },
+      '/nodes/people/accept', { id: d.id }, 'Отмечено: вы там работаете'),
     workJoin: (d) => sheetWorkJoin(d.id, d.v),
     workConfirm: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) { x.confirmed = true; x.waiting = false; x.canConfirm = false; } },
       '/nodes/people/confirm', { id: d.id }, 'Подтверждено'),
@@ -3099,6 +3182,7 @@
     catSuggest(t);
   });
   document.addEventListener('focusin', (e) => { if (e.target.matches('[data-catq]')) catSuggest(e.target); });
+  document.addEventListener('input', (e) => { if (e.target.matches('[data-live]') && SH && SH.onLive) SH.onLive(e.target.value); });
 
   // Вставили совет из переписки — раскладываем по полям: имя, телефон, сфера, текст
   let pasteTimer = null;
