@@ -1130,7 +1130,7 @@
       <p class="sec-note">Ещё не в Сарафане. Придут по любой ссылке — сразу получат вашу заявку</p>
       <div class="card">${list.map((w) => `<button class="person" data-act="openWaiting" data-id="${w.id}" style="width:100%;text-align:left">${waitAv(w, 's')}
         <div class="grow" style="min-width:0"><div class="name ellip">${esc(w.name || 'Без имени')}</div>
-        <div class="sub ellip">${esc([w.cat ? cat(w.cat).who : '', w.note, w.username ? '@' + w.username : '', 'ждёт с ' + when(w.at)].filter(Boolean).join(' · '))}</div></div>${ic('chev', 'chev')}</button>`).join('')}</div>`;
+        <div class="sub ellip">${esc([w.node && nodeById(w.node) ? (cap1(w.job) || 'Работает') + ' в ' + nodeById(w.node).name : '', w.cat ? cat(w.cat).who : '', w.note, w.username ? '@' + w.username : '', 'ждёт с ' + when(w.at)].filter(Boolean).join(' · '))}</div></div>${ic('chev', 'chev')}</button>`).join('')}</div>`;
   }
   const waitAv = (w, size) => `<span class="av ${size} wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>`;
 
@@ -1206,6 +1206,7 @@
       .sort((a, b) => (b.role === 'owner') - (a.role === 'owner') || b.confirmed - a.confirmed || (G.dist[a.user] ?? 9) - (G.dist[b.user] ?? 9));
     const past = all.filter((x) => x.past && !x.hidden);
     const others = (S.nodeOthers || {})[n.id] || 0;
+    const waitHere = (S.waiting || []).filter((w) => w.node === n.id);
     const mine = cur.find((x) => x.user === S.me);
     const hasOwner = cur.some((x) => x.role === 'owner' && x.confirmed);
     const iOwn = cur.some((x) => x.user === S.me && x.role === 'owner' && x.confirmed);
@@ -1214,9 +1215,12 @@
         <div class="sub ellip">${x.role === 'owner' ? 'Владелец' + (x.title ? ' · ' + esc(x.title) : '') : esc(jobRole(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
         ${x.canConfirm ? `<button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>` : ''}
         ${iOwn && x.user !== S.me ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Убрать из фирмы">${ic('x')}</button>` : ''}</div>`;
-    return `<div class="sec-title"><h2 class="h2">Люди</h2>${cur.length ? `<span class="tag">${cur.length + others}</span>` : ''}</div>
+    return `<div class="sec-title"><h2 class="h2">Люди</h2>${cur.length + waitHere.length ? `<span class="tag">${cur.length + others + waitHere.length}</span>` : ''}</div>
       <p class="sec-note">${n.kind === 'company' ? 'Кто здесь работает — можно выйти на своего человека, а не звонить наугад' : 'Кто здесь работает — владелец, мастера, администраторы'}</p>
-      <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0 0 4px">Пока никто не отметился</p>'}
+      <div class="card">${cur.map(row).join('')}${waitHere.map((w) => `<div class="person"><button class="grow row" data-act="openWaiting" data-id="${w.id}" style="min-width:0;text-align:left">${waitAv(w, 's')}
+          <div class="grow"><div class="name ellip">${esc(w.name || 'Без имени')}</div><div class="sub ellip">${esc(cap1(w.job) || 'Работает')} · ещё не в Сарафане · видите только вы</div></div></button>
+          <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropWaitJob" data-id="${w.id}" aria-label="Убрать из фирмы">${ic('x')}</button></div>`).join('')}
+        ${cur.length || waitHere.length ? '' : '<p class="small muted" style="margin:0 0 4px">Пока никто не отметился</p>'}
         ${others ? `<p class="tiny muted" style="margin:8px 0 0">И ещё ${pl(others, 'человек', 'человека', 'человек')} — не из ваших кругов</p>` : ''}
         ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><p class="small" style="margin:4px 0 0">${past.map((x) => `<a class="link" href="#/p/${x.user}">${esc(full(x.user))}</a>`).join(', ')}</p>` : ''}
         <div class="btn-row" style="margin-top:12px">${mine ? '' : `<button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>`}
@@ -1229,28 +1233,44 @@
     const n = nodeById(nid);
     if (!n) return;
     const taken = new Set(nodePeople(nid).filter((x) => !x.past).map((x) => x.user));
-    const f = { q: '', user: '', title: '' };
+    const f = { q: '', user: '', wait: '', title: '' };
+    // кто ещё не в Сарафане, но ждёт в вашем круге: отметка дождётся, пока он придёт
+    const waiters = () => (S.waiting || []).filter((w) => w.node !== nid)
+      .filter((w) => !f.q.trim() || normCat(w.name + ' ' + (w.username || '')).includes(normCat(f.q))).slice(0, 8);
     const people = () => Object.keys(S.users).filter((id) => id !== S.me && !taken.has(id))
       .filter((id) => !f.q.trim() || normCat(U(id).name).includes(normCat(f.q)))
       .sort((a, b) => (G.dist[a] ?? 9) - (G.dist[b] ?? 9)).slice(0, 8);
-    const peopleHtml = () => people().map((id) => `<button class="person" data-act="set" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}
-          <div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(who(id))}</div></div></button>`).join('') || '<p class="small muted">Никого не нашли среди ваших кругов</p>';
+    const peopleHtml = () => {
+      const a = people().map((id) => `<button class="person" data-act="set" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}
+          <div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(who(id))}</div></div></button>`).join('');
+      const w = waiters().map((x) => `<button class="person" data-act="set" data-k="wait" data-v="${x.id}" style="width:100%;text-align:left">${waitAv(x, 's')}
+          <div class="grow"><div class="name ellip">${esc(x.name || 'Без имени')}</div><div class="sub ellip">${x.username ? '@' + esc(x.username) + ' · ' : ''}ещё не в Сарафане</div></div></button>`).join('');
+      return (a || '') + (w ? `<div class="eyebrow" style="margin:12px 2px 4px">ещё не в Сарафане — ждут в вашем круге</div>${w}` : '')
+        || '<p class="small muted">Никого не нашли. Кого нет в Сарафане — сначала добавьте в круг: «Моя сеть» → «Добавить знакомых из Telegram»</p>';
+    };
     openSheet({
       F: f,
-      valid: () => !!f.user,
-      render: () => `${sheetHead(null, 'Кто работает в «' + esc(n.name) + '»', 'Отметите — ему придёт вопрос «это так?»')}
-        ${f.user ? `<div class="person" style="margin-bottom:8px">${av(f.user, 's')}<div class="grow"><div class="name">${esc(full(f.user))}</div><div class="sub">${esc(who(f.user))}</div></div>
+      valid: () => !!(f.user || f.wait),
+      render: () => { const w = f.wait && (S.waiting || []).find((x) => x.id === f.wait);
+        return `${sheetHead(null, 'Кто работает в «' + esc(n.name) + '»', 'Отметите — ему придёт вопрос «это так?»')}
+        ${w ? `<div class="person" style="margin-bottom:8px">${waitAv(w, 's')}<div class="grow"><div class="name">${esc(w.name || 'Без имени')}</div><div class="sub">Ещё не в Сарафане — спросим, когда придёт</div></div>
+          <button class="btn ghost xs" data-act="set" data-k="wait" data-v="">Другой</button></div>`
+    : f.user ? `<div class="person" style="margin-bottom:8px">${av(f.user, 's')}<div class="grow"><div class="name">${esc(full(f.user))}</div><div class="sub">${esc(who(f.user))}</div></div>
           <button class="btn ghost xs" data-act="set" data-k="user" data-v="">Другой</button></div>`
     : `<label class="field"><span>Кого</span><input class="input" data-live="1" placeholder="Начните печатать имя" value="${esc(f.q)}" autocomplete="off"></label>
         <div class="stack person-find" style="margin-top:6px">${peopleHtml()}</div>`}
         <label class="field"><span>Кем работает</span><input class="input" data-bind="title" maxlength="60" placeholder="мастер, менеджер, врач" value="${esc(f.title)}"></label>
-        <p class="why">${ic('spark')}Пока он не согласится, отметку видите только вы, он и владелец фирмы</p>
-        <div class="s-foot"><button class="btn primary block" data-act="submitPropose" data-submit>Отметить</button></div>`,
+        <p class="why">${ic('spark')}${w ? 'Пока его нет в Сарафане, отметку видите только вы. Придёт — сразу получит вопрос «это так?»'
+      : 'Пока он не согласится, отметку видите только вы, он и владелец фирмы'}</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitPropose" data-submit>Отметить</button></div>`; },
       submit: () => {
         closeSheet();
-        mutate(null, '/nodes/people/propose', { node: nid, user: f.user, title: f.title.trim() }, 'Отметили — ждём его согласия');
+        if (f.wait) mutate(null, '/circle/waiting/job', { id: f.wait, node: nid, title: f.title.trim() }, 'Отметили — спросим, когда придёт в Сарафан');
+        else mutate(null, '/nodes/people/propose', { node: nid, user: f.user, title: f.title.trim() }, 'Отметили — ждём его согласия');
       },
       onLive: (v) => { f.q = v; const box = $('#sheet .person-find'); if (box) box.innerHTML = peopleHtml(); },
+      // выбрали участника — сбрасываем ожидающего, и наоборот
+      onSet: (k) => { if (k === 'user' && f.user) f.wait = ''; if (k === 'wait' && f.wait) f.user = ''; },
     });
   }
 
@@ -2917,6 +2937,8 @@
         if (SH && w) { SH.F.name = (f.name || w.name || '').trim(); SH.F.phone = w.username ? '@' + w.username : ''; drawSheet(); }
       }, 320);
     },
+    dropWaitJob: (d) => mutate(() => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) { w.node = null; w.job = ''; } },
+      '/circle/waiting/job', { id: d.id, node: '' }, 'Убрали из фирмы'),
     dropWaiting: (d) => mutate(() => { if (SH) closeSheet(); S.waiting = (S.waiting || []).filter((x) => x.id !== d.id); },
       '/circle/waiting/delete', { id: d.id }, 'Убрали из круга: ' + (d.name || '')),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
