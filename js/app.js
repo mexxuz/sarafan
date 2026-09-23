@@ -107,7 +107,9 @@
     ? `<span class="founder-av">${av(id, size, 'founder')}<svg class="founder-star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg></span>`
     : av(id, size, ring));
   const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' : '');
-  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+  // живая аватарка — только в крупных портретах: в списках десятки роликов разом тяжелы для телефона
+  const video = (id) => (U(id) && U(id).video ? srvUrl(U(id).video) : '');
+  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${video(id) && (size === 'xl' || size === 'l') ? `<video src="${esc(video(id))}" autoplay muted loop playsinline preload="auto"></video>` : ''}</span>`;
   const ringOf = (id) => { const d = G.dist[id]; return d === 1 ? 'r1' : d === 2 ? 'r2' : d === undefined ? '' : 'r3'; };
 
   // Примеры занятий на свободных местах орбиты — показывают, кого тут находят
@@ -827,6 +829,7 @@
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)}${p.private ? ' · для себя' : ''} · ${p.phone ? esc(p.phone) : 'записан ' + when(p.at)}</div></div>
         ${p.private ? '' : `<button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button>`}</div>`).join('')}</div>` : ''}
       <button class="btn primary block" data-act="outsider">${ic('user')}Записать человека</button>
+      <button class="btn block" style="margin-top:8px" data-act="pickContacts">${ic('send')}Из контактов Telegram</button>
       <div class="btn-row" style="margin-top:8px">
         <button class="btn" data-act="newNode" data-v="place">${ic('pin')}Место</button>
         <button class="btn" data-act="newNode" data-v="company">${ic('house')}Фирму</button></div>
@@ -852,6 +855,7 @@
         id, ring: ring(id), self: id === S.me, kind: 'person',
         r: id === S.me ? 21 : ring(id) === 1 ? 15 : ring(id) === 2 ? 10 : 7.5,
         photo: U(id).photo || null,
+        video: U(id).video && (id === S.me || ring(id) <= 1) ? srvUrl(U(id).video) : null,   // дальних — фото, телефон не тянет десятки роликов
         trusted: !!(rep0 && rep0.independent >= 3),
         founder: (S.founders || []).includes(id),
         initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
@@ -1957,7 +1961,7 @@
     const valid = SH ? (SH.valid ? SH.valid() : true) : route().path[0] === 'ask' ? askValid() : !S.onboarded ? !!(F.name || '').trim() : true;
     $$('[data-submit]', scope).forEach((b) => { b.disabled = !valid; });
   }
-  const sheetHead = (id, title, sub) => `<div class="s-head">${id ? av(id) : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
+  const sheetHead = (id, title, sub) => `<div class="s-head">${id ? founderAv(id, 'l') : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
   const relChips = (F, heard) => `<div class="field"><span>Откуда знаете</span><div class="chips">${Object.entries(heard ? { heard: 'Мне посоветовали', ...REL } : REL).map(([k, v]) => `<button class="chip ${F.rel === k ? 'on' : ''}" data-act="set" data-k="rel" data-v="${k}">${v}</button>`).join('')}</div></div>`;
   const catChips = (F, preferred) => {
     const list = F.allCats ? S.cats.map((c) => c.id) : [...new Set([...(preferred || []), ...(F.cat ? [F.cat] : [])])];
@@ -2211,6 +2215,7 @@
         const heard = f.rel === 'heard';
         const more = (S.drafts || []).filter((x) => x.id !== draftId).length;
         return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? (more ? `Проверьте и сохраните — дальше ещё ${more}` : 'Проверьте и сохраните — через год найдёте за секунду') : 'Даже если про Сарафан он ещё не знает')}
+          ${d ? '' : `<button class="link-row wide" data-act="pickContacts" style="margin-bottom:12px">${ic('send')}<span class="grow"><b>Выбрать из контактов Telegram</b><i>До 10 человек за раз — бот сохранит их в черновики</i></span>${ic('arrow')}</button>`}
           ${d ? '' : `<label class="field paste"><span>Скопировали совет в переписке? Вставьте — разберём сами</span><textarea class="textarea" rows="2" data-paste data-bind="paste" placeholder="Рустам, электрик, +998 90 123 45 67 — делал у нас проводку">${esc(f.paste || '')}</textarea></label>`}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
           <label class="field"><span>Телефон или ник — видите только вы</span><input class="input" data-bind="phone" maxlength="40" placeholder="+998… или @ник" value="${esc(f.phone)}"></label>
@@ -2257,7 +2262,7 @@
     const direct = G.connected(S.me, id);
     openSheet({
       F: {},
-      render: () => `${sheetHead(null, esc(U(id).name), esc(who(id)) + ' · ' + esc(U(id).city))}
+      render: () => `${sheetHead(id, esc(U(id).name), esc(who(id)) + ' · ' + esc(U(id).city))}
         <div style="margin-top:14px">${chainLine(t.chain || [])}</div>
         ${rep && rep.count ? `<div class="stat-grid" style="margin-top:14px"><div class="stat"><b>${rep.count}</b><span>${plural(rep.count, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${rep.independent}</b><span>${plural(rep.independent, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')}</span></div></div>` : '<div class="note">Рекомендаций пока нет — этот человек просто в вашей сети.</div>'}
         ${rep && rep.recs.length ? `<div class="note" style="color:var(--ink)">«${esc(rep.recs[0].text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(rep.recs[0].from))} · ${esc(cat(rep.recs[0].cat).name)}</div></div>` : ''}
@@ -2284,6 +2289,11 @@
       valid: () => f.name.trim().length >= 2,
       render: () => `${sheetHead(null, 'Профиль')}
         <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" value="${esc(f.name)}"></label>
+        <div class="field"><span>Живая аватарка</span>
+          <div class="row" style="gap:12px">${av(S.me, 'l')}<div class="grow">
+            <label class="btn sm">${ic('spark')}${U(S.me).video ? 'Заменить ролик' : 'Загрузить ролик'}<input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
+            ${U(S.me).video ? '<button class="btn sm ghost" data-act="dropVideo" style="margin-left:6px">Убрать</button>' : ''}</div></div>
+          <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${f.role === 'client' ? '' : `<div class="field"><span>Чем занимаетесь</span><div class="chips">${S.cats.map((c) => `<button class="chip ${f.cats.includes(c.id) ? 'on' : ''}" data-act="toggle" data-k="cats" data-v="${c.id}">${esc(c.who)}</button>`).join('')}
           ${f.own ? '' : '<button class="chip" data-act="set" data-k="own" data-v="1">Своего занятия нет</button>'}</div>
@@ -2324,6 +2334,7 @@
           '/profile', body, 'Сохранено');
       },
     });
+    wireVideoInput();
   }
 
   // Дописать факт о знакомом: не отзыв, а польза для тех, кто к нему пойдёт
@@ -2431,6 +2442,21 @@
   }
 
   // Снимок места: показывает, куда человек придёт, лучше любого описания
+  async function uploadVideoAvatar(file) {
+    if (!file) return;
+    if (!LIVE) { toast('В демо ролики не загружаются'); return; }
+    toast('Загружаем и сжимаем ролик…');
+    try {
+      await window.API.upload('/profile/video', file, {});
+      await refresh();
+      if (SH) { drawSheet(); wireVideoInput(); }
+      toast('Живая аватарка готова');
+    } catch (e) { toast(e.message); }
+  }
+  function wireVideoInput() {
+    setTimeout(() => { const inp = $('#videoav'); if (inp) inp.onchange = () => uploadVideoAvatar(inp.files && inp.files[0]); }, 60);
+  }
+
   async function uploadPlacePhoto(file, node) {
     if (!file) return;
     if (!LIVE) { toast('В демо снимки не загружаются'); return; }
@@ -2473,6 +2499,16 @@
     if (tg) tg.openTelegramLink(u); else toast('В Telegram откроется выбор чата, куда отправить ссылку');
   };
 
+  // «В Telegram»: в выбранный чат уходит та же карточка с кнопками, что и через «@бот …».
+  // Где Telegram этого не умеет (старые версии, браузер) — как раньше, ссылкой.
+  const shareCard = async (kind, id, fallback) => {
+    if (!(LIVE && tg && tg.shareMessage)) { fallback(); return; }
+    try {
+      const res = await window.API.post('/share/prepare', { kind, id });
+      tg.shareMessage(res.id, (sent) => { if (sent) toast('Отправили'); });
+    } catch (e) { fallback(); }
+  };
+
   // ——— Действия ———
   const ACT = {
     goto: (d) => go(d.h),
@@ -2495,7 +2531,7 @@
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
     submitShare: () => SH.submit(),
-    tgShare: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`),
+    tgShare: (d) => shareCard('person', d.id, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`)),
     tgSend: (d) => tgShareLink(d.url, d.text),
     addPhrase: (d) => {
       const t = (SH.F.text || '').trim();
@@ -2505,6 +2541,10 @@
     },
     openDraft: (d) => sheetOutsider('', d.id),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
+    dropVideo: async () => {
+      if (!LIVE) return;
+      try { await window.API.post('/profile/video/delete', {}); await refresh(); if (SH) { drawSheet(); wireVideoInput(); } toast('Живая аватарка убрана'); } catch (e) { toast(e.message); }
+    },
     // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
     takePhone: () => {
       tg.requestContact((ok, res) => {
@@ -2514,6 +2554,12 @@
         SH.F.cardPhone = (String(raw).startsWith('+') ? '' : '+') + raw;
         drawSheet(); toast('Номер вписан — нажмите «Сохранить»');
       });
+    },
+    // Выбрать людей из контактов: Telegram сам показывает список, бот сохраняет отмеченных в черновики
+    pickContacts: () => {
+      const link = `https://t.me/${S.bot || 'sarafanibot'}?start=pick`;
+      if (!LIVE) { toast('В рабочей версии откроется бот с кнопкой «Выбрать из контактов»'); return; }
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank');
     },
     // Нажали «Сохранить» в чате по ошибке — черновик убираем, открываем следующий, если есть
     skipDraft: async (d) => {
@@ -2527,7 +2573,14 @@
     askLink: () => sheetAskLink(),
     intro: (d) => sheetIntro(d.id, d.cat, d.via, d.q),
     submitIntro: () => SH.submit(),
-    write: (d) => toast(tg ? 'Откроем чат в Telegram' : `В рабочей версии откроется чат с ${U(d.id).name.split(' ')[0]} в Telegram`),
+    // Открыть переписку с человеком: по нику, а если ника нет — по телефону из его карточки
+    write: (d) => {
+      const u = U(d.id) || {};
+      const link = u.username ? `https://t.me/${u.username}` : u.phone ? `https://t.me/${u.phone.replace(/[^\d+]/g, '')}` : '';
+      if (!LIVE) { toast(`В рабочей версии откроется чат с ${(u.name || '').split(' ')[0]} в Telegram`); return; }
+      if (!link) { toast('У человека нет ника в Telegram — попросите знакомого вас познакомить'); return; }
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank');
+    },
     addConn: (d) => mutate(() => {
       S.conns.push({ a: S.me, b: d.id, by: S.me, status: 'pending', at: Date.now() });
       setTimeout(() => { const c = S.conns.find((x) => pairWith(x, d.id)); if (c) { c.status = 'ok'; commit(); toast(U(d.id).name + ' теперь в вашей сети'); } }, 4000);
@@ -2669,8 +2722,8 @@
     addFact: (d) => sheetFact(d.id),
     submitFact: () => SH.submit(),
     delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
-    shareNode: (d) => { const n = nodeById(d.id); tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
-      `${n.name} — советую, посмотри в Сарафане:`); },
+    shareNode: (d) => { const n = nodeById(d.id); shareCard('place', d.id, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
+      `${n.name} — советую, посмотри в Сарафане:`)); },
     toggleWord: (d) => {
       const cur = howList(SH.F[d.k]);
       SH.F[d.k] = (cur.includes(d.v) ? cur.filter((x) => x !== d.v) : [...cur, d.v]).join(',');

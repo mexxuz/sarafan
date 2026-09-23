@@ -565,3 +565,6 @@
 
 /* Вставка совета из переписки: пунктир — сюда кладут, а не пишут */
 .field.paste .textarea { border: 1.5px dashed var(--ink-4, #b6c2d3); background: var(--mist); min-height: 64px; }
+
+/* В шапке всплывающей карточки портрет стоит по центру строки с именем */
+.sheet .s-head { align-items: center; }

@@ -69,6 +69,18 @@ window.Cloud = function (canvas, opts) {
     edges = data.edges.filter((e) => byId[e.a] && byId[e.b])
       .map((e) => Object.assign({ seed: Math.random() * 1.6 }, e));   // огоньки бегут вразнобой
     nodes.forEach((n) => { if (n.photo && !imgs[n.photo]) load(n.photo); });
+    nodes.forEach((n) => { if (n.video && !(n.video in imgs)) loadVideo(n.video); });
+  }
+
+  // Живая аватарка: ролик без звука крутится прямо в кружке, облако и так перерисовывается каждый кадр
+  function loadVideo(src) {
+    const v = document.createElement('video');
+    Object.assign(v, { muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto' });
+    v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+    v.oncanplay = () => { imgs[src] = v; v.play().catch(() => {}); };
+    v.onerror = () => { imgs[src] = null; };
+    imgs[src] = undefined;
+    v.src = src;
   }
 
   function load(src) {
@@ -292,7 +304,7 @@ window.Cloud = function (canvas, opts) {
   }
 
   function drawPerson(n) {
-    const im = n.photo ? imgs[n.photo] : null;
+    const im = (n.video && imgs[n.video]) || (n.photo ? imgs[n.photo] : null);
     const far = !n.self && n.ring >= 3;
 
     // у незнакомых кольцо пунктирное: видно, что их пока никто не рекомендует
