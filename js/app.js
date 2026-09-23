@@ -901,20 +901,39 @@
         go: id === S.me ? '#/me' : '#/p/' + id,
       };
     });
-    // Создатель сети виден всем: у кого нет к нему цепочки — золотая точка на дальнем круге
+    // Создатель сети виден всем. Он за вашими кругами — золотая точка в конце настоящей цепочки
+    // знакомств: кого вы видите, те собой, остальные — безымянные точки, их не открыть
     const fc = S.founderCard;
-    if (!onlyPlaces && fc && !U(fc.id)) nodes.push({
-      id: 'fc' + fc.id, ring: 1.5, kind: 'person', r: 12, founder: true, fc: true,
-      photo: fc.photo || null, video: null,
-      initials: (fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
-      label: 'создатель Сарафана' });
+    const chainEdges = [];
+    if (!onlyPlaces && fc && !U(fc.id)) {
+      const fid = 'fc' + fc.id;
+      const hops = fc.path || [];
+      nodes.push({
+        id: fid, ring: fc.path ? Math.min(3, 1 + hops.length * 0.5) : 1.5, kind: 'person', r: 12, founder: true, fc: true,
+        photo: fc.photo || null, video: null,
+        initials: (fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
+        label: 'создатель Сарафана' });
+      if (fc.path) {
+        let prev = S.me;
+        hops.forEach((h, i) => {
+          let id = h && people.includes(h) ? h : null;
+          if (!id) {
+            id = 'anon' + i;
+            nodes.push({ id, ring: 2, kind: 'person', r: 5, ghost: true, anon: true, initials: '', label: '' });
+          }
+          chainEdges.push({ a: prev, b: id, kind: 'wait', len: 34 });
+          prev = id;
+        });
+        chainEdges.push({ a: prev, b: fid, kind: 'wait', len: 40 });
+      }
+    }
     // кто ждёт в круге — бледный кружок на пунктире: место уже есть, человек ещё не пришёл
     if (!onlyPlaces) (S.waiting || []).slice(0, 12).forEach((w) => nodes.push({
       id: 'w' + w.id, ring: 1, self: false, kind: 'person', ghost: true, r: 11,
       photo: w.photo ? srvUrl(w.photo) : null,
       initials: (w.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase(),
       label: (w.name || '').split(' ')[0], go: '#/net' }));
-    const edges = [];
+    const edges = [...chainEdges];
     (S.waiting || []).slice(0, 12).forEach((w) => { if (!onlyPlaces) edges.push({ a: S.me, b: 'w' + w.id, kind: 'wait', len: 70 }); });
     const known = new Set(people);
     S.conns.filter((c) => c.status === 'ok' && known.has(c.a) && known.has(c.b))
@@ -967,6 +986,7 @@
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
     if (n.fc) { sheetFounder(); return; }
+    if (n.anon) { toast('Этого человека вы не знаете — он просто звено в цепочке до создателя'); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
     sheetPeek(n.id);
