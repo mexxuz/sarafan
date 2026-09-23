@@ -1065,7 +1065,7 @@
     if (F.show === undefined) F.show = 'all';
     const ring1 = myContacts();
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
-    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button>
         <h1 class="h2 grow">Облако сети</h1>
         ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="chips" style="margin-bottom:10px">
@@ -1577,7 +1577,7 @@
     const byKind = {};
     facts.forEach((f) => { (byKind[f.kind] = byKind[f.kind] || []).push(f); });
     const can = n.by === S.me || !!mine || canCard(n);
-    return `<div class="top ${n.photo ? 'on-photo' : ''}"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
+    return `<div class="top ${n.photo ? 'on-photo' : ''}"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button>
         <div class="grow"></div>
         ${can ? `<button class="icon-btn" data-act="nodeTools" data-id="${n.id}" aria-label="Что можно поправить">${ic('dots3')}</button>` : ''}
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
@@ -1939,7 +1939,7 @@
     else if (t.chain && t.chain.length > 2) actions = `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${focus || ''}">${ic('hand')}${t.chain.length > 3 ? 'Шаг к знакомству' : 'Попросить знакомство'}</button>`;
     else actions = `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться контактом</button>`;
 
-    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
       <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1>${founderTag(id)}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
@@ -2035,7 +2035,7 @@
         <div style="margin-top:10px">${chainLine(direct ? [S.me, a.person] : [S.me, a.from, a.person].filter((x, k, arr) => arr.indexOf(x) === k))}</div>
         <p class="txt">«${esc(a.text)}»</p>${act}</div>`;
     }).join('');
-    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><h1 class="h2 grow">${mine ? 'Ваш запрос' : 'Запрос'}</h1></div>
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><h1 class="h2 grow">${mine ? 'Ваш запрос' : 'Запрос'}</h1></div>
       <div class="card">${mine ? '' : q.from
         ? `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`
         : `<div class="row"><span class="av s ghost-av">${ic('user')}</span><div class="grow"><div class="h3">Кто-то из ваших знакомых</div><div class="tiny muted">имя откроется, когда вы ответите · ${when(q.at)}</div></div></div>`}
@@ -3085,6 +3085,8 @@
   const ACT = {
     goto: (d) => go(d.h),
     back: () => goBack(),
+    // С глубокого экрана — сразу на главную, не щёлкая «назад» по цепочке
+    goHome: () => { if (SH) closeSheet(); navBack = true; go('#/'); },
     closeSheet: (d) => { const s = SH; closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
     peek: (d) => sheetPeek(d.id),
     set: (d) => {
