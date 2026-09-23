@@ -968,6 +968,36 @@
         waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
       });
     }
+    // Большая сеть: все знакомства разом сливаются в клубок. Оставляем «цветы»: нити между вами и вашими
+    // знакомыми, а каждого из второго круга — одной нитью к тому знакомому, через кого вы на него выходите.
+    // Место — одной нитью к ближайшему из тех, кто его советует; места только через дальних — в «Только места»
+    if (!onlyPlaces && people.length > 60) {
+      const R = (id) => (id === S.me ? 0 : ring(id));
+      const isPlace = (id) => String(id).startsWith('o');
+      const nb = new Map();
+      S.conns.filter((c) => c.status === 'ok').forEach((c) => {
+        if (!nb.has(c.a)) nb.set(c.a, []);
+        if (!nb.has(c.b)) nb.set(c.b, []);
+        nb.get(c.a).push(c.b); nb.get(c.b).push(c.a);
+      });
+      const keep = edges.filter((e) => !isPlace(e.a) && !isPlace(e.b)
+        && (!known.has(e.a) || !known.has(e.b) || (R(e.a) <= 1 && R(e.b) <= 1)));
+      people.filter((id) => R(id) === 2).forEach((id) => {
+        const via = (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x));
+        if (!via.length) return;
+        const p = via.find((x) => vouched.has(x + '>' + id)) || via[0];
+        keep.push({ a: p, b: id, kind: vouched.has(p + '>' + id) ? 'vouch' : 'know', len: 30 });
+      });
+      const best = {};
+      edges.filter((e) => isPlace(e.b) && known.has(e.a)).forEach((e) => { if (!best[e.b] || R(e.a) < R(best[e.b].a)) best[e.b] = e; });
+      const drop = new Set();
+      nodes.filter((n) => isPlace(n.id)).forEach((n) => {
+        const e = best[n.id];
+        if (!e || R(e.a) > 1) { drop.add(n.id); return; }
+        keep.push({ ...e, len: 34 });
+      });
+      return { nodes: nodes.filter((n) => !drop.has(n.id)), edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
+    }
     if (onlyPlaces) {
       // срез «только места»: вы, места и фирмы. Людей нет
       const kept = nodes.filter((n) => n.id === S.me || String(n.id).startsWith('o'));
