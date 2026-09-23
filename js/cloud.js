@@ -333,7 +333,7 @@ window.Cloud = function (canvas, opts) {
       ctx.strokeStyle = 'rgba(232,165,40,.95)';
       ctx.lineWidth = 1.6;
       ctx.stroke();
-      const sx = n.x, sy = n.y - n.r - 3.2, sr = Math.max(4.2, n.r * 0.24);
+      const sx = n.x, sy = n.y - n.r - 3.2, sr = Math.max(6.5, n.r * 0.42);
       ctx.beginPath();
       for (let i = 0; i < 10; i++) {
         const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? sr * 0.45 : sr;
