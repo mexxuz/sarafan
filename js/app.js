@@ -1394,7 +1394,7 @@
           <span class="grow"><b>${esc(r.label)}</b><i>${esc(r.hint)}</i></span>${ic('arrow')}</button>`).join('')}</div>
         ${f.data.people.length ? `<div class="sec-title"><h2 class="h2">Или конкретный человек</h2></div>
         <div class="card">${f.data.people.map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(p.name)}">
-          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div>${ic('arrow')}</button>`).join('')}</div>` : ''}`}`,
+          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow" style="min-width:0"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div></button>`).join('')}</div>` : ''}`}`,
     });
   }
 
