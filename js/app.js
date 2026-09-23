@@ -810,9 +810,7 @@
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
-      <p class="cloud-gain">${op.total1
-    ? `Через ${pl(op.total1, 'знакомого', 'знакомых', 'знакомых')} вам открыто <b>${pl(op.total2, 'человек', 'человека', 'человек')}</b>, которых вы не знаете лично${nodesAll().length ? ` и <b>${pl(nodesAll().length, 'проверенное место', 'проверенных места', 'проверенных мест')}</b>` : ''}`
-    : 'Позовите первого знакомого — и его круг откроется вам целиком'}</p>
+      ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${myList()}
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
