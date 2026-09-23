@@ -2292,7 +2292,7 @@
           <input class="input" style="margin-top:8px" data-bind="hours" maxlength="80" placeholder="Когда удобно писать: будни до 20:00" value="${esc(f.hours || '')}">
           <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>
         <label class="field"><span>Телефон для карточки в чатах</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone || '')}">
-          <p class="hint">Когда вас советуют через @${esc(S.bot || 'sarafanibot')}, в чат придёт настоящий контакт: позвонить или сохранить в телефон одним нажатием. Не хотите — оставьте пустым</p></label>`}
+          <p class="hint">Когда вас советуют в чате, номер будет в карточке — нажмут и позвонят. Не хотите — оставьте пустым</p></label>`}
         <div class="field"><span>Как вы видны сети</span><div class="chips">${[
           ['open', 'Беру работу'], ['busy', 'Сейчас занят'], ['hidden', 'Не показывать меня'],
         ].map(([k, l]) => `<button class="chip ${f.avail === k ? 'on' : ''}" data-act="set" data-k="avail" data-v="${k}">${l}</button>`).join('')}</div>
