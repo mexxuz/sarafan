@@ -2682,7 +2682,8 @@
       const v = d.v === '1' ? true : d.v === '' ? false : d.v;
       SH.F[d.k] = v; if (SH.onSet) SH.onSet(d.k); drawSheet();
     },
-    toggle: (d) => { const a = SH.F[d.k]; const i = a.indexOf(d.v); i < 0 ? a.push(d.v) : a.splice(i, 1); drawSheet(); },
+    // и в окне, и на странице входа (там сферы выбирают до того, как открылось хоть одно окно)
+    toggle: (d) => { const data = SH ? SH.F : F; const a = data[d.k] = data[d.k] || []; const i = a.indexOf(d.v); i < 0 ? a.push(d.v) : a.splice(i, 1); if (SH) drawSheet(); else render(); },
     // Поиск
     filter: (d) => { F.f = d.v; $('#results').innerHTML = searchResults(); },
     clearCat: () => { F.c = ''; history.replaceState(null, '', '#/search'); lastHash = location.hash; render(); },
