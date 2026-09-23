@@ -909,7 +909,7 @@
       const fid = 'fc' + fc.id;
       const hops = fc.path || [];
       nodes.push({
-        id: fid, ring: fc.path ? Math.min(3, 1 + hops.length * 0.5) : 1.5, kind: 'person', r: 12, founder: true, fc: true,
+        id: fid, ring: fc.path ? Math.min(2.2, 1 + hops.length * 0.4) : 1.5, kind: 'person', r: 12, founder: true, fc: true,
         photo: fc.photo || null, video: null,
         initials: (fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
         label: 'создатель Сарафана' });
@@ -921,10 +921,10 @@
             id = 'anon' + i;
             nodes.push({ id, ring: 2, kind: 'person', r: 5, ghost: true, anon: true, initials: '', label: '' });
           }
-          chainEdges.push({ a: prev, b: id, kind: 'wait', len: 34 });
+          chainEdges.push({ a: prev, b: id, kind: 'wait', len: 26 });
           prev = id;
         });
-        chainEdges.push({ a: prev, b: fid, kind: 'wait', len: 40 });
+        chainEdges.push({ a: prev, b: fid, kind: 'wait', len: 30 });
       }
     }
     // кто ждёт в круге — бледный кружок на пунктире: место уже есть, человек ещё не пришёл
