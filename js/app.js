@@ -968,75 +968,24 @@
         waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
       });
     }
-    // Большая сеть: все знакомства разом сливаются в клубок. Оставляем «цветы»: нити между вами и вашими
-    // знакомыми, а каждого из второго круга — одной нитью к тому знакомому, через кого вы на него выходите.
-    // Место — одной нитью к ближайшему из тех, кто его советует; места только через дальних — в «Только места»
+    // Большая сеть — звёздное небо. Ваши знакомые — портреты, все остальные — звёзды: без букв, мерцают,
+    // кого больше рекомендуют — ярче и крупнее. Места и фирмы — фиолетовые и голубые звёзды.
+    // Никаких колец: люди сами сбиваются в скопления по тому, кто с кем знаком, — как созвездия.
+    // Связи со звёздами — едва заметные нити; наведите на звезду — загорится её созвездие
     if (!onlyPlaces && people.length > 60) {
-      const R = (id) => (id === S.me ? 0 : ring(id));
       const isPlace = (id) => String(id).startsWith('o');
-      const nb = new Map();
-      S.conns.filter((c) => c.status === 'ok').forEach((c) => {
-        if (!nb.has(c.a)) nb.set(c.a, []);
-        if (!nb.has(c.b)) nb.set(c.b, []);
-        nb.get(c.a).push(c.b); nb.get(c.b).push(c.a);
-      });
-      const keep = edges.filter((e) => !isPlace(e.a) && !isPlace(e.b)
-        && (!known.has(e.a) || !known.has(e.b) || (R(e.a) <= 1 && R(e.b) <= 1)));
-      // у каждого знакомого — пятёрка самых рекомендуемых из его круга, остальные сворачиваются в «+N»
-      const kids = new Map();
-      const parentOf = {};
-      const drop = new Set();
-      people.filter((id) => R(id) === 2).forEach((id) => {
-        const via = (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x));
-        if (!via.length) { drop.add(id); return; }
-        const p = via.find((x) => vouched.has(x + '>' + id)) || via[0];
-        if (!kids.has(p)) kids.set(p, []);
-        kids.get(p).push(id);
-        parentOf[id] = p;
-      });
-      const extra = [];
-      kids.forEach((list, p) => {
-        // первыми — общие: кого знают сразу несколько ваших знакомых. Они и есть мосты между «цветами»
-        const ties = (id) => (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x)).length;
-        list.sort((a, b) => ties(b) - ties(a) || G.recsTo(b).length - G.recsTo(a).length);
-        list.slice(0, 5).forEach((id) => keep.push({ a: p, b: id, kind: vouched.has(p + '>' + id) ? 'vouch' : 'know', len: 28 }));
-        const rest = list.slice(5);
-        rest.forEach((id) => drop.add(id));
-        if (rest.length) {
-          extra.push({ id: 'more' + p, ring: 2, kind: 'person', ghost: true, r: 9, initials: '+' + rest.length,
-            label: 'ещё ' + rest.length, more: { parent: p, count: rest.length } });
-          keep.push({ a: p, b: 'more' + p, kind: 'wait', len: 26 });
+      nodes.forEach((n) => {
+        if (n.self || n.fc || n.anon || n.ghost) return;
+        if (isPlace(n.id)) {
+          const k = nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length;
+          Object.assign(n, { star: true, r: 2.8 + Math.min(3, k * 0.7) });
+        } else if (n.ring >= 2) {
+          const k = G.recsTo(n.id).length;
+          Object.assign(n, { star: true, bright: k >= 2 || n.trusted, r: 2.2 + Math.min(3.2, k * 0.8), photo: null, video: null, initials: '' });
         }
       });
-      // места: одной нитью к ближайшему, кто на облаке и советует его или там работает; такого нет —
-      // к вашему знакомому, через которого вы выходите на советчика. На полотне — сорок самых советуемых
-      const shown = (id) => id === S.me || (known.has(id) && !drop.has(id));
-      const best = {};
-      edges.filter((e) => isPlace(e.b) && known.has(e.a)).forEach((e) => {
-        const at = shown(e.a) ? e.a : parentOf[e.a];
-        if (!at || !shown(at)) return;
-        const cand = { a: at, b: e.b, kind: at === e.a ? e.kind : 'wait', len: at === e.a ? 34 : 44 };
-        if (!best[e.b] || R(at) < R(best[e.b].a) || (R(at) === R(best[e.b].a) && at === e.a)) best[e.b] = cand;
-      });
-      nodes.filter((n) => isPlace(n.id)).map((n) => ({ n, e: best[n.id], k: nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length }))
-        .sort((a, b) => (b.e ? 1 : 0) - (a.e ? 1 : 0) || b.k - a.k)
-        .forEach((x, i) => {
-          if (!x.e || i >= 40) { drop.add(x.n.id); return; }
-          keep.push(x.e);
-        });
-      // Пересечения: все остальные связи между теми, кто на облаке, — тонкими нитями. Точки они не тянут,
-      // раскладку держат «цветы», а сеть видна целиком: кто кого знает, кто что советует
-      const seen = new Set(keep.map((e) => [e.a, e.b].sort().join('~')));
-      const onCloud = (id) => id === S.me || ((known.has(id) || isPlace(id)) && !drop.has(id));
-      edges.forEach((e) => {
-        if (e.kind === 'wait' || !onCloud(e.a) || !onCloud(e.b)) return;
-        const k = [e.a, e.b].sort().join('~');
-        if (seen.has(k)) return;
-        seen.add(k);
-        keep.push({ ...e, faint: true, len: 140 });
-      });
-      return { nodes: [...nodes.filter((n) => !drop.has(n.id)), ...extra],
-        edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
+      const star = new Set(nodes.filter((n) => n.star).map((n) => n.id));
+      return { nodes, edges: edges.map((e) => (star.has(e.a) || star.has(e.b) ? { ...e, faint: true, len: 56 } : e)) };
     }
     if (onlyPlaces) {
       // срез «только места»: вы, места и фирмы. Людей нет

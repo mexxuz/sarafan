@@ -55,7 +55,7 @@ window.Cloud = function (canvas, opts) {
       return Object.assign({
         vx: 0, vy: 0,
         // появление: узел всплывает, ближние раньше дальних
-        born: was ? 1 : 0, delay: was ? 0 : (n.self ? 0 : 6 + i * 1.6),
+        born: was ? 1 : 0, delay: was ? 0 : (n.self ? 0 : n.star ? 8 + Math.random() * 70 : 6 + Math.min(i, 60) * 1.6),
         glow: 0,
         // своя фаза качания: узлы дышат вразнобой, а не строем
         ph: was ? was.ph : Math.random() * Math.PI * 2,
@@ -104,7 +104,7 @@ window.Cloud = function (canvas, opts) {
         let dx = b.x - a.x, dy = b.y - a.y;
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = rnd(1); dy = rnd(1); d2 = 1; }
-        const min = (a.r + b.r + 26) ** 2;
+        const min = (a.r + b.r + (a.star && b.star ? 9 : a.star || b.star ? 16 : 26)) ** 2;
         if (d2 > 56000) continue;                       // далёкие друг друга не трогают
         const f = (min / d2) * 1.35;
         const d = Math.sqrt(d2);
@@ -119,7 +119,7 @@ window.Cloud = function (canvas, opts) {
       const d = Math.max(1, Math.hypot(dx, dy));
       const want = e.len || 92;
       // тонкая нить пересечения почти не тянет: раскладку держат основные
-      const f = (d - want) * 0.008 * (e.faint ? 0.08 : e.kind === 'vouch' ? 1.25 : 1);
+      const f = (d - want) * 0.008 * (e.faint ? 0.3 : e.kind === 'vouch' ? 1.25 : 1);
       const ux = dx / d, uy = dy / d;
       if (!a.self) { a.vx += ux * f; a.vy += uy * f; }
       if (!b.self) { b.vx -= ux * f; b.vy -= uy * f; }
@@ -133,10 +133,15 @@ window.Cloud = function (canvas, opts) {
       const room = Math.min(cy, H - cy) - 26;
       const k = Math.max(0.62, Math.min(2.2, room / 186));
       const d = Math.max(1, Math.hypot(dx / wide, dy));
-      const want = (70 + n.ring * 58) * k;
-      const pull = (want - d) * 0.006;
-      n.vx += (dx / d) * pull / wide;
-      n.vy += (dy / d) * pull;
+      if (n.star) {
+        n.vx += (cx - n.x) * 0.0012;
+        n.vy += (cy - n.y) * 0.0012;
+      } else {
+        const want = (70 + n.ring * 58) * k;
+        const pull = (want - d) * (big() ? 0.003 : 0.006);
+        n.vx += (dx / d) * pull / wide;
+        n.vy += (dy / d) * pull;
+      }
       if (heat) { n.vx += rnd(heat); n.vy += rnd(heat); }
       // медленное плавание: каждый узел ходит по своей маленькой петле. В большой сети — нет:
       // сотни плавающих точек толкают друг друга без конца, и облако не успокаивается
@@ -204,7 +209,7 @@ window.Cloud = function (canvas, opts) {
     const cx = W / 2, cy = H * (opts.centerY || 0.5);
     ctx.strokeStyle = 'rgba(47,123,255,.045)';
     ctx.lineWidth = 1;
-    [72 + 62, 72 + 124].forEach((r) => {
+    if (!big()) [72 + 62, 72 + 124].forEach((r) => {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
@@ -224,8 +229,8 @@ window.Cloud = function (canvas, opts) {
       if (grow <= 0.02) return;
       const hot = lit && (e.a === lit.id || e.b === lit.id);
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both : COLOR[e.kind]);
-      ctx.lineWidth = hot ? 1.8 : e.faint ? 0.6 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
-      ctx.globalAlpha = (lit && !hot ? 0.28 : e.faint && !hot ? 0.5 : 1) * grow * Math.min(depth(a), depth(b));
+      ctx.lineWidth = hot ? 1.4 : e.faint ? 0.5 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
+      ctx.globalAlpha = (lit && !hot ? 0.12 : e.faint && !hot ? 0.3 : 1) * grow * Math.min(depth(a), depth(b));
       // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       const dx = b.x - a.x, dy = b.y - a.y;
@@ -297,7 +302,8 @@ window.Cloud = function (canvas, opts) {
 
       const saved = n.r;
       n.r = R;
-      if (n.kind === 'node') drawPlace(n);
+      if (n.star) drawStar(n, dim);
+      else if (n.kind === 'node') drawPlace(n);
       else drawPerson(n);
       n.r = saved;
 
@@ -380,6 +386,25 @@ window.Cloud = function (canvas, opts) {
       ctx.lineWidth = 1.1;
       ctx.stroke();
     }
+  }
+
+  // Звезда: ядро и мягкое свечение, мерцает в своём ритме. Голубые — люди (кого рекомендуют — ярче),
+  // фиолетовые — фирмы, синие — места
+  function drawStar(n, dim) {
+    const tw = calm ? 1 : 0.62 + 0.38 * Math.sin(now * 0.0018 * n.sp + n.ph);
+    const tone = n.kind === 'node' ? (n.company ? '120,96,255' : '47,123,255') : n.bright ? '47,123,255' : '120,140,178';
+    const glowR = n.r * (3.2 + n.glow * 2);
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
+    g.addColorStop(0, `rgba(${tone},${(dim ? 0.08 : 0.28) * tw + n.glow * 0.3})`);
+    g.addColorStop(1, `rgba(${tone},0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r * (0.55 + 0.15 * tw), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${tone},${0.55 + 0.45 * tw})`;
+    ctx.fill();
   }
 
   // Места и фирмы узнаются по значку внутри кружка, а не по форме маркера:
@@ -479,7 +504,14 @@ window.Cloud = function (canvas, opts) {
     const sx = e.clientX - b.left, sy = e.clientY - b.top;
     return { x: (sx - cam.x) / cam.scale, y: (sy - cam.y) / cam.scale, sx, sy };
   };
-  const find = (p) => nodes.find((n) => Math.hypot(n.x - p.x, n.y - p.y) <= n.r + 8 / cam.scale);
+  const find = (p) => {
+    let best = null, bd = Infinity;
+    nodes.forEach((n) => {
+      const d = Math.hypot(n.x - p.x, n.y - p.y);
+      if (d <= Math.max(n.r, 6) + 8 / cam.scale && d < bd) { best = n; bd = d; }
+    });
+    return best;
+  };
 
   canvas.addEventListener('pointerdown', (e) => {
     const p = at(e);
