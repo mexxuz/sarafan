@@ -649,3 +649,13 @@
   background: rgba(255, 255, 255, .14); color: #fff; }
 .viewas-bar button:last-child { background: #fff; color: #1d2130; }
 body.viewing-as #app { padding-top: 48px; }
+
+/* Облако сети во весь экран: небо под всем окном, шапка и подпись лежат поверх */
+.map-screen .top, .map-screen .chips { position: relative; z-index: 2; }
+.map-screen .cloud-box.big { position: fixed; inset: 0; z-index: 0; margin: 0; height: auto; min-height: 0; }
+.map-screen .cloud-box.big canvas { -webkit-mask-image: none; mask-image: none; }
+.map-foot { position: fixed; left: 50%; transform: translateX(-50%); z-index: 2; width: min(calc(100% - 24px), 520px);
+  bottom: calc(var(--nav-h) + 26px + env(safe-area-inset-bottom)); padding: 8px 12px; border-radius: 16px;
+  background: rgba(255, 255, 255, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); pointer-events: none; }
+.map-foot .cloud-legend { margin: 0; }
+@media (min-width: 900px) { .map-foot { bottom: 20px; } }

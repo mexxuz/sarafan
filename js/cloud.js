@@ -146,7 +146,7 @@ window.Cloud = function (canvas, opts) {
       // медленное плавание: каждый узел ходит по своей маленькой петле. В большой сети — нет:
       // сотни плавающих точек толкают друг друга без конца, и облако не успокаивается
       if (!calm && !big()) {
-        const t = now * 0.0004 * n.sp + n.ph;
+        const t = animT * 0.0004 * n.sp + n.ph;
         n.vx += Math.cos(t) * 0.035;
         n.vy += Math.sin(t * 1.17) * 0.035;
       }
@@ -248,7 +248,7 @@ window.Cloud = function (canvas, opts) {
       // и гаснет к краям. Движение заметно боковым зрением, но не отвлекает.
       if (calm || grow < 0.99) return;
       const speed = e.kind === 'vouch' ? 0.000075 : 0.00005;
-      const cycle = ((now * speed + (e.seed || 0)) % 2.4);   // долгая пауза между проблесками
+      const cycle = ((animT * speed + (e.seed || 0)) % 2.4);   // долгая пауза между проблесками
       if (cycle > 1) return;
       const bez = (t) => {
         const u = 1 - t, q = u * u, w = 2 * u * t, z = t * t;
@@ -391,7 +391,7 @@ window.Cloud = function (canvas, opts) {
   // Звезда: ядро и мягкое свечение, мерцает в своём ритме. Голубые — люди (кого рекомендуют — ярче),
   // фиолетовые — фирмы, синие — места
   function drawStar(n, dim) {
-    const tw = calm ? 1 : 0.62 + 0.38 * Math.sin(now * 0.0018 * n.sp + n.ph);
+    const tw = calm ? 1 : 0.62 + 0.38 * Math.sin(animT * 0.0018 * n.sp + n.ph);
     const tone = n.kind === 'node' ? (n.company ? '120,96,255' : '47,123,255') : n.bright ? '47,123,255' : '120,140,178';
     const glowR = n.r * (3.2 + n.glow * 2);
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
@@ -448,17 +448,35 @@ window.Cloud = function (canvas, opts) {
 
   // ——— жизнь ———
   let frames = 0;
-  // Большая сеть раскладывается и замирает: движется только то, что тянут, и соседи — пока не улягутся
+  // Большая сеть раскладывается, а потом плывёт: каждая точка тихо покачивается вокруг своего места —
+  // без толкотни, поэтому хаоса нет. Навели на точку или коснулись — всё замирает, и движение, и мерцание
   const big = () => nodes.length > 60;
   let settleUntil = 260;
+  let animT = 0, lastNow = 0, wasPhysics = true;
   function tick() {
     frames++;
     now = performance.now();
     if (frames % 30 === 0) size();          // страховка: размер мог поменяться незаметно
     // симуляция остывает, как в настоящих графах: сначала расходятся, потом замирают
     // и лишь едва дрейфуют — движение есть, ряби нет
+    const dt = lastNow ? Math.min(64, now - lastNow) : 16;
+    lastNow = now;
+    const paused = !!(hover || held);
+    if (!paused) animT += dt;
     const heat = calm ? 0 : big() ? 0.3 * Math.pow(0.975, frames) : Math.max(0.012, 0.3 * Math.pow(0.975, frames));
-    if (!big() || frames < settleUntil || held) step(heat);
+    const physics = !big() || frames < settleUntil || !!held;
+    if (physics && !wasPhysics) nodes.forEach((n) => { n.ax = undefined; });   // снова тянут — плавание с места
+    wasPhysics = physics;
+    if (physics && !(hover && !held)) step(heat);
+    else if (!physics && !calm) {
+      nodes.forEach((n) => {
+        if (n.self) return;
+        const k = 0.00045 * n.sp, amp = n.star ? 7 : 3;
+        if (n.ax === undefined) { n.ax = n.x; n.ay = n.y; n.t0 = animT; }
+        n.x = n.ax + amp * (Math.cos(animT * k + n.ph) - Math.cos(n.t0 * k + n.ph));
+        n.y = n.ay + amp * (Math.sin(animT * k * 1.17 + n.ph) - Math.sin(n.t0 * k * 1.17 + n.ph));
+      });
+    }
 
     nodes.forEach((n, i) => {
       if (n.delay > 0) { n.delay -= 1; return; }

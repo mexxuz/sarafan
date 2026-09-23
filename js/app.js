@@ -1172,13 +1172,13 @@
     if (F.show === undefined) F.show = 'all';
     const ring1 = myContacts();
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
-    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button>
+    return `<div class="map-screen"><div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button>
         <h1 class="h2 grow">Облако сети</h1>
         ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="chips" style="margin-bottom:10px">
         ${[['all', 'Всё'], ['people', 'Только люди'], ['places', 'Только места']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
-      <div class="cloud-legend" style="margin-top:10px">
+      <div class="map-foot"><div class="cloud-legend">
         <span><i class="lg-me"></i>вы</span>
         ${F.show === 'places' ? `<span><i class="lg-1"></i>кто советует</span>` : `<span><i class="lg-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
         <span><i class="lg-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
@@ -1186,7 +1186,7 @@
         ${F.show === 'people' ? '' : `<span><i class="lg-place"></i>${pl(nodesAll().filter((n) => n.kind !== 'company').length, 'место', 'места', 'мест')}</span>
         <span><i class="lg-co"></i>${pl(nodesAll().filter((n) => n.kind === 'company').length, 'фирма', 'фирмы', 'фирм')}</span>`}
         <span><i class="lg-trust"></i>надёжно</span></div>
-      <p class="tiny muted" style="text-align:center;margin-top:10px">Серая нить — знакомы, синяя — рекомендует. Точку можно тянуть, нажатие открывает карточку.</p>`;
+      <p class="tiny muted" style="text-align:center;margin:6px 0 0">Наведите или коснитесь точки — небо замрёт. Нажатие открывает карточку</p></div></div>`;
   }
 
   // ——— Места и фирмы ———
