@@ -121,8 +121,9 @@ window.Cloud = function (canvas, opts) {
       // тонкая нить пересечения почти не тянет: раскладку держат основные
       const f = (d - want) * 0.008 * (e.faint ? 0.3 : e.kind === 'vouch' ? 1.25 : 1);
       const ux = dx / d, uy = dy / d;
-      if (!a.self) { a.vx += ux * f; a.vy += uy * f; }
-      if (!b.self) { b.vx -= ux * f; b.vy -= uy * f; }
+      // нить со звездой тянет только звезду: ваше созвездие звёзды не растаскивают
+      if (!a.self && !(e.faint && !a.star)) { a.vx += ux * f; a.vy += uy * f; }
+      if (!b.self && !(e.faint && !b.star)) { b.vx -= ux * f; b.vy -= uy * f; }
     });
     nodes.forEach((n) => {
       if (n.self || n === held) return;
@@ -137,8 +138,9 @@ window.Cloud = function (canvas, opts) {
         n.vx += (cx - n.x) * 0.0012;
         n.vy += (cy - n.y) * 0.0012;
       } else {
-        const want = (70 + n.ring * 58) * k;
-        const pull = (want - d) * (big() ? 0.003 : 0.006);
+        // на звёздном небе ваши знакомые держатся плотной группой вокруг вас — ваше созвездие в центре
+        const want = big() ? (58 + n.ring * 42) * k : (70 + n.ring * 58) * k;
+        const pull = (want - d) * (big() ? 0.01 : 0.006);
         n.vx += (dx / d) * pull / wide;
         n.vy += (dy / d) * pull;
       }
@@ -228,8 +230,9 @@ window.Cloud = function (canvas, opts) {
       const grow = Math.min(a.born, b.born);
       if (grow <= 0.02) return;
       const hot = lit && (e.a === lit.id || e.b === lit.id);
-      ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both : COLOR[e.kind]);
-      ctx.lineWidth = hot ? 1.4 : e.faint ? 0.5 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
+      ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both
+        : big() && !e.faint && e.kind === 'know' ? 'rgba(70,110,190,.42)' : COLOR[e.kind]);   // линии вашего созвездия видны отчётливо
+      ctx.lineWidth = hot ? 1.4 : e.faint ? 0.5 : big() ? (e.kind === 'vouch' ? 1.6 : 1.3) : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
       ctx.globalAlpha = (lit && !hot ? 0.12 : e.faint && !hot ? 0.3 : 1) * grow * Math.min(depth(a), depth(b));
       // Маленькое облако — лёгкие дуги: пучок линий перестаёт выглядеть спицами колеса.
       // Звёздное небо — прямые, как в рисунках созвездий, и чуть не доходят до звезды
