@@ -974,8 +974,20 @@
     // Связи со звёздами — едва заметные нити; наведите на звезду — загорится её созвездие
     if (!onlyPlaces && people.length > 60) {
       const isPlace = (id) => String(id).startsWith('o');
+      // Коллеги связаны через фирму, а не каждый с каждым: фирма — узел созвездия, сотрудники — лучи от неё.
+      // Фирмы, где работаете вы или ваши знакомые, — значки внутри вашего созвездия, а не звёзды
+      const onCloud = new Set(nodes.map((n) => n.id));
+      const firmsOf = new Map();
+      const addFirm = (who, f) => { if (!firmsOf.has(who)) firmsOf.set(who, new Set()); firmsOf.get(who).add(f); };
+      nodes.filter((n) => isPlace(n.id)).forEach((n) => nodePeople(n.id.slice(1))
+        .filter((x) => !x.past && !x.waiting && x.accepted !== false && onCloud.has(x.user)).forEach((x) => addFirm(x.user, n.id)));
+      (S.waiting || []).forEach((w) => { if (w.node && onCloud.has('o' + w.node) && onCloud.has('w' + w.id)) addFirm('w' + w.id, 'o' + w.node); });
+      const colleagues = (a2, b2) => { const A = firmsOf.get(a2), B = firmsOf.get(b2); return !!A && !!B && [...A].some((f) => B.has(f)); };
+      const core = new Set();
+      firmsOf.forEach((set, who) => { if (who === S.me || String(who).startsWith('w') || ring(who) <= 1) set.forEach((f) => core.add(f)); });
       nodes.forEach((n) => {
         if (n.self || n.fc || n.anon || n.ghost) return;
+        if (core.has(n.id)) { n.ring = 1; return; }
         if (isPlace(n.id)) {
           const k = nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length;
           Object.assign(n, { star: true, r: 2.8 + Math.min(3, k * 0.7) });
@@ -985,7 +997,12 @@
         }
       });
       const star = new Set(nodes.filter((n) => n.star).map((n) => n.id));
-      return { nodes, edges: edges.map((e) => (star.has(e.a) || star.has(e.b) ? { ...e, faint: true, len: 56 } : e)) };
+      const sky = edges
+        // знакомство коллег и «вы — ваш сотрудник» уже видно через фирму: прямую нить убираем
+        .filter((e) => !((e.kind === 'know' || e.kind === 'wait') && colleagues(e.a, e.b)))
+        .map((e) => (star.has(e.a) || star.has(e.b) ? { ...e, faint: true, len: 56 }
+          : e.kind === 'work' ? { ...e, len: 46 } : e));
+      return { nodes, edges: sky };
     }
     if (onlyPlaces) {
       // срез «только места»: вы, места и фирмы. Людей нет
