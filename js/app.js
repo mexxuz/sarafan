@@ -984,6 +984,7 @@
         && (!known.has(e.a) || !known.has(e.b) || (R(e.a) <= 1 && R(e.b) <= 1)));
       // у каждого знакомого — пятёрка самых рекомендуемых из его круга, остальные сворачиваются в «+N»
       const kids = new Map();
+      const parentOf = {};
       const drop = new Set();
       people.filter((id) => R(id) === 2).forEach((id) => {
         const via = (nb.get(id) || []).filter((x) => R(x) === 1 && known.has(x));
@@ -991,6 +992,7 @@
         const p = via.find((x) => vouched.has(x + '>' + id)) || via[0];
         if (!kids.has(p)) kids.set(p, []);
         kids.get(p).push(id);
+        parentOf[id] = p;
       });
       const extra = [];
       kids.forEach((list, p) => {
@@ -1004,14 +1006,21 @@
           keep.push({ a: p, b: 'more' + p, kind: 'wait', len: 26 });
         }
       });
-      // места: одной нитью к ближайшему советчику, на полотне — два десятка самых советуемых
+      // места: одной нитью к ближайшему, кто на облаке и советует его или там работает; такого нет —
+      // к вашему знакомому, через которого вы выходите на советчика. На полотне — сорок самых советуемых
+      const shown = (id) => id === S.me || (known.has(id) && !drop.has(id));
       const best = {};
-      edges.filter((e) => isPlace(e.b) && known.has(e.a)).forEach((e) => { if (!best[e.b] || R(e.a) < R(best[e.b].a)) best[e.b] = e; });
+      edges.filter((e) => isPlace(e.b) && known.has(e.a)).forEach((e) => {
+        const at = shown(e.a) ? e.a : parentOf[e.a];
+        if (!at || !shown(at)) return;
+        const cand = { a: at, b: e.b, kind: at === e.a ? e.kind : 'wait', len: at === e.a ? 34 : 44 };
+        if (!best[e.b] || R(at) < R(best[e.b].a) || (R(at) === R(best[e.b].a) && at === e.a)) best[e.b] = cand;
+      });
       nodes.filter((n) => isPlace(n.id)).map((n) => ({ n, e: best[n.id], k: nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length }))
-        .sort((a, b) => b.k - a.k)
+        .sort((a, b) => (b.e ? 1 : 0) - (a.e ? 1 : 0) || b.k - a.k)
         .forEach((x, i) => {
-          if (!x.e || R(x.e.a) > 1 || drop.has(x.e.a) || i >= 24) { drop.add(x.n.id); return; }
-          keep.push({ ...x.e, len: 34 });
+          if (!x.e || i >= 40) { drop.add(x.n.id); return; }
+          keep.push(x.e);
         });
       return { nodes: [...nodes.filter((n) => !drop.has(n.id)), ...extra],
         edges: keep.filter((e) => !drop.has(e.a) && !drop.has(e.b)) };
