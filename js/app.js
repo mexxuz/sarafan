@@ -1121,7 +1121,7 @@
           <div class="btn-row" style="margin-top:8px">
             <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}Рекомендовать</button>
             <button class="btn sm ghost" data-act="sendInvite">${ic('send')}Поторопить</button></div>
-          <button class="btn ghost block" style="margin-top:4px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}">Не ждать</button></div>`,
+          <button class="btn ghost block" style="margin-top:4px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}">Убрать из круга</button></div>`,
     });
   }
 
@@ -2771,7 +2771,7 @@
       }, 320);
     },
     dropWaiting: (d) => mutate(() => { if (SH) closeSheet(); S.waiting = (S.waiting || []).filter((x) => x.id !== d.id); },
-      '/circle/waiting/delete', { id: d.id }, 'Больше не ждём: ' + (d.name || '')),
+      '/circle/waiting/delete', { id: d.id }, 'Убрали из круга: ' + (d.name || '')),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropVideo: async () => {
       if (!LIVE) return;
