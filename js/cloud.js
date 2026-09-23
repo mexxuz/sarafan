@@ -177,7 +177,9 @@ window.Cloud = function (canvas, opts) {
     knowHot: 'rgba(96,116,150,.5)',
     vouchHot: 'rgba(47,123,255,.8)',
     both: 'rgba(47,123,255,.46)',
-    work: 'rgba(120,96,255,.5)',                  // человек — его фирма: фиолетовый пунктир
+    work: 'rgba(120,96,255,.5)',
+    wait: 'rgba(122,138,163,.35)',                // ждёт в круге: ещё не пришёл в Сарафан
+    waitHot: 'rgba(122,138,163,.7)',                  // человек — его фирма: фиолетовый пунктир
     workHot: 'rgba(120,96,255,.9)',                // взаимно: двое рекомендуют друг друга
     me: '#2f7bff',
     ring1: 'rgba(47,123,255,.95)',
@@ -229,10 +231,10 @@ window.Cloud = function (canvas, opts) {
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.quadraticCurveTo(kx, ky, b.x, b.y);
-      ctx.setLineDash(e.kind === 'work' ? [3, 3] : []);
+      ctx.setLineDash(e.kind === 'work' ? [3, 3] : e.kind === 'wait' ? [2, 4] : []);
       ctx.stroke();
       ctx.setLineDash([]);
-      if (e.kind === 'work') return;   // по нити работы огоньки не бегут — это не рекомендация
+      if (e.kind === 'work' || e.kind === 'wait') return;   // по нити работы огоньки не бегут — это не рекомендация
 
       // По нити плывёт мягкий проблеск — участок линии подсвечивается градиентом
       // и гаснет к краям. Движение заметно боковым зрением, но не отвлекает.
@@ -310,6 +312,7 @@ window.Cloud = function (canvas, opts) {
 
   function drawPerson(n) {
     const im = (n.video && imgs[n.video]) || (n.photo ? imgs[n.photo] : null);
+    if (n.ghost) ctx.globalAlpha *= 0.5;   // ждёт в круге — бледнее своих
     const far = !n.self && n.ring >= 3;
 
     // у незнакомых кольцо пунктирное: видно, что их пока никто не рекомендует

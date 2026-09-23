@@ -589,3 +589,6 @@
 .cat-sugg .sugg:active { transform: scale(.99); }
 .cat-sugg .sugg.new { color: var(--blue); font-weight: 600; align-items: center; background: var(--blue-soft, #eaf2ff); }
 .cat-sugg .sugg.new svg { width: 16px; height: 16px; }
+
+/* Ждёт в круге: портрет бледный и в пунктирной рамке — место есть, человек ещё не пришёл */
+.av.wait { opacity: .7; box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--ink-4); filter: grayscale(.35); }

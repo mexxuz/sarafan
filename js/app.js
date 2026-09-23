@@ -864,7 +864,14 @@
         go: id === S.me ? '#/me' : '#/p/' + id,
       };
     });
+    // кто ждёт в круге — бледный кружок на пунктире: место уже есть, человек ещё не пришёл
+    if (!onlyPlaces) (S.waiting || []).slice(0, 12).forEach((w) => nodes.push({
+      id: 'w' + w.id, ring: 1, self: false, kind: 'person', ghost: true, r: 11,
+      photo: w.photo ? srvUrl(w.photo) : null,
+      initials: (w.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase(),
+      label: (w.name || '').split(' ')[0], go: '#/net' }));
     const edges = [];
+    (S.waiting || []).slice(0, 12).forEach((w) => { if (!onlyPlaces) edges.push({ a: S.me, b: 'w' + w.id, kind: 'wait', len: 70 }); });
     const known = new Set(people);
     S.conns.filter((c) => c.status === 'ok' && known.has(c.a) && known.has(c.b))
       .forEach((c) => edges.push({ a: c.a, b: c.b, kind: 'know' }));
@@ -910,6 +917,7 @@
   // чтобы человек не терял из виду всю сеть
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
+    if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
     sheetPeek(n.id);
   }
@@ -1079,6 +1087,19 @@
     return `<label class="node-photo blank">${ic('cam')}
       <b>Добавить снимок</b>
       <span>Знакомые узнают место с первого взгляда — вывеску, вход, зал</span>${input}</label>`;
+  }
+
+  // ——— Ждут в круге: добавлены из контактов Telegram, но ещё не в Сарафане ———
+  // Придут по любой ссылке — Сарафан узнает их и пришлёт заявку от вас.
+  function waitingList() {
+    const list = S.waiting || [];
+    if (!list.length) return '';
+    return `<div class="sec-title"><h2 class="h2">Ждут в вашем круге</h2><span class="tag">${list.length}</span></div>
+      <p class="sec-note">Ещё не в Сарафане. Придут по любой ссылке — сразу получат вашу заявку</p>
+      <div class="card">${list.map((w) => `<div class="person"><span class="av s wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>
+        <div class="grow"><div class="name ellip">${esc(w.name || 'Без имени')}</div><div class="sub ellip">${w.username ? '@' + esc(w.username) + ' · ' : ''}ждёт с ${when(w.at)}</div></div>
+        <button class="btn xs" data-act="sendInvite">Поторопить</button>
+        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}" aria-label="Не ждать">${ic('x')}</button></div>`).join('')}</div>`;
   }
 
   // ——— Люди фирмы: кто владелец, кто работает, кто работал раньше ———
@@ -1700,6 +1721,7 @@
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       <button class="link-row wide" data-act="pickCircle" style="margin:var(--s-3) 0 var(--s-3)">${ic('user')}
         <span class="grow"><b>Добавить знакомых из Telegram</b><i>Отметьте людей в контактах — без рекомендаций</i></span>${ic('arrow')}</button>
+      ${waitingList()}
       ${invite}
       ${empty ? howto : ''}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
@@ -2708,6 +2730,8 @@
     // Записали человека, а он не нужен — убираем; его ссылка-приглашение перестаёт работать
     dropPending: (d) => mutate(() => { S.pendingInvites = (S.pendingInvites || []).filter((x) => x.code !== d.code); },
       '/recommendations/outside/delete', { code: d.code }, 'Убрали: ' + d.name),
+    dropWaiting: (d) => mutate(() => { S.waiting = (S.waiting || []).filter((x) => x.id !== d.id); },
+      '/circle/waiting/delete', { id: d.id }, 'Больше не ждём: ' + (d.name || '')),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropVideo: async () => {
       if (!LIVE) return;
