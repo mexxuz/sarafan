@@ -1004,6 +1004,41 @@
           : e.kind === 'work' ? { ...e, len: 46 } : e));
       return { nodes, edges: sky };
     }
+    if (onlyPlaces && people.length > 60) {
+      // «Только места» в большой сети — тоже небо. В центре — созвездие ваших мест: что советуете вы
+      // и ваши знакомые — значками. Места связаны между собой, если их советует или в них работает
+      // один и тот же человек: так видно «места одной компании». Линия от вас — только к вашим местам
+      const isPlace = (id) => String(id).startsWith('o');
+      const places = nodes.filter((n) => isPlace(n.id));
+      const byPerson = new Map();
+      const near = new Set();
+      edges.forEach((e) => {
+        if (!isPlace(e.b) || isPlace(e.a)) return;
+        if (!byPerson.has(e.a)) byPerson.set(e.a, new Set());
+        byPerson.get(e.a).add(e.b);
+        if (e.a === S.me || ring(e.a) <= 1) near.add(e.b);
+      });
+      places.forEach((n) => {
+        if (near.has(n.id)) { n.ring = 1.5; return; }
+        const k = nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length;
+        Object.assign(n, { star: true, r: 2.8 + Math.min(3, k * 0.7) });
+      });
+      const out = [];
+      const seen = new Set();
+      byPerson.forEach((set, who) => {
+        const list = [...set].sort();
+        if (who === S.me) list.forEach((pid) => out.push({ a: S.me, b: pid, kind: 'vouch', len: 60 }));
+        // цепочкой, а не каждый с каждым: у человека с десятью местами — созвездие, а не клубок
+        for (let i = 1; i < list.length; i++) {
+          const k = [list[i - 1], list[i]].join('~');
+          if (seen.has(k)) continue;
+          seen.add(k);
+          const faint = !near.has(list[i - 1]) || !near.has(list[i]);
+          out.push({ a: list[i - 1], b: list[i], kind: 'know', faint, len: faint ? 60 : 70 });
+        }
+      });
+      return { nodes: nodes.filter((n) => n.id === S.me || isPlace(n.id)), edges: out };
+    }
     if (onlyPlaces) {
       // срез «только места»: вы, места и фирмы. Людей нет
       const kept = nodes.filter((n) => n.id === S.me || String(n.id).startsWith('o'));
