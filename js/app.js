@@ -1675,6 +1675,7 @@
           <div class="small muted" style="margin-top:2px">Осталось мест: ${left} из ${inv.max}</div></div></div>
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
         <div class="btn-row"><button class="btn sm" data-act="sendInvite">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
+        <button class="link-row wide" data-act="pickCircle" style="margin-top:10px">${ic('user')}<span class="grow"><b>Позвать из контактов Telegram</b><i>Отметьте знакомых — без рекомендаций. Кто уже здесь, получит заявку</i></span>${ic('arrow')}</button>
         <div class="dots plain">${Array.from({ length: inv.max }, (_, i) => `<i class="${i < inv.used ? 'on' : ''}"></i>`).join('')}</div>
         <p class="small muted" style="margin:12px 0 0">Кто войдёт по ссылке — сразу ваш контакт. Но приглашение не значит, что вы человека рекомендуете: это отдельное действие.</p>
       </div>`;
@@ -2664,6 +2665,12 @@
         SH.F.cardPhone = (String(raw).startsWith('+') ? '' : '+') + raw;
         drawSheet(); toast('Номер вписан — нажмите «Сохранить»');
       });
+    },
+    // Позвать знакомых из контактов — просто в круг, без рекомендаций
+    pickCircle: () => {
+      const link = `https://t.me/${S.bot || 'sarafanibot'}?start=pickc`;
+      if (!LIVE) { toast('В рабочей версии откроется бот с кнопкой «Выбрать знакомых»'); return; }
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank');
     },
     // Выбрать людей из контактов: Telegram сам показывает список, бот сохраняет отмеченных в черновики
     pickContacts: () => {
