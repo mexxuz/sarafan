@@ -28,6 +28,7 @@ window.Graph = function (S) {
     const count = {};
     (S.users[id].cats || []).forEach((c) => { count[c] = count[c] || 0; });
     recsTo(id).forEach((r) => { count[r.cat] = (count[r.cat] || 0) + 1; });
+    (S.users[id].anonRecs || []).forEach((r) => { count[r.cat] = (count[r.cat] || 0) + 1; });   // советы без имени тоже говорят, кто он
     return Object.keys(count).sort((a, b) => count[b] - count[a]);
   };
 
@@ -90,25 +91,40 @@ window.Graph = function (S) {
   };
 
   // Поиск: сначала 1-й круг, потом 2-й, 3-й, затем остальные. Внутри круга — по независимым источникам.
+  // Что о человеке сказано в сфере: узкая специальность, метки и слова рекомендаций (и тех, что без имени)
+  const hayOf = (u, cat) => norm([((u.focus || {})[cat] || ''),
+    ...recsTo(u.id, cat).flatMap((r) => [...(r.tags || []), r.text]),
+    ...(u.anonRecs || []).filter((r) => !cat || r.cat === cat).flatMap((r) => [...(r.tags || []), r.text])].join(' '));
+  const stem = (w) => (w.length > 5 ? w.slice(0, w.length - 2) : w);
+
+  // Поиск: сначала 1-й круг, потом 2-й, 3-й, затем остальные. Внутри круга — по независимым источникам.
+  // Слова сверх сферы («ортодонт», «не назначает лишнего») поднимают тех, у кого они есть
   const search = (q, catFilter) => {
     const cats = catFilter ? [catFilter] : matchCats(q);
     const nq = norm(q).trim();
+    const words = nq.split(/\s+/).filter((w) => w.length >= 4);
     const out = [];
     Object.values(S.users).forEach((u) => {
       if (u.id === S.me) return;
       const mine = catsOf(u.id);
       let hit = cats.filter((c) => mine.includes(c));
       if (!hit.length && nq.length >= 3 && !catFilter && norm(u.name).includes(nq)) hit = [mine[0] || null];
+      // узкую специальность и метки ищем, даже если сфера не угадалась: «ортодонт», «гинеколог»
+      if (!hit.length && words.length && !catFilter) hit = mine.filter((c) => words.some((w) => hayOf(u, c).includes(stem(w)))).slice(0, 1);
       hit.forEach((cat) => {
         const rep = cat ? reputation(u.id, cat) : { count: 0, unique: 0, independent: 0, near: [] };
-        if (!rep.count && !(u.cats || []).includes(cat)) return;
+        const anon = (u.anonRecs || []).filter((r) => r.cat === cat);
+        if (!rep.count && !anon.length && !(u.cats || []).includes(cat)) return;
         const t = trust(u.id, cat);
-        out.push({ user: u, cat, rep, ...t });
+        const hay = cat ? hayOf(u, cat) : '';
+        const fit = words.filter((w) => hay.includes(stem(w))).length;
+        const anonCircle = anon.length ? Math.min(...anon.map((r) => r.circle || 4)) + 1 : Infinity;
+        out.push({ user: u, cat, rep, ...t, fit, anon: anon.length, sortCircle: Math.min(t.circle, anonCircle) });
       });
     });
     const seen = new Set();
     return out
-      .sort((a, b) => a.circle - b.circle || b.rep.independent - a.rep.independent || b.rep.count - a.rep.count)
+      .sort((a, b) => b.fit - a.fit || a.sortCircle - b.sortCircle || b.rep.independent - a.rep.independent || b.rep.count - a.rep.count)
       .filter((r) => (seen.has(r.user.id) ? false : seen.add(r.user.id)));
   };
 

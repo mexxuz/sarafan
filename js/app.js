@@ -111,7 +111,28 @@
   const first = (id) => (id === S.me ? 'Вы' : U(id).name.split(' ')[0]);
   const full = (id) => (id === S.me ? 'Вы' : U(id).name);
   const cat = (id) => G.catById[id] || { name: 'Другое', who: '' };
-  const who = (id) => { const c = G.catsOf(id); return c.length ? c.map((x) => cat(x).who).slice(0, 3).join(' · ') : 'Участник сети'; };
+  const focusOf = (id, c) => ((U(id) || {}).focus || {})[c] || '';
+  const who = (id) => { const c = G.catsOf(id); return c.length ? c.map((x) => cat(x).who + (focusOf(id, x) ? ` (${focusOf(id, x)})` : '')).slice(0, 3).join(' · ') : 'Участник сети'; };
+  // Узкая специальность: подсказки для частых сфер, остальное пишут своими словами
+  const FOCUS_HINT = {
+    dentist: ['терапевт', 'ортодонт', 'хирург', 'имплантолог', 'детский стоматолог', 'ортопед'],
+    pediatr: ['неонатолог', 'детский ЛОР', 'детский невролог', 'детский аллерголог', 'детский эндокринолог'],
+    therapist: ['эндокринолог', 'гастроэнтеролог', 'невролог', 'ЛОР', 'дерматолог', 'гинеколог', 'уролог'],
+    cardio: ['аритмолог', 'детский кардиолог', 'УЗИ сердца'],
+    psych: ['семейный', 'детский', 'тревога и паника', 'зависимости', 'пары'],
+    lawyer: ['семейное право', 'трудовые споры', 'недвижимость', 'бизнес и договоры', 'уголовное'],
+    tutor: ['математика', 'физика', 'русский язык', 'подготовка к экзаменам'],
+    english: ['IELTS', 'для детей', 'разговорный', 'деловой'],
+    repair: ['плитка', 'под ключ', 'покраска', 'гипсокартон'],
+    auto: ['ходовая', 'двигатель', 'автоэлектрика', 'кузов'],
+    beauty: ['маникюр', 'брови', 'стрижки', 'ресницы'],
+    photo: ['свадьбы', 'семейные', 'предметная', 'репортаж'],
+  };
+  // Быстрые метки в рекомендации — то, что спрашивают о таких людях. По ним же ищут
+  const MED = ['dentist', 'pediatr', 'therapist', 'cardio', 'psych'];
+  const TAGS_MED = ['не назначает лишнего', 'объясняет понятно', 'хорош с детьми', 'можно написать после приёма', 'приезжает на дом', 'без очередей'];
+  const TAGS_ALL = ['делает в срок', 'честные цены', 'отвечает быстро', 'аккуратно, убирает за собой', 'приезжает в тот же день', 'объясняет понятно'];
+  const tagsFor = (c) => (MED.includes(c) ? TAGS_MED : TAGS_ALL);
   const uid = () => Math.random().toString(36).slice(2, 8);
   const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
   const when = (t) => {
@@ -648,8 +669,8 @@
     const tag = author === S.me ? '<span class="tag brand">Вы</span>' : d === 1 ? circleTag(1) : d === 2 ? circleTag(2) : '';
     const target = showTarget ? `<div class="small muted" style="margin-top:8px">→ <a href="#/p/${r.to}"><b style="color:var(--ink)">${esc(full(r.to))}</b></a></div>` : '';
     return `<div class="rec"><div class="row"><a href="#/p/${author}">${av(author, 's')}</a><div class="grow"><div class="row" style="gap:8px"><a href="#/p/${author}" class="h3 ellip" style="text-decoration:none">${esc(full(author))}</a>${tag}</div><div class="tiny muted">${when(r.at)}${r.edited ? ' · изменена' : ''}</div></div></div>
-      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}</div>
-      <p class="txt">${esc(r.text)}</p>${target}</div>`;
+      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}${r.anon ? '<span class="tag">без вашего имени</span>' : ''}</div>
+      <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}${target}</div>`;
   };
 
   // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто рекомендует.
@@ -1507,6 +1528,28 @@
   const nodePeople = (nid) => (S.nodePeople || []).filter((x) => x.node === nid);
   const jobsOf = (uid) => (S.nodePeople || []).filter((x) => x.user === uid && nodeById(x.node));
   const cap1 = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
+  const WEEK = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
+  const jobDays = (x) => (x.days ? ' · ' + x.days : '');
+  function sheetWorkDays(linkId) {
+    const x = (S.nodePeople || []).find((y) => y.id === linkId);
+    if (!x) return;
+    const n = nodeById(x.node);
+    const parts = (x.days || '').split('·');
+    const f = { days: WEEK.filter((d) => (parts[0] || '').includes(d)), hours: (parts[1] || '').trim() };
+    openSheet({
+      F: f,
+      render: () => `${sheetHead(null, 'Дни приёма', esc(n ? n.name : ''))}
+        <div class="field" style="margin-top:0"><span>Когда вы здесь</span><div class="chips">${WEEK.map((d) => `<button class="chip ${f.days.includes(d) ? 'on' : ''}" data-act="toggle" data-k="days" data-v="${d}">${d}</button>`).join('')}</div></div>
+        <label class="field"><span>Часы, если хотите</span><input class="input" data-bind="hours" maxlength="30" placeholder="9:00–14:00" value="${esc(f.hours)}"></label>
+        <p class="why">${ic('spark')}Кто вас советует, увидит: «Дент-Люкс · пн, ср» — и придёт в нужный день</p>
+        <div class="s-foot"><button class="btn primary block" data-act="saveWorkDays" data-id="${linkId}">Сохранить</button></div>`,
+      save: () => {
+        const days = [WEEK.filter((d) => f.days.includes(d)).join(', '), f.hours.trim()].filter(Boolean).join(' · ');
+        closeAllSheets();
+        mutate(() => { x.days = days; }, '/nodes/people/days', { id: linkId, days }, days ? 'Дни приёма сохранены' : 'Дни приёма убраны');
+      },
+    });
+  }
   const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : x.role === 'promoter' ? cap1(x.title) || 'Делает мероприятия' : cap1(x.title) || 'Работает');
   // Неподтверждённая отметка: человек написал о себе сам, никто пока не подтвердил
   const jobState = (x) => (x.accepted === false ? (x.user === S.me ? 'отметил ' + (x.by && U(x.by) ? first(x.by) : 'знакомый') : 'ждёт его согласия')
@@ -1518,8 +1561,25 @@
     const cur = jobsOf(uid).filter((x) => !x.past && (!x.waiting || uid === S.me));
     if (!cur.length) return '';
     return `<div class="job-line">${cur.slice(0, 2).map((x) => { const n = nodeById(x.node);
-      return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
+      return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${x.days ? ` <i>${esc(x.days)}</i>` : ''}${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
       ${cur.length > 2 ? `<span class="tiny muted">и ещё ${cur.length - 2}</span>` : ''}</div>`;
+  }
+
+  // Что о человеке говорят чаще всего, сколько коллег его советуют и что советуют без имени
+  function voicesView(id) {
+    const anon = (U(id) || {}).anonRecs || [];
+    const recs = G.recsTo(id);
+    const count = {};
+    [...recs, ...anon].forEach((r) => (r.tags || []).forEach((t) => { count[t] = (count[t] || 0) + 1; }));
+    const tags = Object.keys(count).sort((a, b) => count[b] - count[a]).slice(0, 8);
+    const peers = [...recs, ...anon].filter((r) => r.rel === 'colleague').length;
+    const circleWord = (c) => (c === 1 ? 'из вашего круга' : c === 2 ? 'через ваших знакомых' : c <= 3 ? 'из третьего круга' : 'из сети');
+    if (!tags.length && !peers && !anon.length) return '';
+    return `${tags.length || peers ? `<div class="chips" style="margin-top:14px">${peers ? `<span class="tag brand">${ic('seal')}${pl(peers, 'коллега советует', 'коллеги советуют', 'коллег советуют')}</span>` : ''}${tags.map((t) => `<span class="tag soft">${esc(t)} · ${count[t]}</span>`).join('')}</div>` : ''}
+      ${anon.length ? `<div class="sec-title"><h2 class="h2">Советуют без имени</h2><span class="tag">${anon.length}</span></div>
+        <p class="sec-note">${id === S.me ? 'Кто именно — не видно никому, и вам тоже' : 'Человек попросил не показывать своё имя — видно только, насколько он близко к вам'}</p>
+        <div class="card">${anon.map((r) => `<div class="rec"><div class="chips" style="gap:6px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${circleWord(r.circle)}</span>${r.rel === 'colleague' ? '<span class="tag">коллега</span>' : ''}</div>
+          <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}</div>`).join('')}</div>` : ''}`;
   }
 
   // Блок «Где работает» в профиле: текущие места, ниже — «Раньше»
@@ -1541,7 +1601,8 @@
     }
     const row = (x) => { const n = nodeById(x.node);
       return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
-        <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
+        <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x) + jobDays(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
+        ${mine && !x.past && x.accepted !== false ? `<button class="btn ghost xs" data-act="workDays" data-id="${x.id}">${x.days ? 'Дни' : 'Дни приёма'}</button>` : ''}
         ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
     : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
         ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div>`; };
@@ -1563,7 +1624,7 @@
     const iOwn = cur.some((x) => x.user === S.me && x.role === 'owner' && x.confirmed);
     const row = (x) => `<div class="person"><a class="grow row" href="#/p/${x.user}" style="min-width:0">${av(x.user, 's')}
         <div class="grow"><div class="name ellip">${esc(full(x.user))}</div>
-        <div class="sub ellip">${x.role === 'owner' ? 'Владелец' + (x.title ? ' · ' + esc(x.title) : '') : esc(jobRole(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
+        <div class="sub ellip">${x.role === 'owner' ? 'Владелец' + (x.title ? ' · ' + esc(x.title) : '') : esc(jobRole(x))}${esc(jobDays(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
         ${x.canConfirm ? `<button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>` : ''}
         ${iOwn && x.user !== S.me ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Убрать из фирмы">${ic('x')}</button>` : ''}</div>`;
     return `<div class="sec-title"><h2 class="h2">Люди</h2>${cur.length + waitHere.length ? `<span class="tag">${cur.length + others + waitHere.length}</span>` : ''}</div>
@@ -2358,6 +2419,7 @@
       ${LIVE ? `<p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="colFor" data-u="${id}">${ic('list')}В подборку</button></p>` : ''}
       ${factsView(id)}
       ${showcaseView(id)}
+      ${voicesView(id)}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
       <div class="card">${repRows(id)}</div>
       ${allRecs.length ? `<div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
@@ -2629,6 +2691,7 @@
         <button class="btn block" data-act="openShowcase">Открыть витрину</button></div>`}
       <div class="sec-title"><h2 class="h2">Вас рекомендуют</h2></div>
       <div class="card">${repRows(S.me)}</div>
+      ${voicesView(S.me)}
       <div class="sec-title"><h2 class="h2">Ваши советы помогают</h2></div>
       <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
         ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
@@ -3068,13 +3131,13 @@
   // Рекомендовать знакомого
   function sheetRecommend(id, catId) {
     const prefer = G.catsOf(id);
-    const f = { cat: catId || prefer[0] || '', rel: '', text: '', interest: '', priv: false, allCats: !prefer.length };
-    const existing = () => G.recsFrom(S.me).find((r) => r.to === id && r.cat === f.cat);
-    const fillFromExisting = () => { const e = existing(); if (e) { f.text = e.text; f.rel = e.rel; f.interest = e.interest || ''; f.priv = !!e.private; } };
+    const f = { cat: catId || prefer[0] || '', rel: '', text: '', interest: '', priv: false, allCats: !prefer.length, tags: [], anon: false };
+    const existing = () => G.recsFrom(S.me).find((r) => r.to === id && r.cat === f.cat) || S.recs.find((r) => r.from === S.me && r.to === id && r.cat === f.cat);
+    const fillFromExisting = () => { const e = existing(); if (e) { f.text = e.text; f.rel = e.rel; f.interest = e.interest || ''; f.priv = !!e.private; f.tags = [...(e.tags || [])]; f.anon = !!e.anon; } };
     fillFromExisting();
     openSheet({
       F: f,
-      onSet: (k) => { if (k === 'cat') { f.text = ''; f.rel = ''; fillFromExisting(); } },
+      onSet: (k) => { if (k === 'cat') { f.text = ''; f.rel = ''; f.tags = []; fillFromExisting(); } },
       valid: () => f.cat && f.rel && f.text.trim().length >= MIN_TEXT && (existing() || recsToday() < REC_LIMIT),
       render: () => {
         const e = existing();
@@ -3083,18 +3146,23 @@
           ${catChips(f, prefer)}${relChips(f)}
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой, как сказали бы в чате: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           ${quickChips()}
+          ${f.cat ? `<div class="field"><span>Что ещё важно знать — можно несколько</span><div class="chips">${tagsFor(f.cat).map((t) => `<button class="chip ${f.tags.includes(t) ? 'on' : ''}" data-act="toggle" data-k="tags" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+            <p class="hint">По этим меткам знакомые и ищут: «педиатр, не назначает лишнего»</p></div>` : ''}
           <div class="field"><span>Есть ли у вас свой интерес</span><div class="chips">${[
           ['', 'Нет, просто советую'], ['family', 'Это мой родственник'], ['staff', 'Работает у меня'], ['money', 'Я на этом зарабатываю'],
         ].map(([k, l]) => `<button class="chip ${f.interest === k ? 'on' : ''}" data-act="set" data-k="interest" data-v="${k}">${l}</button>`).join('')}</div>
             <p class="hint">Скрытый интерес ломает доверие ко всей сети, названный вслух — нет</p></div>
           ${e ? `<div class="note">Вы уже рекомендовали в этой сфере ${when(e.at)}. Изменения сохранятся с пометкой «изменена» — старую версию мы храним.</div>` : ''}
           ${limit ? `<div class="warn">${ic('alert')}<div>Сегодня вы уже дали ${REC_LIMIT} рекомендаций. Лимит защищает сеть от накруток — продолжить можно завтра.</div></div>` : ''}
+          ${f.priv ? '' : `<button class="pick ${f.anon ? 'on' : ''}" data-act="set" data-k="anon" data-v="${f.anon ? '' : '1'}">
+            <span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span>
+            <span class="small muted">Для деликатного — психолог, гинеколог, уролог. Знакомые увидят совет и что он из их круга, но не от кого. ${esc(first(id))} тоже не узнает</span></span><span class="radio"></span></button>`}
           <button class="pick ${f.priv ? 'on' : ''}" data-act="set" data-k="priv" data-v="${f.priv ? '' : '1'}">
             <span class="grow"><span class="h3" style="display:block">Только для себя</span>
             <span class="small muted">Запись останется в вашем кругу: её не увидит ни этот человек, ни знакомые, и в его репутацию она не пойдёт</span></span><span class="radio"></span></button>
           <div class="note">${f.priv
             ? 'Пока запись только ваша. Её можно открыть кругу в любой момент — тогда она станет рекомендацией с вашим именем.'
-            : 'Рекомендация подписана вашим именем, и её видят знакомые. Звёзд здесь нет — только ваши слова.'}</div>
+            : f.anon ? 'Совет увидят знакомые — без вашего имени. Вы всегда можете снять эту отметку.' : 'Рекомендация подписана вашим именем, и её видят знакомые. Звёзд здесь нет — только ваши слова.'}</div>
           <p class="why">${ic('spark')}${f.priv ? 'Личная запись работает на вас: через год вы вспомните, за что советовали этого человека' : `Такие записи и делают сеть полезной: за ${esc(first(id))} придут к вам, а не будут искать вслепую`}</p>
           <div class="s-foot"><button class="btn primary block" data-act="submitRec" data-id="${id}" data-submit>${ic('seal')}${e ? 'Сохранить изменения' : 'Отправить рекомендацию'}</button></div>`;
       },
@@ -3102,9 +3170,9 @@
         const e = existing();
         closeSheet();
         mutate(() => {
-          if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.interest = f.interest; e.private = f.priv; e.edited = true; }
-          else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, at: Date.now(), confirmed: false });
-        }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv },
+          if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.interest = f.interest; e.private = f.priv; e.tags = f.tags; e.anon = f.anon; e.edited = true; }
+          else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, tags: f.tags, anon: f.anon, at: Date.now(), confirmed: false });
+        }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, tags: f.tags, anon: !!f.anon && !f.priv },
           e ? 'Запись обновлена' : f.priv ? 'Записали только для вас' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
       },
     });
@@ -3356,6 +3424,7 @@
       avail: S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open'),
       area: how.area || '', visit: how.visit || '', hours: how.hours || '',
       langs: how.langs || '', pay: how.pay || '', reply: how.reply || '', busyDays: '', cardPhone: S.cardPhone || '' };
+    Object.entries(me.focus || {}).forEach(([c, v]) => { f['focus_' + c] = v; });
     const hidden = S.blocked || [];
     openSheet({
       F: f,
@@ -3369,6 +3438,9 @@
           <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${f.role === 'client' ? '' : catPick(f, 'cats', 'who', 'Чем занимаетесь')}
+        ${f.role === 'client' ? '' : f.cats.map((c) => `<div class="field"><span>${esc(cat(c).who)} — узкая специальность, если есть</span>
+          <input class="input" data-bind="focus_${c}" maxlength="60" placeholder="${esc((FOCUS_HINT[c] || ['например, детский'])[0])}" value="${esc(f['focus_' + c] || '')}">
+          ${FOCUS_HINT[c] ? `<div class="chips" style="margin-top:6px">${FOCUS_HINT[c].map((h) => `<button class="chip" data-act="focusPick" data-c="${c}" data-v="${esc(h)}">${esc(h)}</button>`).join('')}</div>` : ''}</div>`).join('')}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
         ${f.role === 'client' ? '' : `<div class="field"><span>Как с вами работать</span>
           <input class="input" data-bind="area" maxlength="80" placeholder="Район: Мирабад, Юнусабад…" value="${esc(f.area || '')}">
@@ -3397,9 +3469,10 @@
           cats: f.role === 'client' ? [] : f.cats,
           area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
           langs: f.langs, pay: f.pay, reply: f.reply, cardPhone: (f.cardPhone || '').trim(),
-          busyUntil: f.avail === 'busy' && f.busyDays ? Date.now() + Number(f.busyDays) * 864e5 : null };
+          busyUntil: f.avail === 'busy' && f.busyDays ? Date.now() + Number(f.busyDays) * 864e5 : null,
+          focus: Object.fromEntries((f.role === 'client' ? [] : f.cats).map((c) => [c, (f['focus_' + c] || '').trim()])) };
         closeSheet();
-        mutate(() => { S.availability = f.avail; S.cardPhone = body.cardPhone; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden',
+        mutate(() => { S.availability = f.avail; S.cardPhone = body.cardPhone; Object.assign(me, { name: body.name, about: body.about, cats: body.cats, role: body.role, busy: f.avail === 'busy', hidden: f.avail === 'hidden', focus: body.focus,
           how: { area: body.area, visit: body.visit, hours: body.hours, langs: body.langs, pay: body.pay, reply: body.reply } }); },
           '/profile', body, 'Сохранено');
       },
@@ -3800,6 +3873,10 @@
     partnerView: (d) => sheetPartnerView(d.id),
     chatHelp: () => sheetChatHelp(),
     busyEdit: () => sheetBusy(),
+    workDays: (d) => sheetWorkDays(d.id),
+    saveWorkDays: () => SH && SH.save && SH.save(),
+    focusPick: (d) => { const k = 'focus_' + d.c; const cur = (SH.F[k] || '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (!cur.includes(d.v)) cur.push(d.v); SH.F[k] = cur.join(', '); drawSheet(); },
     busyDay: (d) => { const a = SH.F.days; const i = a.indexOf(d.v); if (i < 0) a.push(d.v); else a.splice(i, 1); drawSheet(); },
     busySave: async () => {
       const days = SH.F.days.slice().sort();
