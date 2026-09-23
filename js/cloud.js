@@ -231,14 +231,22 @@ window.Cloud = function (canvas, opts) {
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both : COLOR[e.kind]);
       ctx.lineWidth = hot ? 1.4 : e.faint ? 0.5 : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
       ctx.globalAlpha = (lit && !hot ? 0.12 : e.faint && !hot ? 0.3 : 1) * grow * Math.min(depth(a), depth(b));
-      // лёгкая дуга: пучок линий перестаёт выглядеть спицами колеса
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const bend = 0.08;
+      // Маленькое облако — лёгкие дуги: пучок линий перестаёт выглядеть спицами колеса.
+      // Звёздное небо — прямые, как в рисунках созвездий, и чуть не доходят до звезды
+      const sky = big();
+      let ax = a.x, ay = a.y, bx = b.x, by = b.y;
+      if (sky) {
+        const L = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / L, uy = (by - ay) / L;
+        const ga = Math.min(L * 0.3, a.r * (a.star ? 1.6 : 1) + 3), gb = Math.min(L * 0.3, b.r * (b.star ? 1.6 : 1) + 3);
+        ax += ux * ga; ay += uy * ga; bx -= ux * gb; by -= uy * gb;
+      }
+      const mx = (ax + bx) / 2, my = (ay + by) / 2;
+      const dx = bx - ax, dy = by - ay;
+      const bend = sky ? 0 : 0.08;
       const kx = mx - dy * bend, ky = my + dx * bend;
       ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.quadraticCurveTo(kx, ky, b.x, b.y);
+      ctx.moveTo(ax, ay);
+      ctx.quadraticCurveTo(kx, ky, bx, by);
       ctx.setLineDash(e.kind === 'work' ? [3, 3] : e.kind === 'wait' ? [2, 4] : []);
       ctx.stroke();
       ctx.setLineDash([]);
@@ -252,7 +260,7 @@ window.Cloud = function (canvas, opts) {
       if (cycle > 1) return;
       const bez = (t) => {
         const u = 1 - t, q = u * u, w = 2 * u * t, z = t * t;
-        return [q * a.x + w * kx + z * b.x, q * a.y + w * ky + z * b.y];
+        return [q * ax + w * kx + z * bx, q * ay + w * ky + z * by];
       };
       const half = 0.16;
       const tone = e.kind === 'vouch' ? '47,123,255' : '126,146,178';
