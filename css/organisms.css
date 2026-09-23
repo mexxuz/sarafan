@@ -611,3 +611,20 @@
 .chip .chip-x { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; margin-left: 6px; margin-right: -6px; background: rgba(30, 50, 90, .08); color: inherit; }
 .chip .chip-x svg { width: 12px; height: 12px; }
 .chip.on .chip-x { background: rgba(255, 255, 255, .25); }
+
+/* Карточка места из облака: обложка, кто вы здесь, сведения строками, люди, слово знакомых */
+.peek-cover { margin: -8px -20px 12px; height: 132px; overflow: hidden; border-radius: 28px 28px 0 0; }
+.peek-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.peek-rel { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 10px; border-radius: 999px;
+  font: 600 var(--fs-xs)/1.2 var(--t); color: #6b4fd0; background: linear-gradient(170deg, #f1ecff, #e8e0ff); }
+.peek-rel svg { width: 14px; height: 14px; }
+.peek-info { margin-top: 12px; border-radius: 16px; background: var(--card-2, #f5f8fc); overflow: hidden; }
+.peek-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--ink); text-decoration: none; font-size: var(--fs-sm); }
+.peek-row + .peek-row { border-top: 1px solid var(--line); }
+.peek-row > svg { width: 17px; height: 17px; flex: none; color: var(--ink-3); }
+.peek-row i { display: block; font-style: normal; font-size: var(--fs-xxs); color: var(--ink-3); margin-bottom: 1px; }
+.peek-row svg:last-child { width: 15px; height: 15px; color: var(--ink-4); }
+.peek-people { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.peek-people .faces { display: flex; }
+.peek-people .stack-face { margin-left: -8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper); line-height: 0; }
+.peek-people .stack-face:first-child { margin-left: 0; }

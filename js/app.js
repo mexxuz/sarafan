@@ -204,6 +204,8 @@
     chev: '<path d="m9 6 6 6-6 6"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
     expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    tag: '<path d="M3.5 12.2 11.8 4h7.7v7.7l-8.3 8.3a1.5 1.5 0 0 1-2.1 0l-5.6-5.7a1.5 1.5 0 0 1 0-2.1z"/><circle cx="15.5" cy="8" r="1.4"/>',
     shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
@@ -992,23 +994,50 @@
   }
 
   // Быстрая карточка места или фирмы
+  // Карточка места или фирмы из облака: всё главное с одного взгляда —
+  // чем занимаются, где и когда, кто там ваш, что говорят знакомые
   function sheetNodePeek(id) {
     const n = nodeById(id);
     if (!n) return;
-    const recs = nodeRecs(n);
-    const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
-    const facts = (n.facts || []).slice(0, 2);
+    const recs = nodeRecs(n).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
+    const best = recs[0];
+    const mineRec = recs.find((r) => r.from === S.me);
+    const fact = (k) => (n.facts || []).find((f) => f.kind === k);
+    const people = nodePeople(n.id).filter((x) => !x.past && (x.accepted !== false) && (!x.waiting || x.user === S.me));
+    const waitHere = (S.waiting || []).filter((w) => w.node === n.id);
+    const me = people.find((x) => x.user === S.me);
+    const friends = people.filter((x) => x.user !== S.me && G.dist[x.user] === 1);
+    const others = (S.nodeOthers || {})[n.id] || 0;
+    const total = people.length + waitHere.length + others;
+    const relation = me ? (me.role === 'owner' ? 'Вы владелец' : `Вы здесь работаете${me.title ? ' · ' + esc(me.title) : ''}`)
+      : friends.length ? `Здесь работает ваш знакомый — ${esc(first(friends[0].user))}${friends[0].title ? ', ' + esc(friends[0].title) : ''}`
+        : '';
+    const info = [
+      fact('service') && [ic('spark'), 'Что делают', fact('service').text],
+      (n.address || mapLink(n)) && [ic('pin'), 'Где', n.address || 'На карте', mapLink(n)],
+      fact('hours') && [ic('clock'), 'Когда работают', fact('hours').text],
+      fact('price') && [ic('tag'), 'Сколько стоит', fact('price').text],
+      n.link && [ic('link'), 'Сайт', n.link.replace(/^https?:\/\//, ''), n.link.startsWith('http') ? n.link : 'https://' + n.link],
+      fact('who') && [ic('user'), 'К кому подходить', fact('who').text],
+    ].filter(Boolean);
+    const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
     openSheet({
       F: {},
-      render: () => `${sheetHead(null, esc(n.name), `${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}${n.address ? ' · ' + esc(n.address) : ''}`)}
-        <div class="stat-grid" style="margin-top:14px">
-          <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
-          <div class="stat"><b>${(n.facts || []).length}</b><span>${plural((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
-        ${best ? `<div class="note" style="color:var(--ink);margin-top:14px">«${esc(best.text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(best.from))}</div></div>` : ''}
-        ${facts.length ? `<div class="card" style="box-shadow:none;background:var(--card-2);margin-top:10px">${facts.map((f) => `<div class="fact"><p>${esc(f.text)}</p><div class="tiny muted">${esc(FACT_KIND[f.kind] || '')} · ${esc(first(f.from))}</div></div>`).join('')}</div>` : ''}
+      render: () => `${n.photo ? `<div class="peek-cover"><img src="${esc(srvUrl(n.photo))}" alt=""></div>` : ''}
+        <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+          <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
+          <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
+        ${relation ? `<div class="peek-rel">${ic('seal')}${relation}</div>` : ''}
+        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow"><i>${label}</i>${esc(text)}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
+    : `<p class="small muted" style="margin:12px 0 0">О ${n.kind === 'company' ? 'фирме' : 'месте'} пока ничего не дописали: что делают, часы, цены. Знаете — добавьте, это увидят ваши знакомые</p>`}
+        ${total ? `<div class="peek-people"><span class="faces">${people.slice(0, 4).map((x) => face(x.user)).join('')}${waitHere.slice(0, Math.max(0, 4 - people.length)).map((w) => `<span class="stack-face">${waitAv(w, 'xs')}</span>`).join('')}</span>
+          <span class="grow small">${pl(total, 'человек', 'человека', 'человек')} ${n.kind === 'company' ? 'в фирме' : 'здесь работают'}${friends.length ? ` · ${pl(friends.length, 'ваш знакомый', 'ваших знакомых', 'ваших знакомых')}` : ''}</span></div>` : ''}
+        ${best ? `<div class="note" style="color:var(--ink);margin-top:12px">«${esc(best.text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(best.from))}${G.dist[best.from] === 1 ? ' · ваш знакомый' : ''}${recs.length > 1 ? ` · и ещё ${pl(recs.length - 1, 'рекомендация', 'рекомендации', 'рекомендаций')}` : ''}</div></div>`
+    : `<p class="small muted" style="margin:12px 0 0">Пока никто не рекомендовал. ${me ? 'Попросите довольных клиентов — одной ссылкой' : 'Были здесь — будьте первым'}</p>`}
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Открыть</button>
-          <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}Рекомендовать</button>
+          ${me ? `<button class="btn primary" data-act="addFact" data-id="${n.id}">${ic('plus')}Дописать сведения</button>`
+    : `<button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mineRec ? 'Изменить запись' : 'Рекомендовать'}</button>`}
         </div></div>`,
     });
   }
