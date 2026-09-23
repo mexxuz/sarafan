@@ -298,7 +298,7 @@ window.Cloud = function (canvas, opts) {
       else drawPerson(n);
       n.r = saved;
 
-      const showLabel = n.label && (n.self || n.ring <= 1 || n === lit || near.has(n.id));
+      const showLabel = n.label && (n.self || n.ring <= 1 || n.fc || n === lit || near.has(n.id));
       if (showLabel) {
         ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.85 : 0.55) * ease * (lit && near.has(n.id) ? 1 : depth(n));
         ctx.fillStyle = '#6b7488';

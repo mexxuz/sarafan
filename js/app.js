@@ -904,7 +904,7 @@
     // Создатель сети виден всем: у кого нет к нему цепочки — золотая точка на дальнем круге
     const fc = S.founderCard;
     if (!onlyPlaces && fc && !U(fc.id)) nodes.push({
-      id: 'fc' + fc.id, ring: 3, kind: 'person', r: 11, founder: true, fc: true,
+      id: 'fc' + fc.id, ring: 2, kind: 'person', r: 12, founder: true, fc: true,
       photo: fc.photo || null, video: null,
       initials: (fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
       label: 'создатель Сарафана' });
