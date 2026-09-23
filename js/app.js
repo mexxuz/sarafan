@@ -924,7 +924,9 @@
         const voices = [...new Set([...nodeRecs(n).map((r) => r.from), n.by])].filter((id) => known.has(id));
         // кто из видимых людей здесь работает — к ним фиолетовая пунктирная нить
         const staff = nodePeople(n.id).filter((x) => !x.past && !x.waiting && known.has(x.user)).map((x) => x.user);
-        if (!voices.length && !staff.length) return;
+        // ждущие в круге, отмеченные здесь сотрудниками, — тоже держат фирму в облаке
+        const waitStaff = onlyPlaces ? [] : (S.waiting || []).slice(0, 12).filter((w) => w.node === n.id).map((w) => 'w' + w.id);
+        if (!voices.length && !staff.length && !waitStaff.length) return;
         const id = 'o' + n.id;
         nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company',
           r: n.kind === 'company' ? 8 : 8.5,
@@ -932,6 +934,7 @@
           go: '#/o/' + n.id });
         voices.filter((v) => !staff.includes(v)).forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
         staff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
+        waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
       });
     }
     if (onlyPlaces) {
