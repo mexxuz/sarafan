@@ -1,13 +1,13 @@
 ﻿/* Сарафан — дизайн-система по слоям.
    Порядок важен: каждый следующий слой опирается на предыдущий.
    1 Основа (значения + сброс) → 2 Атомы → 3 Молекулы → 4 Организмы → 5 Шаблоны */
-@import url('tokens.css?v=202609231958');
-@import url('atoms.css?v=202609231958');
-@import url('molecules.css?v=202609231958');
-@import url('organisms.css?v=202609231958');
-@import url('templates.css?v=202609231958');
-@import url('tour.css?v=202609231958');
-@import url('desktop.css?v=202609231958');
+@import url('tokens.css?v=202609232016');
+@import url('atoms.css?v=202609232016');
+@import url('molecules.css?v=202609232016');
+@import url('organisms.css?v=202609232016');
+@import url('templates.css?v=202609232016');
+@import url('tour.css?v=202609232016');
+@import url('desktop.css?v=202609232016');
 
 /* ——— СЛОЙ 1. ОСНОВА: сброс и холст ——— */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -15,6 +15,8 @@ html, body { margin: 0; }
 /* Страница никогда не шире экрана: вращающиеся кольца знакомых на «Моей сети» при повороте
    вылезали за край, страница уезжала вбок — и нижнее меню вместе с ней (правка 23.09) */
 html, body { overflow-x: hidden; overflow-x: clip; }
+/* Край страницы не пружинит и не растягивается: на Android страница тянулась, на iPhone отскакивала */
+html, body { overscroll-behavior: none; }
 body {
   background: var(--sky-2);
   color: var(--ink);

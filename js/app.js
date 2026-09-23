@@ -3,7 +3,11 @@
   const KEY = 'sarafan-demo-v1';
   const qs = new URLSearchParams(location.search);
   const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
-  if (tg) { tg.ready(); tg.expand(); }
+  if (tg) {
+    tg.ready(); tg.expand();
+    // потянули вниз у верхнего края — Telegram не должен сворачивать приложение: это читалось как «отскок»
+    try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) { /* старый Telegram */ }
+  }
 
   // ——— Состояние ———
   const load = () => {
@@ -433,14 +437,28 @@
     requestAnimationFrame(() => n.classList.remove('hide'));
     const incoming = S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !q.answers.some((a) => a.from === S.me) && !(q.skip || []).includes(S.me)).length;
     const pendingIn = S.conns.filter(askedMe).length;
-    const item = (key, href, icon, label, badge) => `<a href="${href}" class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span>${badge ? `<i class="badge">${badge}</i>` : ''}</a>`;
-    n.innerHTML = '<i class="pill" aria-hidden="true"></i>' +
-      item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') +
-      `<a href="#/ask" class="ask ${active === 'ask' ? 'on' : ''}" aria-label="Спросить свою сеть">${ic('ask')}<span>Спросить</span>${incoming ? `<i class="badge">${incoming}</i>` : ''}</a>` +
-      item('net', '#/net', 'net', 'Сеть', pendingIn) + item('new', '#/new', 'bell', 'Новое', todo());
+    const badges = { home: 0, search: 0, ask: incoming, net: pendingIn, new: todo() };
+    // Меню собираем один раз, дальше только переключаем выбранный раздел и числа.
+    // Раньше оно пересобиралось при каждом обновлении — подложка рождалась у левого края
+    // и тянулась к кнопке: это и была «анимация растяжения».
+    if (!n.querySelector('a[data-key]')) {
+      const item = (key, href, icon, label) => `<a href="${href}" data-key="${key}" ${key === 'ask' ? 'class="ask" aria-label="Спросить свою сеть"' : ''}>${ic(icon)}<span>${label}</span><i class="badge" hidden></i></a>`;
+      n.innerHTML = '<i class="pill" aria-hidden="true"></i>' +
+        item('home', '#/', 'home', 'Главная') + item('search', '#/search', 'search', 'Поиск') + item('ask', '#/ask', 'ask', 'Спросить') +
+        item('net', '#/net', 'net', 'Сеть') + item('new', '#/new', 'bell', 'Новое');
+      n.querySelector('.pill').classList.add('still');   // первый раз встаёт на место без езды
+    }
+    n.querySelectorAll('a[data-key]').forEach((a) => {
+      const k = a.dataset.key, on = k === active;
+      a.classList.toggle('on', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      const b = a.querySelector('.badge');
+      b.hidden = !badges[k];
+      if (badges[k] && b.textContent !== String(badges[k])) b.textContent = badges[k];
+    });
     movePill(n);
     // меряем ещё раз, когда шрифт и подписи уже на месте — иначе подложка съезжает
-    requestAnimationFrame(() => movePill(n));
+    requestAnimationFrame(() => { movePill(n); requestAnimationFrame(() => { const pl = n.querySelector('.pill'); if (pl) pl.classList.remove('still'); }); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => movePill(n));
   }
 
