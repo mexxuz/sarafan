@@ -185,7 +185,7 @@
   const trustMark = (rep) => (rep && rep.independent >= 3 && !rep.suspicious
     ? `<span class="trust">${ic('seal')}надёжно</span>` : '');
 
-  const REL = { client: 'Опыт клиента', together: 'Работали вместе', colleague: 'Коллеги по цеху', friend: 'Знаю лично', other: 'Другое' };
+  const REL = { client: 'Опыт клиента', together: 'Работали вместе', team: 'Через сотрудника', colleague: 'Коллеги по цеху', friend: 'Знаю лично', other: 'Другое' };
   const circleName = (c) => (c === 0 ? 'Это вы' : c === 1 ? 'Ваш контакт'
     : c === 2 ? 'Через вашего знакомого' : c === 3 ? 'В двух шагах от вас' : 'Вне вашей сети');
   const circleTag = (c) => `<span class="tag circle-${Math.min(c, 3)}">${circleName(c)}</span>`;
@@ -1002,7 +1002,7 @@
     const recs = nodeRecs(n).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
     const best = recs[0];
     const mineRec = recs.find((r) => r.from === S.me);
-    const fact = (k) => (n.facts || []).find((f) => f.kind === k);
+    const fact = (k) => (n.facts || []).slice().sort(officialFirst).find((f) => f.kind === k);
     const people = nodePeople(n.id).filter((x) => !x.past && (x.accepted !== false) && (!x.waiting || x.user === S.me));
     const waitHere = (S.waiting || []).filter((w) => w.node === n.id);
     const me = people.find((x) => x.user === S.me);
@@ -1036,7 +1036,8 @@
     : `<p class="small muted" style="margin:12px 0 0">Пока никто не рекомендовал. ${me ? 'Попросите довольных клиентов — одной ссылкой' : 'Были здесь — будьте первым'}</p>`}
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Открыть</button>
-          ${me ? `<button class="btn primary" data-act="addFact" data-id="${n.id}">${ic('plus')}Дописать сведения</button>`
+          ${canCard(n) ? `<button class="btn primary" data-act="nodeCard" data-id="${n.id}">${ic('edit')}Карточка ${n.kind === 'company' ? 'фирмы' : 'места'}</button>`
+    : me ? `<button class="btn primary" data-act="addFact" data-id="${n.id}">${ic('plus')}Дописать сведения</button>`
     : `<button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mineRec ? 'Изменить запись' : 'Рекомендовать'}</button>`}
         </div></div>`,
     });
@@ -1210,6 +1211,12 @@
   }
 
   // Блок «Где работает» в профиле: текущие места, ниже — «Раньше»
+  function partnerOfView(kind, id) {
+    const list = partnerFirms(kind, id);
+    if (!list.length) return '';
+    return `<p class="small" style="margin:10px 0 0">${ic('seal')} С ${kind === 'user' ? 'ним' : 'ними'} работают: ${list.slice(0, 4).map((x) => `<a class="link" href="#/o/${x.firm}">${esc(nodeById(x.firm).name)}</a>`).join(', ')}</p>`;
+  }
+
   function workView(uid) {
     const all = jobsOf(uid);
     const mine = uid === S.me;
@@ -1411,15 +1418,122 @@
     });
   }
 
+  // Карточку фирмы заполняет владелец, а пока его нет — тот, кто её записал
+  const canCard = (n) => {
+    const owners = nodePeople(n.id).filter((x) => !x.past && x.role === 'owner' && x.confirmed).map((x) => x.user);
+    return owners.includes(S.me) || (!owners.length && (n.by === S.me || n.claimed === S.me));
+  };
+  const officialFirst = (a, b) => (b.official ? 1 : 0) - (a.official ? 1 : 0);
+
+  // Одной формой: всё главное о фирме — что делают, где, когда, сколько, к кому подходить
+  function sheetNodeCard(id) {
+    const n = nodeById(id);
+    if (!n) return;
+    const own = (k) => ((n.facts || []).find((f) => f.kind === k && f.official && f.from === S.me) || {}).text || '';
+    const f = { name: n.name, cat: n.cat || '', address: n.address || '', link: n.link || '',
+      service: own('service'), hours: own('hours'), price: own('price'), who: own('who'), contact: own('contact') };
+    const field = (k, label, ph, area) => `<label class="field"><span>${label}</span>${area
+      ? `<textarea class="textarea" data-bind="${k}" rows="2" maxlength="300" placeholder="${ph}">${esc(f[k])}</textarea>`
+      : `<input class="input" data-bind="${k}" maxlength="200" placeholder="${ph}" value="${esc(f[k])}">`}</label>`;
+    openSheet({
+      F: f,
+      valid: () => f.name.trim().length >= 2,
+      render: () => `${sheetHead(null, n.kind === 'company' ? 'Карточка фирмы' : 'Карточка места', 'Всё, что знакомым полезно знать заранее')}
+        ${field('name', 'Название', 'Premium Selection')}
+        ${catPick(f, 'cat', 'name', 'Сфера')}
+        ${field('service', 'Что делаете', 'Широкоформатная печать, вывески, POS-материалы', true)}
+        ${field('address', 'Адрес', 'Бешагач, 71')}
+        ${field('hours', 'Когда работаете', 'Пн–Сб, 9:00–19:00')}
+        ${field('price', 'Сколько стоит', 'Баннер 3×6 м — от 450 000 сум', true)}
+        ${field('link', 'Сайт или канал', 'ps.com.uz')}
+        ${field('who', 'К кому подходить', 'Раксана — менеджер, отвечает за заказы')}
+        ${field('contact', 'Как связаться', '+998 71 … или @premium_selection')}
+        <p class="why">${ic('spark')}Это будет стоять первым, с пометкой «от владельца». Уточнения знакомых останутся ниже</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitCard" data-submit>Сохранить карточку</button></div>`,
+      submit: () => {
+        closeSheet();
+        mutate(null, '/nodes/card', { id: n.id, name: f.name.trim(), cat: f.cat || '', address: f.address.trim(), link: f.link.trim(),
+          service: f.service.trim(), hours: f.hours.trim(), price: f.price.trim(), who: f.who.trim(), contact: f.contact.trim() }, 'Карточка сохранена');
+      },
+    });
+  }
+
+  // С кем работает фирма: подрядчики и поставщики — от имени фирмы, видно, кто вёл дело
+  const partnersOf = (fid) => (S.partners || []).filter((x) => x.firm === fid);
+  const partnerFirms = (kind, id) => (S.partners || []).filter((x) => (kind === 'user' ? x.user === id : x.node === id) && nodeById(x.firm));
+  function partnersBlock(n) {
+    const list = partnersOf(n.id);
+    const member = nodePeople(n.id).some((x) => x.user === S.me && !x.past && x.confirmed);
+    const iOwn = nodePeople(n.id).some((x) => x.user === S.me && !x.past && x.confirmed && x.role === 'owner');
+    if (!list.length && !member) return '';
+    const who = (x) => (x.user ? full(x.user) : x.node && nodeById(x.node) ? nodeById(x.node).name : x.name || 'Без имени');
+    const pic = (x) => (x.user ? av(x.user, 's') : `<span class="node-ic ${x.node && nodeById(x.node) ? nodeById(x.node).kind : 'company'}" style="width:34px;height:34px">${ic(x.user ? 'user' : x.node ? 'house' : 'user')}</span>`);
+    const href = (x) => (x.user ? '#/p/' + x.user : x.node ? '#/o/' + x.node : '');
+    const via = (x) => (x.via ? 'вела ' + first(x.via) : x.viaName ? 'вёл(а) ' + x.viaName : '');
+    return `<div class="sec-title"><h2 class="h2">С кем работает</h2>${list.length ? `<span class="tag">${list.length}</span>` : ''}</div>
+      <p class="sec-note">Подрядчики и поставщики ${n.kind === 'company' ? 'фирмы' : 'места'} — рекомендация от ${esc(n.name)}, а не личная</p>
+      <div class="card">${list.slice(0, 30).map((x) => `<div class="person">${href(x) ? `<a class="grow row" href="${href(x)}" style="min-width:0">` : '<div class="grow row" style="min-width:0">'}${pic(x)}
+          <div class="grow"><div class="name ellip">${esc(who(x))}</div>
+          <div class="sub ellip">${esc([x.cat ? cat(x.cat).who : '', x.text, via(x), x.inside && x.phone ? x.phone : ''].filter(Boolean).join(' · ') || (x.source === 'import' ? 'из контактов фирмы' : ''))}</div></div>${href(x) ? '</a>' : '</div>'}
+          ${x.by === S.me || iOwn ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropPartner" data-id="${x.id}" aria-label="Убрать">${ic('x')}</button>` : ''}</div>`).join('')
+        || '<p class="small muted" style="margin:0 0 4px">Пока пусто. Добавьте подрядчиков и поставщиков, с которыми работает фирма — знакомые смогут на них выйти</p>'}
+        ${list.length > 30 ? `<p class="tiny muted" style="margin:8px 0 0">и ещё ${list.length - 30}</p>` : ''}
+        ${member ? `<div class="btn-row" style="margin-top:12px"><button class="btn sm ghost" data-act="addPartner" data-id="${n.id}">${ic('plus')}Добавить подрядчика</button></div>
+        <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл контактов из телефона (.vcf) или таблицу (.csv)</p>` : ''}</div>`;
+  }
+
+  function sheetPartner(fid) {
+    const firm = nodeById(fid);
+    if (!firm) return;
+    const staff = nodePeople(fid).filter((x) => !x.past && x.confirmed && x.accepted !== false).map((x) => x.user);
+    const f = { mode: 'contact', user: '', node: '', nodeName: '', name: '', phone: '', cat: '', text: '', via: S.me, viaName: '', q: '', items: [] };
+    let t = null;
+    const people = () => Object.keys(S.users).filter((id) => id !== S.me && (!f.q.trim() || normCat(U(id).name).includes(normCat(f.q)))).slice(0, 8);
+    const listHtml = () => (f.mode === 'user'
+      ? people().map((id) => `<button class="person" data-act="pickWho" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(who(id))}</div></div></button>`).join('') || '<p class="small muted">Никого не нашли</p>'
+      : f.q.trim().length < 2 ? '<p class="tiny muted" style="margin:6px 2px">Название, хотя бы две буквы</p>'
+        : f.items.filter((x) => x.id !== fid).map((x) => `<button class="person" data-act="pickPartnerNode" data-id="${x.id}" data-name="${esc(x.name)}" style="width:100%;text-align:left"><span class="node-ic ${x.kind}" style="width:34px;height:34px">${ic(x.kind === 'company' ? 'house' : 'pin')}</span><div class="grow"><div class="name ellip">${esc(x.name)}</div><div class="sub ellip">${esc(x.address || NODE_KIND[x.kind])}</div></div></button>`).join('') || '<p class="small muted">Не нашли — добавьте как «Просто контакт»</p>');
+    openSheet({
+      F: f,
+      valid: () => (f.mode === 'user' ? !!f.user : f.mode === 'node' ? !!f.node : f.name.trim().length >= 2),
+      render: () => `${sheetHead(null, 'Подрядчик «' + esc(firm.name) + '»', 'С кем работает фирма — видно, кто вёл дело')}
+        <div class="chips" style="margin-bottom:10px">${[['contact', 'Просто контакт'], ['user', 'Человек в Сарафане'], ['node', 'Фирма в Сарафане']].map(([k, l]) => `<button class="chip ${f.mode === k ? 'on' : ''}" data-act="set" data-k="mode" data-v="${k}">${l}</button>`).join('')}</div>
+        ${f.mode === 'contact' ? `<label class="field" style="margin-top:0"><span>Имя или название</span><input class="input" data-bind="name" maxlength="80" placeholder="Бумага-Опт, Азамат" value="${esc(f.name)}"></label>
+          <label class="field"><span>Телефон — видят только сотрудники фирмы</span><input class="input" data-bind="phone" inputmode="tel" maxlength="40" placeholder="+998 90 …" value="${esc(f.phone)}"></label>`
+    : f.mode === 'user' ? (f.user ? `<div class="person">${av(f.user, 's')}<div class="grow"><div class="name">${esc(full(f.user))}</div></div><button class="btn ghost xs" data-act="set" data-k="user" data-v="">Другой</button></div>`
+      : `<label class="field" style="margin-top:0"><span>Кого</span><input class="input" data-live="1" placeholder="Начните печатать имя" autocomplete="off"></label><div class="stack partner-find">${listHtml()}</div>`)
+      : (f.node ? `<div class="person"><span class="node-ic company" style="width:34px;height:34px">${ic('house')}</span><div class="grow"><div class="name">${esc(f.nodeName)}</div></div><button class="btn ghost xs" data-act="set" data-k="node" data-v="">Другая</button></div>`
+        : `<label class="field" style="margin-top:0"><span>Фирма</span><input class="input" data-live="1" placeholder="Название фирмы" autocomplete="off"></label><div class="stack partner-find">${listHtml()}</div>`)}
+        ${catPick(f, 'cat', 'name', 'Сфера')}
+        <label class="field"><span>За что ценим — одной фразой</span><input class="input" data-bind="text" maxlength="200" placeholder="Бумага всегда в наличии, привозят за день" value="${esc(f.text)}"></label>
+        <div class="field"><span>Кто вёл дело</span><div class="chips">${[S.me, ...staff.filter((u) => u !== S.me)].slice(0, 8).map((u) => `<button class="chip ${f.via === u && !f.viaName ? 'on' : ''}" data-act="pickWho" data-k="via" data-v="${u}">${u === S.me ? 'Я' : esc(first(u))}</button>`).join('')}</div>
+          <input class="input" style="margin-top:8px" data-bind="viaName" maxlength="60" placeholder="Или имя: менеджер Раксана" value="${esc(f.viaName)}"></div>
+        <div class="s-foot"><button class="btn primary block" data-act="submitPartner" data-submit>Добавить</button></div>`,
+      onLive: (v) => {
+        f.q = v;
+        const box = $('#sheet .partner-find');
+        if (f.mode === 'user') { if (box) box.innerHTML = listHtml(); return; }
+        clearTimeout(t);
+        t = setTimeout(async () => { try { f.items = (await window.API.get('/nodes/find?q=' + encodeURIComponent(v.trim()))).items; } catch (e) { f.items = []; } const b2 = $('#sheet .partner-find'); if (b2) b2.innerHTML = listHtml(); }, 250);
+      },
+      submit: () => {
+        closeSheet();
+        mutate(null, '/firms/partner', { firm: fid, user: f.mode === 'user' ? f.user : '', node: f.mode === 'node' ? f.node : '',
+          name: f.mode === 'contact' ? f.name.trim() : '', phone: f.mode === 'contact' ? f.phone.trim() : '', cat: f.cat || '',
+          text: f.text.trim(), via: f.viaName.trim() ? '' : f.via, via_name: f.viaName.trim() }, 'Добавлено в «С кем работает»');
+      },
+    });
+  }
+
   function Node(id) {
     const n = nodeById(id);
     if (!n) return '<div class="empty"><h2 class="h2">Место не найдено</h2><a class="btn" href="#/">На главную</a></div>';
     const recs = nodeRecs(n).sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
     const mine = recs.find((r) => r.from === S.me);
-    const facts = (n.facts || []).slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
+    const facts = (n.facts || []).slice().sort((a, b) => officialFirst(a, b) || (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9));
     const byKind = {};
     facts.forEach((f) => { (byKind[f.kind] = byKind[f.kind] || []).push(f); });
-    const can = n.by === S.me || !!mine;
+    const can = n.by === S.me || !!mine || canCard(n);
     return `<div class="top ${n.photo ? 'on-photo' : ''}"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
         <div class="grow"></div>
         ${can ? `<button class="icon-btn" data-act="nodeTools" data-id="${n.id}" aria-label="Что можно поправить">${ic('dots3')}</button>` : ''}
@@ -1441,13 +1555,17 @@
         <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек рекомендует', 'человека рекомендуют', 'человек рекомендуют')}</span></div>
         <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
 
+      ${canCard(n) && !(n.facts || []).some((x) => x.official) ? `<button class="link-row wide" data-act="nodeCard" data-id="${n.id}" style="margin-top:16px">${ic('edit')}<span class="grow"><b>Заполните карточку ${n.kind === 'company' ? 'фирмы' : 'места'}</b><i>Что делаете, часы, цены, к кому подходить — одним экраном</i></span>${ic('arrow')}</button>` : ''}
+
       ${peopleBlock(n)}
 
-      <div class="sec-title"><h2 class="h2">Что об этом знают</h2><button class="btn sm" data-act="addFact" data-id="${n.id}">Добавить</button></div>
+      ${partnersBlock(n)}
+
+      <div class="sec-title"><h2 class="h2">Что об этом знают</h2><button class="btn sm" data-act="${canCard(n) ? 'nodeCard' : 'addFact'}" data-id="${n.id}">${canCard(n) ? 'Карточка' : 'Добавить'}</button></div>
       ${facts.length ? `<div class="card">${Object.keys(byKind).map((k) => `<div class="fact-group">
         <div class="eyebrow">${esc(FACT_KIND[k] || FACT_KIND.note)}</div>
         ${byKind[k].map((f) => `<div class="fact"><p>${esc(f.text)}</p>
-          <div class="row"><span class="tiny muted grow">${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
+          <div class="row"><span class="tiny muted grow">${f.official ? '<b style="color:#6b4fd0">от владельца</b> · ' : ''}${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
           ${f.from === S.me ? `<button class="btn ghost xs" data-act="delFact" data-id="${f.id}">Убрать</button>` : ''}</div></div>`).join('')}
       </div>`).join('')}</div>`
     : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}
@@ -1471,7 +1589,9 @@
     openSheet({
       F: {},
       render: () => `${sheetHead(null, esc(n.name), 'Что можно поправить')}
-        ${n.by === S.me ? `<button class="link-row wide" data-act="editNode" data-id="${n.id}">${ic('edit')}
+        ${canCard(n) ? `<button class="link-row wide" data-act="nodeCard" data-id="${n.id}">${ic('edit')}
+          <span class="grow"><b>Карточка ${n.kind === 'company' ? 'фирмы' : 'места'}</b><i>Название, сфера, что делаете, адрес, часы, цены, сайт</i></span>${ic('arrow')}</button>`
+    : n.by === S.me ? `<button class="link-row wide" data-act="editNode" data-id="${n.id}">${ic('edit')}
           <span class="grow"><b>Поправить карточку</b><i>Название, сфера, адрес, ссылка</i></span>${ic('arrow')}</button>` : ''}
         <label class="link-row wide" style="cursor:pointer">${ic('cam')}
           <span class="grow"><b>${n.photo ? 'Заменить снимок' : 'Добавить снимок'}</b><i>Знакомые узнают место с первого взгляда</i></span>
@@ -1783,6 +1903,7 @@
       <div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${partnerOfView('user', id)}
       ${workView(id)}
       ${howView(id)}
       ${factsView(id)}
@@ -3128,6 +3249,12 @@
     submitWork: () => SH.submit(),
     submitFix: () => SH.submit(),
     submitPropose: () => SH.submit(),
+    submitCard: () => SH.submit(),
+    submitPartner: () => SH.submit(),
+    nodeCard: (d) => sheetNodeCard(d.id),
+    addPartner: (d) => sheetPartner(d.id),
+    pickPartnerNode: (d) => { SH.F.node = d.id; SH.F.nodeName = d.name; drawSheet(); },
+    dropPartner: (d) => mutate(() => { S.partners = (S.partners || []).filter((x) => x.id !== d.id); }, '/firms/partner/delete', { id: d.id }, 'Убрали'),
     // выбрать человека в окне: номер кладём как есть — общее «set» превращало «1» в «да»
     pickWho: (d) => { SH.F[d.k] = d.v; if (SH.onSet) SH.onSet(d.k); drawSheet(); },
     submitPickNode: () => SH.submit(),
