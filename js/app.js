@@ -321,6 +321,8 @@
     if (!raw || !S || !S.onboarded) return false;
     pendingLanding = '';
     if (raw.startsWith('a-')) { go('#/rec/' + raw.split('_')[0]); return true; }
+    const sc = raw.match(/^([sk])-([a-z0-9-]+)$/);                     // из группы: «s-электрик» — поиск, «k-…» — спросить
+    if (sc) { go(sc[1] === 's' ? '#/search?c=' + sc[2] : '#/ask?c=' + sc[2]); return true; }
     const col = (raw.match(/(?:^|_)(l[a-z0-9]{7})$/) || [])[1];      // подборка: «код-приглашения_lxxxxxxx»
     if (col) { go('#/l/' + col); return true; }
     const legacy = raw.match(/^([poq])_(\d+)/);
