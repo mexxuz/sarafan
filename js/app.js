@@ -742,8 +742,7 @@
         <div class="logo grow">${logoMark}сарафан</div>
         <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
-      ${(S.drafts || []).length ? `<button class="link-row wide over-cloud" data-act="openDraft" data-id="${S.drafts[0].id}" style="margin-top:12px">${ic('send')}
-        <span class="grow"><b>Из переписки: ${pl(S.drafts.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</b><i>${esc(S.drafts[0].name || 'Совет, который вы переслали')} — допишите в один экран</i></span>${ic('arrow')}</button>` : ''}
+      ${draftsCard()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
@@ -770,6 +769,21 @@
         <a class="ask-hero" href="#/new" style="text-decoration:none"><span class="ic">${ic('bell')}</span><span class="grow"><div class="t1">Загляните в «Новое»</div><div class="t2">${todoText()}</div></span>${ic('chev').replace('<svg', '<svg style="width:20px;height:20px;opacity:.7"')}</a>` : ''}
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
+
+  // ——— Черновики из переписки ———
+  // Каждый видно сразу: открыть и дописать — или убрать крестиком, если нажали по ошибке
+  function draftsCard() {
+    const list = S.drafts || [];
+    if (!list.length) return '';
+    const line = (d) => [d.name || 'имя не указано', d.cat ? cat(d.cat).who : '', d.phone || (d.username ? '@' + d.username : '')].filter(Boolean).join(' · ');
+    return `<div class="card over-cloud" style="margin-top:12px">
+      <div class="eyebrow">из переписки · ${pl(list.length, 'запись ждёт', 'записи ждут', 'записей ждут')}</div>
+      <div style="margin-top:6px">${list.slice(0, 6).map((d) => `<div class="person"><button class="grow row" data-act="openDraft" data-id="${d.id}" style="min-width:0;text-align:left"><span class="av s" style="background:var(--mist-2)">${ic('send')}</span>
+        <div class="grow"><div class="name ellip">${esc(line(d))}</div><div class="sub ellip">${esc(circleShort(d.text) || 'Совет из чата')}</div></div></button>
+        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="dropDraft" data-id="${d.id}" aria-label="Не сохранять">${ic('x')}</button></div>`).join('')}</div>
+      <p class="tiny muted" style="margin:8px 0 0">Нажмите, чтобы дописать, или крестик — если сохранили по ошибке</p></div>`;
+  }
+  const circleShort = (t) => { const x = String(t || '').replace(/\s+/g, ' ').trim(); return x.length > 70 ? x.slice(0, 69) + '…' : x; };
 
   // ——— Сохранено из чатов ———
   // Нажали «Сохранить себе» под карточкой в переписке — человек или место здесь,
@@ -2487,7 +2501,7 @@
       const next = (S.drafts || []).find((x) => x.id !== d.id);
       if (next) setTimeout(() => sheetOutsider(null, next.id), 350);
     },
-    dropDraft: (d) => mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Убрали'),
+    dropDraft: (d) => mutate(() => { S.drafts = (S.drafts || []).filter((x) => x.id !== d.id); }, '/drafts/done', { id: d.id }, 'Не сохранили'),
     submitAskRec: () => SH.submit(),
     askLink: () => sheetAskLink(),
     intro: (d) => sheetIntro(d.id, d.cat, d.via, d.q),
