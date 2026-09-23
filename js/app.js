@@ -2384,7 +2384,16 @@
     return screenHead('Моя сеть',
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
       `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
-      ${c1.length ? `<div class="face-rail">${c1.map((id) => `<a class="face" href="#/p/${id}">${av(id, 'l')}<span>${esc(first(id))}</span></a>`).join('')}</div>` : ''}
+      ${(() => {
+        // Главное дело в сети — записать, за что цените своего человека: тогда знакомые найдут его через вас.
+        // В ряду — только те, кого вы ещё не рекомендовали; нажатие сразу открывает запись
+        const mine = new Set(G.recsFrom(S.me).map((r) => r.to));
+        const todo = c1.filter((id) => !mine.has(id));
+        if (!todo.length) return '';
+        return `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Запишите своих</h2><span class="small muted">${c1.length - todo.length} из ${c1.length}</span></div>
+          <p class="sec-note">Вы знакомы, но ещё не рекомендовали — ваши знакомые не найдут их через вас</p>
+          <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div>`;
+      })()}
       ${pend.length ? `<div class="sec-title" style="margin-top:var(--s-4)"><h2 class="h2">Хотят в вашу сеть</h2><span class="badge">${pend.length}</span></div>${pend.map(connRequestCard).join('')}` : ''}
       <button class="link-row wide" data-act="pickCircle" style="margin:var(--s-3) 0 var(--s-3)">${ic('user')}
         <span class="grow"><b>Добавить знакомых из Telegram</b><i>Отметьте людей в контактах — без рекомендаций</i></span>${ic('arrow')}</button>
