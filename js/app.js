@@ -1249,9 +1249,7 @@
         <div class="field" style="margin-top:0"><span>Что это</span><div class="chips">
           ${Object.entries(NODE_KIND).map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-act="set" data-k="kind" data-v="${k}">${l}</button>`).join('')}</div></div>
         <label class="field"><span>Название</span><input class="input" data-bind="name" maxlength="90" placeholder="${f.kind === 'company' ? 'Например: Ремстрой' : 'Например: Чайхана на Мирабаде'}" value="${esc(f.name)}"></label>
-        <div class="field"><span>Сфера</span><div class="chips">${S.cats.slice(0, 10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}
-          <button class="chip ${f.allCats ? 'on' : ''}" data-act="set" data-k="allCats" data-v="1">Другая…</button></div>
-          ${f.allCats ? `<div class="chips" style="margin-top:8px">${S.cats.slice(10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}</div>
+        ${catChips(f, S.cats.slice(0, 10).map((c) => c.id))}
         <label class="field"><span>Адрес — если это место</span><input class="input" data-bind="address" maxlength="160" placeholder="Мирабад, 12" value="${esc(f.address)}"></label>
         <label class="field"><span>Ссылка — сайт, канал, карта</span><input class="input" data-bind="link" maxlength="200" placeholder="remstroy.uz" value="${esc(f.link)}"></label>
         <div class="field"><span>Точка на карте</span>
@@ -1288,9 +1286,7 @@
       valid: () => f.name.trim().length >= 2,
       render: () => `${sheetHead(null, 'Поправить карточку', esc(NODE_KIND[n.kind]))}
         <label class="field" style="margin-top:0"><span>Название</span><input class="input" data-bind="name" maxlength="90" value="${esc(f.name)}"></label>
-        <div class="field"><span>Сфера</span><div class="chips">${S.cats.slice(0, 10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}
-          <button class="chip ${f.allCats ? 'on' : ''}" data-act="set" data-k="allCats" data-v="1">Другая…</button></div>
-          ${f.allCats ? `<div class="chips" style="margin-top:8px">${S.cats.slice(10).map((c) => `<button class="chip ${f.cat === c.id ? 'on' : ''}" data-act="set" data-k="cat" data-v="${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}</div>
+        ${catChips(f, S.cats.slice(0, 10).map((c) => c.id))}
         <label class="field"><span>Адрес</span><input class="input" data-bind="address" maxlength="160" value="${esc(f.address)}"></label>
         <label class="field"><span>Ссылка</span><input class="input" data-bind="link" maxlength="200" value="${esc(f.link)}"></label>
         <div class="field"><span>Точка на карте</span>
