@@ -1359,9 +1359,11 @@
     const inc = incomingRequests().filter((q) => !q.answers.some((a) => a.from === S.me)).length;
     const res = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
       && Date.now() - i.at > 3 * 864e5).length;
-    return { asks, pend, inc, res };
+    // кто отметился в вашей фирме или просит подтвердить, что он владелец
+    const work = (S.nodePeople || []).filter((x) => x.canConfirm).length;
+    return { asks, pend, inc, res, work };
   };
-  const todo = () => { const t = todoCounts(); return t.asks + t.pend + t.inc + t.res; };
+  const todo = () => { const t = todoCounts(); return t.asks + t.pend + t.inc + t.res + t.work; };
   const todoText = () => {
     const t = todoCounts();
     const parts = [];
@@ -1369,6 +1371,7 @@
     if (t.asks) parts.push(pl(t.asks, 'просьба познакомить', 'просьбы познакомить', 'просьб познакомить'));
     if (t.pend) parts.push(pl(t.pend, 'заявка в вашу сеть', 'заявки в вашу сеть', 'заявок в вашу сеть'));
     if (t.res) parts.push('вопрос о знакомстве');
+    if (t.work) parts.push(pl(t.work, 'отметка в фирме', 'отметки в фирме', 'отметок в фирме'));
     return parts.join(' · ');
   };
 
@@ -1379,13 +1382,21 @@
     const howItWent = S.intros.filter((i) => i.from === S.me && i.status === 'ok' && !i.result
       && Date.now() - i.at > 3 * 864e5).slice(0, 1);
     const ev = feed();
-    const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length;
+    const work = (S.nodePeople || []).filter((x) => x.canConfirm && nodeById(x.node));
+    const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length && !work.length;
     return screenHead('Новое', todo() ? 'Ждут вашего ответа' : 'Движение доверия вокруг вас') + `
       ${nothing ? `<div class="empty" style="padding-top:18vh"><h2 class="h2">Пока тихо</h2>
         <p>Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кого просят познакомить.</p>
         <a class="btn primary" href="#/net">${ic('plus')}Позвать знакомых</a></div>` : ''}
       ${howItWent.map(resultAskCard).join('')}
       ${asks.length ? `<div class="sec-title"><h2 class="h2">Просят познакомить</h2><span class="badge">${asks.length}</span></div>${asks.map(introAskCard).join('')}` : ''}
+      ${work.length ? `<div class="sec-title"><h2 class="h2">Отметились в фирме</h2><span class="badge">${work.length}</span></div>
+      <div class="card">${work.map((x) => { const n = nodeById(x.node);
+    return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0">${av(x.user, 's')}<div class="grow"><div class="name ellip">${esc(full(x.user))}</div>
+      <div class="sub ellip">${x.role === 'owner' ? 'Владелец' : esc(jobRole(x))} · ${esc(n.name)}</div></div></a>
+      <button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>
+      <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Не подтверждать">${ic('x')}</button></div>`; }).join('')}
+      <p class="tiny muted" style="margin:8px 0 0">Подтвердите, если это правда: так знакомые выходят на своего человека в фирме</p></div>` : ''}
       ${pend.length ? `<div class="sec-title"><h2 class="h2">Хотят в вашу сеть</h2></div>${pend.map(connRequestCard).join('')}` : ''}
       ${inc.length ? `<div class="sec-title"><h2 class="h2">Вас спрашивают</h2></div><div class="stack">${inc.map((q, i) => requestCard(q, false, i === 0)).join('')}</div>` : ''}
       ${ev.length ? `<div class="sec-title"><h2 class="h2">В вашей сети</h2></div>
