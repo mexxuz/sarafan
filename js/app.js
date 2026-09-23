@@ -1196,7 +1196,7 @@
         <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
         ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
     : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
-        ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button>` : ''}</div>`; };
+        ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div>`; };
     return `<div class="sec-title"><h2 class="h2">${mine ? 'Где вы работаете' : 'Где работает'}</h2></div>
       <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0">Сейчас нигде не отмечен</p>'}
       ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше</div>${past.map(row).join('')}` : ''}${addBtn}</div>`;
@@ -1225,7 +1225,7 @@
           <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropWaitJob" data-id="${w.id}" aria-label="Убрать из фирмы">${ic('x')}</button></div>`).join('')}
         ${cur.length || waitHere.length ? '' : '<p class="small muted" style="margin:0 0 4px">Пока никто не отметился</p>'}
         ${others ? `<p class="tiny muted" style="margin:8px 0 0">И ещё ${pl(others, 'человек', 'человека', 'человек')} — не из ваших кругов</p>` : ''}
-        ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><p class="small" style="margin:4px 0 0">${past.map((x) => `<a class="link" href="#/p/${x.user}">${esc(full(x.user))}</a>`).join(', ')}</p>` : ''}
+        ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><div class="chips" style="margin-top:6px">${past.map((x) => `<span class="chip"><a href="#/p/${x.user}" style="text-decoration:none">${esc(full(x.user))}</a>${iOwn || x.user === S.me ? `<button class="chip-x" data-act="workErase" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Удалить запись">${ic('x')}</button>` : ''}</span>`).join('')}</div>` : ''}
         <div class="btn-row" style="margin-top:12px">${mine ? '' : `<button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>`}
           <button class="btn sm ghost" data-act="proposePerson" data-id="${n.id}">${ic('plus')}Добавить человека</button></div>
         ${mine || hasOwner ? '' : `<button class="btn ghost xs" style="margin-top:6px" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}Это моя ${n.kind === 'company' ? 'фирма' : 'точка'}</button>`}</div>`;
@@ -3112,6 +3112,9 @@
       '/nodes/people/confirm', { id: d.id }, 'Подтверждено'),
     workLeave: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.past = true; },
       '/nodes/people/leave', { id: d.id }, 'Готово: ' + (d.name || 'убрали')),
+    // попало по ошибке — удаляем насовсем, из истории тоже
+    workErase: (d) => mutate(() => { S.nodePeople = (S.nodePeople || []).filter((y) => y.id !== d.id); },
+      '/nodes/people/erase', { id: d.id }, 'Удалено: ' + (d.name || '')),
     workHide: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.hidden = !!d.v; },
       '/nodes/people/hide', { id: d.id, hidden: !!d.v }, d.v ? 'Скрыто от других' : 'Снова видно'),
     // «Не показывайте меня этому человеку»: перестают видеть друг друга, он не узнаёт

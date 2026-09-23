@@ -607,3 +607,7 @@
 .fix-btn:hover { opacity: 1; }
 .fix-btn svg { width: 15px; height: 15px; }
 @media (min-width: 900px) { .fix-btn { bottom: 20px; } }
+/* крестик внутри метки — убрать (в «раньше работали», в выбранных сферах) */
+.chip .chip-x { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; margin-left: 6px; margin-right: -6px; background: rgba(30, 50, 90, .08); color: inherit; }
+.chip .chip-x svg { width: 12px; height: 12px; }
+.chip.on .chip-x { background: rgba(255, 255, 255, .25); }
