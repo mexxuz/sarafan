@@ -1398,16 +1398,19 @@
     });
   }
 
+  // Инструменты основателя в углу: «глазами других» и «Правка». Остальным не видны
   function drawFixBtn() {
     drawViewAsBar();
     let b = $('#fixbtn');
     const show = LIVE && isFounder(S.me);
     if (!show) { if (b) b.hidden = true; return; }
     if (!b) {
-      b = document.createElement('button');
-      b.id = 'fixbtn'; b.className = 'fix-btn'; b.setAttribute('aria-label', 'Отправить правку');
-      b.innerHTML = ic('edit') + '<span>Правка</span>';
-      b.addEventListener('click', () => sheetFix());
+      b = document.createElement('div');
+      b.id = 'fixbtn'; b.className = 'dev-tools';
+      b.innerHTML = `<button class="fix-btn round" aria-label="Посмотреть глазами других" title="Посмотреть глазами других">${ic('eye')}</button>`
+        + `<button class="fix-btn" aria-label="Отправить правку">${ic('edit')}<span>Правка</span></button>`;
+      b.children[0].addEventListener('click', () => sheetViewAs());
+      b.children[1].addEventListener('click', () => sheetFix());
       document.body.appendChild(b);
     }
     b.hidden = !!SH;
@@ -2210,8 +2213,6 @@
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
       <div class="stack">${myNodes().slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
-      ${LIVE && isFounder(S.me) ? `<button class="link-row wide" data-act="viewAsOpen" style="margin-top:20px">${ic('eye')}
-        <span class="grow"><b>Посмотреть глазами других</b><i>Как Сарафан видят сотрудник, знакомый, знакомый знакомого и посторонний</i></span>${ic('arrow')}</button>` : ''}
       <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>

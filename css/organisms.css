@@ -601,13 +601,16 @@
 .tg-full #app { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)); }
 
 /* Правка — только у основателя: маленькая плашка в углу, над нижним меню */
-.fix-btn { position: fixed; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 31;
+.dev-tools { position: fixed; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 31; display: flex; gap: 6px; }
+.dev-tools[hidden] { display: none; }
+.fix-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px 8px 10px; border-radius: 999px;
   font: 700 var(--fs-xs)/1 var(--t); color: #fff; background: rgba(18, 20, 26, .78); backdrop-filter: blur(8px);
   box-shadow: 0 6px 18px rgba(18, 20, 26, .22); opacity: .85; }
 .fix-btn:hover { opacity: 1; }
 .fix-btn svg { width: 15px; height: 15px; }
-@media (min-width: 900px) { .fix-btn { bottom: 20px; } }
+.fix-btn.round { padding: 8px 9px; }
+@media (min-width: 900px) { .dev-tools { bottom: 20px; } }
 /* крестик внутри метки — убрать (в «раньше работали», в выбранных сферах) */
 .chip .chip-x { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; margin-left: 6px; margin-right: -6px; background: rgba(30, 50, 90, .08); color: inherit; }
 .chip .chip-x svg { width: 12px; height: 12px; }
