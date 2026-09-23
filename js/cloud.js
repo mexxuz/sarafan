@@ -109,8 +109,9 @@ window.Cloud = function (canvas, opts) {
         const f = (min / d2) * 1.35;
         const d = Math.sqrt(d2);
         const ux = dx / d, uy = dy / d;
-        if (!b.self) { b.vx += ux * f; b.vy += uy * f; }
-        if (!a.self) { a.vx -= ux * f; a.vy -= uy * f; }
+        // звезда и портрет: расступается звезда — ваше созвездие стоит на месте
+        if (!b.self && !(a.star && !b.star)) { b.vx += ux * f; b.vy += uy * f; }
+        if (!a.self && !(b.star && !a.star)) { a.vx -= ux * f; a.vy -= uy * f; }
       }
     }
     edges.forEach((e) => {
