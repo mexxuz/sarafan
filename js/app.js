@@ -940,6 +940,16 @@
         voices.filter((v) => !staff.includes(v)).forEach((v) => edges.push({ a: v, b: id, kind: 'vouch', len: 44 }));
         staff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
         waitStaff.forEach((v) => edges.push({ a: v, b: id, kind: 'work', len: 40 }));
+        // Подрядчики фирмы — бледные кружки-разделы с числом: полсотни точек облако бы утопили
+        if (!onlyPlaces) {
+          const secs = new Map();
+          partnersOf(n.id).forEach((x) => { const k = (x.section || '').split(' › ')[0]; secs.set(k, (secs.get(k) || 0) + 1); });
+          [...secs].slice(0, 6).forEach(([k, c]) => {
+            const sid = 'ps' + n.id + ':' + k;
+            nodes.push({ id: sid, ring: 3, ghost: true, r: 5.5, initials: String(c), label: (k || 'Подрядчики') + ' · ' + c, sec: { firm: n.id, key: k } });
+            edges.push({ a: id, b: sid, kind: 'wait', len: 30 });
+          });
+        }
       });
     }
     if (onlyPlaces) {
@@ -957,9 +967,42 @@
   // чтобы человек не терял из виду всю сеть
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
+    if (n.sec) { openSecs.add(n.sec.firm + ':' + n.sec.key); go('#/o/' + n.sec.firm); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
     sheetPeek(n.id);
+  }
+
+  // Посоветовать подрядчика своей фирмы: спросивший увидит его телефон — вы им делитесь
+  function sheetAnswerPartner(qid, pid) {
+    const q = S.requests.find((x) => x.id === qid);
+    if (!q) return;
+    const mine = myFirmPartners();
+    const f = { partner: pid || '', text: '', q: '' };
+    const listHtml = () => mine.filter((x) => !f.q.trim() || partnerFits(x, f.q, ''))
+      .sort((a, b) => partnerScore(b, q) - partnerScore(a, q)).slice(0, 30)
+      .map((x) => `<button class="pick" data-act="pickWho" data-k="partner" data-v="${x.id}">${partnerAv(x)}<span class="grow"><span class="h3 ellip" style="display:block">${esc(x.name)}</span><span class="small muted ellip" style="display:block">${esc(x.section || (x.cat ? cat(x.cat).who : ''))}</span></span><span class="radio"></span></button>`).join('')
+      || '<p class="small muted">Никого не нашли — попробуйте другое слово</p>';
+    openSheet({
+      F: f,
+      valid: () => !!f.partner && f.text.trim().length >= 8,
+      render: () => {
+        const x = mine.find((y) => y.id === f.partner);
+        return `${sheetHead(q.from, 'Подрядчик вашей фирмы', q.from ? esc(U(q.from).name) + ' спрашивает' : 'Знакомый спрашивает')}
+        <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
+        ${x ? `<div class="field"><span>Кого советуете</span><div class="pick on">${partnerAv(x)}<span class="grow"><span class="h3 ellip" style="display:block">${esc(x.name)}</span><span class="small muted ellip" style="display:block">${esc([x.section, nodeById(x.firm) ? nodeById(x.firm).name : ''].filter(Boolean).join(' · '))}</span></span><button class="btn ghost xs" data-act="set" data-k="partner" data-v="">Другой</button></div></div>`
+    : `<label class="field"><span>Кого советуете</span><input class="input" data-live="1" placeholder="Имя, раздел или что делает" autocomplete="off" value="${esc(f.q)}"></label><div class="stack partner-pick">${listHtml()}</div>`}
+        <label class="field"><span>Почему он</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: печатаем у него баннеры третий год, всегда в срок">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="8"></p></label>
+        <p class="why">${ic('spark')}Спросивший увидит телефон и ник подрядчика — вы им делитесь. Остальным он по-прежнему не виден</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitAnswerPartner" data-submit>${ic('send')}Отправить ответ</button></div>`;
+      },
+      onLive: (v) => { f.q = v; const b = $('#sheet .partner-pick'); if (b) b.innerHTML = listHtml(); },
+      submit: () => {
+        const body = { request: qid, partner: f.partner, text: f.text.trim() };
+        closeAllSheets();
+        mutate(null, '/answers/partner', body, 'Ответ отправлен');
+      },
+    });
   }
 
   // Посоветовать в ответ не человека, а место или фирму
@@ -989,7 +1032,7 @@
       submit: () => {
         const n = nodeById(f.node);
         const text = f.text.trim();
-        closeSheet();
+        closeAllSheets();
         mutate(() => { q.answers.push({ from: S.me, person: S.me, text: `${n.name} — ${text}`, at: Date.now() }); },
           '/answers/place', { request: qid, node: f.node, text }, 'Ответ отправлен');
       },
@@ -1217,7 +1260,7 @@
   function partnerOfView(kind, id) {
     const list = partnerFirms(kind, id);
     if (!list.length) return '';
-    return `<p class="small" style="margin:10px 0 0">${ic('seal')} С ${kind === 'user' ? 'ним' : 'ними'} работают: ${list.slice(0, 4).map((x) => `<a class="link" href="#/o/${x.firm}">${esc(nodeById(x.firm).name)}</a>`).join(', ')}</p>`;
+    return `<p class="small" style="margin:${kind === 'user' ? '10px 0 0' : '0'}">${ic('seal')} С ${kind === 'user' ? 'ним' : 'ними'} работают: ${list.slice(0, 4).map((x) => `<a class="link" href="#/o/${x.firm}">${esc(nodeById(x.firm).name)}</a>`).join(', ')}</p>`;
   }
 
   function workView(uid) {
@@ -1365,10 +1408,6 @@
     if (!va) {
       if (bar) bar.remove();
       document.body.classList.remove('viewing-as');
-      // «Другой» из полосы: вернулись своими глазами — сразу снова выбор
-      let again = false;
-      try { again = sessionStorage.getItem('sarafan.viewAsPick') === '1'; if (again) sessionStorage.removeItem('sarafan.viewAsPick'); } catch (e) { /* */ }
-      if (again && LIVE && isFounder(S.me)) setTimeout(sheetViewAs, 300);
       return;
     }
     if (!bar) {
@@ -1508,6 +1547,44 @@
   // С кем работает фирма: подрядчики и поставщики — от имени фирмы, видно, кто вёл дело
   const partnersOf = (fid) => (S.partners || []).filter((x) => x.firm === fid);
   const partnerFirms = (kind, id) => (S.partners || []).filter((x) => (kind === 'user' ? x.user === id : x.node === id) && nodeById(x.firm));
+  // Один и тот же подрядчик у разных фирм — одна карточка: сервер сводит их по телефону или нику
+  const partnerGroups = (list) => {
+    const m = new Map();
+    list.forEach((x) => { const k = x.key || x.id; if (!m.has(k)) m.set(k, []); m.get(k).push(x); });
+    return [...m.values()];
+  };
+  const stem = (w) => (w.length > 5 ? w.slice(0, w.length - 3) : w);
+  const partnerHay = (x) => normCat([x.name, x.section, x.text, x.cat ? cat(x.cat).name + ' ' + cat(x.cat).who : ''].join(' '));
+  // Подходит ли подрядчик под запрос: все слова (по корню) есть в имени, разделе, сфере или заметках
+  const partnerFits = (x, q, catId) => {
+    const hay = partnerHay(x);
+    if (catId && (x.cat === catId || catWords(cat(catId)).some((w) => w.length >= 4 && hay.includes(stem(w))))) return true;
+    const words = normCat(q).split(/[\s,.]+/).filter((w) => w.length >= 3);
+    return !!words.length && words.every((w) => hay.includes(stem(w)));
+  };
+  // Насколько подрядчик подходит к запросу знакомого: сфера и совпавшие слова
+  const partnerScore = (x, q) => {
+    const hay = partnerHay(x);
+    const words = normCat(q.text || '').split(/[\s,.!?]+/).filter((w) => w.length >= 4);
+    return (q.cat && x.cat === q.cat ? 3 : 0) + words.filter((w) => hay.includes(stem(w))).length;
+  };
+  const myFirmPartners = () => (S.partners || []).filter((x) => x.inside);
+  const partnersForRequest = (q) => myFirmPartners().map((x) => ({ x, s: partnerScore(x, q) }))
+    .filter((y) => y.s > 0).sort((a, b) => b.s - a.s).map((y) => y.x);
+  const partnerAv = (x) => (x.user && U(x.user) ? av(x.user, 's')
+    : `<span class="av s" style="--h:${hue(x.key || x.id)}" aria-hidden="true">${esc(((x.name || '?').match(/[A-Za-zА-Яа-яЁё0-9]/) || ['?'])[0].toUpperCase())}</span>`);
+  const firmsLine = (g) => [...new Set(g.map((x) => x.firm))].filter((f) => nodeById(f)).map((f) => nodeById(f).name);
+  function partnerCard(g) {
+    const x = g[0];
+    const where = (x.section || '').split(' › ').slice(-1)[0] || (x.cat ? cat(x.cat).who : '');
+    const firms = firmsLine(g);
+    const inner = `${partnerAv(x)}<div class="grow" style="min-width:0"><div class="name ellip">${esc(x.user && U(x.user) ? full(x.user) : x.name)}</div>
+      <div class="sub ellip">${esc([where, 'работает с ' + firms.join(', ')].filter(Boolean).join(' · '))}</div></div>`;
+    return x.user && U(x.user) ? `<a class="person" href="#/p/${x.user}">${inner}</a>`
+      : `<button class="person" style="width:100%;text-align:left" data-act="partnerView" data-id="${x.id}">${inner}</button>`;
+  }
+  const findPartners = (q, catId) => partnerGroups((S.partners || []).filter((x) => nodeById(x.firm) && partnerFits(x, q, catId)));
+
   // Разделы открываются по нажатию: у фирмы бывает полсотни подрядчиков
   const openSecs = new Set();
   function partnersBlock(n) {
@@ -1554,20 +1631,29 @@
 
   // Контакт фирмы целиком: раздел, заметки и цены, как связаться
   function sheetPartnerView(pid) {
-    const x = (S.partners || []).find((y) => y.id === pid);
-    if (!x) return;
+    const x0 = (S.partners || []).find((y) => y.id === pid);
+    if (!x0) return;
+    const group = (S.partners || []).filter((y) => (y.key || y.id) === (x0.key || x0.id));
+    const x = group.find((y) => y.inside) || x0;          // есть своя фирма среди них — берём её запись: там телефон
     const firm = nodeById(x.firm);
+    const firms = [...new Set(group.map((y) => y.firm))].map(nodeById).filter(Boolean);
     const tel = (x.phone || '').match(/\+?[\d\s\-()]{7,}/);
-    const notes = (x.text || '').split(/;\s*/).filter(Boolean);
+    const notes = [...new Set(group.flatMap((y) => (y.text || '').split(/;\s*/)).filter(Boolean))];
+    // Телефона не видно — выходим через сотрудника фирмы, который вас знает
+    const staff = firms.flatMap((n) => nodePeople(n.id).filter((y) => !y.past && y.confirmed && U(y.user) && y.user !== S.me)
+      .map((y) => ({ user: y.user, firm: n.name })))
+      .sort((a, b) => (G.dist[a.user] ?? 9) - (G.dist[b.user] ?? 9)).slice(0, 4);
     openSheet({
       F: {},
       render: () => `${sheetHead(null, esc(x.name || 'Без имени'), esc([x.section, x.cat ? cat(x.cat).who : ''].filter(Boolean).join(' · ') || 'Контакт фирмы'))}
-        <p class="small muted" style="margin:0 0 12px">${ic('seal')} С ним работает ${firm ? `<a class="link" href="#/o/${firm.id}">${esc(firm.name)}</a>` : 'фирма'}${x.viaName ? ' · вёл(а) ' + esc(x.viaName) : x.via && x.source !== 'import' ? ' · вёл(а) ' + esc(first(x.via)) : ''}</p>
+        <p class="small muted" style="margin:0 0 12px">${ic('seal')} С ним работа${firms.length > 1 ? 'ют' : 'ет'} ${firms.map((n) => `<a class="link" href="#/o/${n.id}">${esc(n.name)}</a>`).join(', ') || 'фирма'}${x.viaName ? ' · вёл(а) ' + esc(x.viaName) : x.via && x.source !== 'import' ? ' · вёл(а) ' + esc(first(x.via)) : ''}</p>
         ${notes.length ? `<div class="card" style="margin-bottom:12px">${notes.map((t) => `<p class="small" style="margin:4px 0">${esc(t)}</p>`).join('')}</div>` : ''}
         ${x.inside ? `<div class="stack" style="gap:8px">
           ${x.username ? `<button class="btn primary block" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать в Telegram · @${esc(x.username)}</button>` : ''}
           ${tel ? `<a class="btn ${x.username ? 'ghost' : 'primary'} block" href="tel:${esc(tel[0].replace(/[^\d+]/g, ''))}">${ic('phone')}Позвонить · ${esc(tel[0].trim())}</a>` : ''}</div>`
-    : '<p class="small muted">Телефон видят сотрудники фирмы. Чтобы выйти на этот контакт — спросите у них</p>'}`,
+    : `<p class="small muted" style="margin:0 0 10px">Телефон знают сотрудники фирмы — спросите того, кто ближе к вам</p>
+          ${staff.length ? `<div class="card">${staff.map((y) => `<a class="person" href="#/p/${y.user}">${av(y.user, 's')}<div class="grow" style="min-width:0"><div class="name ellip">${esc(full(y.user))}</div>
+            <div class="sub ellip">${esc(y.firm)}${G.dist[y.user] === 1 ? ' · ваш знакомый' : G.dist[y.user] === 2 ? ' · через ваших знакомых' : ''}</div></div></a>`).join('')}</div>` : ''}`}`,
     });
   }
 
@@ -1645,6 +1731,8 @@
         <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
 
       ${canCard(n) && !(n.facts || []).some((x) => x.official) ? `<button class="link-row wide" data-act="nodeCard" data-id="${n.id}" style="margin-top:16px">${ic('edit')}<span class="grow"><b>Заполните карточку ${n.kind === 'company' ? 'фирмы' : 'места'}</b><i>Что делаете, часы, цены, к кому подходить — одним экраном</i></span>${ic('arrow')}</button>` : ''}
+
+      ${partnerOfView('node', n.id) ? `<div class="card" style="margin-top:16px">${partnerOfView('node', n.id)}</div>` : ''}
 
       ${peopleBlock(n)}
 
@@ -1932,8 +2020,12 @@
     const placeBlock = places.length ? `<div class="sec-title"><h2 class="h2">Места и фирмы</h2><span class="small muted">${places.length}</span></div>
       <div class="stack">${places.slice(0, 6).map((n, i) => nodeCard(n, i === 0 && !all.length)).join('')}</div>` : '';
     const addPlace = `<p style="text-align:center;margin-top:16px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>`;
+    const partnersFound = findPartners(q, F.c);
+    const partnerBlock = partnersFound.length ? `<div class="sec-title"><h2 class="h2">Подрядчики фирм</h2><span class="small muted">${partnersFound.length}</span></div>
+      <p class="sec-note">С ними работают фирмы из Сарафана — выйти можно через сотрудника</p>
+      <div class="card">${partnersFound.slice(0, 8).map(partnerCard).join('')}${partnersFound.length > 8 ? `<p class="tiny muted" style="margin:8px 0 0">и ещё ${partnersFound.length - 8} — уточните запрос</p>` : ''}</div>` : '';
     if (!all.length) {
-      if (places.length) return filt + placeBlock + addPlace + askCard;
+      if (places.length || partnersFound.length) return filt + placeBlock + partnerBlock + addPlace + askCard;
       return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В кругах ваших знакомых в этой сфере пока никого.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + addPlace + askCard;
     }
     const groups = [['1', 'Ваши контакты'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
@@ -1943,7 +2035,7 @@
       if (!g.length) return;
       html += `<div class="group-label">${label}</div><div class="stack">${g.map(resultCard).join('')}</div>`;
     });
-    return html + placeBlock + addPlace + askCard;
+    return html + placeBlock + partnerBlock + addPlace + askCard;
   }
 
   // ——— Профиль человека ———
@@ -2066,6 +2158,15 @@
     const mine = q.from === S.me;
     const answered = q.answers.some((a) => a.from === S.me);
     const answers = q.answers.map((a, i) => {
+      if (a.partner) {
+        const x = a.partner, tel = (x.phone || '').match(/\+?[\d\s\-()]{7,}/);
+        const thanksP = mine ? (a.thanked ? `<span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Спасибо</span>` : `<button class="btn ghost xs" data-act="thank" data-q="${q.id}" data-i="${i}">Сказать спасибо</button>`) : '';
+        return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">советует подрядчика фирмы · ${when(a.at)}</span></div>${thanksP}</div>
+          <div class="row" style="margin-top:10px"><span class="av" style="--h:${hue(x.id)}">${esc((x.name || '?')[0].toUpperCase())}</span><div class="grow"><div class="h3">${esc(x.name)}</div>
+          <div class="small muted">${esc([x.section, 'работает с ' + x.firmName].filter(Boolean).join(' · '))}</div></div></div>
+          <p class="txt">«${esc(a.text)}»</p>
+          ${x.username || tel ? `<div class="btn-row">${x.username ? `<button class="btn soft sm" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать</button>` : ''}${tel ? `<a class="btn ${x.username ? 'ghost' : 'soft'} sm" href="tel:${esc(tel[0].replace(/[^\d+]/g, ''))}">${ic('phone')}${esc(tel[0].trim())}</a>` : ''}</div>` : ''}</div>`;
+      }
       const t = G.trust(a.person, q.cat);
       const direct = G.connected(S.me, a.person);
       const intro = S.intros.find((x) => x.to === a.person && x.from === S.me);
@@ -2091,7 +2192,8 @@
       ${answers ? `<div class="card" style="padding:6px 10px 10px">${answers}</div>` : `<div class="card"><p class="small muted" style="margin:0">${mine ? 'Мы сообщим в Telegram, как только кто-то посоветует человека.' : 'Будьте первым, кто поможет.'}</p></div>`}
       <div style="margin-top:16px">${mine
         ? (q.closed ? '<p class="small muted" style="text-align:center">Запрос закрыт</p>' : `<button class="btn ghost block" data-act="closeReq" data-id="${q.id}">${ic('check')}Нашёл, закрыть запрос</button>`)
-        : answered ? '' : `<button class="btn primary block" data-act="answer" data-id="${q.id}">Посоветовать человека</button>`}</div>`;
+        : answered ? '' : `${partnersForRequest(q).length ? `<div class="note" style="margin-bottom:12px">${ic('seal')} У подрядчиков вашей фирмы есть подходящие: <b>${esc(partnersForRequest(q).slice(0, 3).map((x) => x.name.split(' ')[0]).join(', '))}</b>
+          <button class="btn ghost xs" style="margin-top:10px" data-act="answerPartner" data-q="${q.id}" data-id="${partnersForRequest(q)[0].id}">Посоветовать</button></div>` : ''}<button class="btn primary block" data-act="answer" data-id="${q.id}">Посоветовать человека</button>`}</div>`;
   }
 
   // ——— Моя сеть ———
@@ -2745,6 +2847,7 @@
       .map((c) => ({ id: c, fit: !!q.cat && G.catsOf(c).includes(q.cat), mine: !!q.cat && G.recsFrom(S.me).some((r) => r.to === c && r.cat === q.cat) }))
       .sort((a, b) => (b.mine - a.mine) || (b.fit - a.fit) || U(a.id).name.localeCompare(U(b.id).name));
     const f = { person: '', text: '', asRec: true };
+    const fits = partnersForRequest(q);
     openSheet({
       F: f,
       valid: () => f.person && f.text.trim().length >= 8,
@@ -2757,8 +2860,10 @@
           <label class="field"><span>Почему этот человек</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинил мне часы в прошлом году, взял недорого и сделал за три дня">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="20"></p></label>
           ${canRec ? `<div class="note" style="margin-top:12px">Ваш ответ сам ляжет в ваш круг — записью о ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}». Её увидят знакомые, когда будут искать такого же человека.
             <button class="btn ghost xs" style="margin-top:10px" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}">${f.asRec ? 'Не записывать, просто ответить' : 'Всё-таки записать'}</button></div>` : ''}
+          ${fits.length ? `<div class="field"><span>Подрядчики вашей фирмы — подходят</span>${fits.slice(0, 5).map((x) => `<button class="pick" data-act="answerPartner" data-q="${q.id}" data-id="${x.id}">${partnerAv(x)}<span class="grow"><span class="h3 ellip" style="display:block">${esc(x.name)}</span><span class="small muted ellip" style="display:block">${esc(x.section || (x.cat ? cat(x.cat).who : ''))}</span></span>${ic('arrow')}</button>`).join('')}</div>` : ''}
           <div class="btn-row" style="margin-top:12px">
             <button class="btn ghost sm" data-act="outsider" data-cat="${q.cat}">Человека нет в сети</button>
+            ${myFirmPartners().length ? `<button class="btn ghost sm" data-act="answerPartner" data-q="${q.id}">Подрядчик фирмы</button>` : ''}
             <button class="btn ghost sm" data-act="answerPlace" data-id="${q.id}" data-cat="${q.cat}">Посоветовать место</button></div>
           <div class="s-foot"><button class="btn primary block" data-act="submitAnswer" data-submit>${ic('send')}Отправить ответ</button></div>`;
       },
@@ -3360,8 +3465,11 @@
     nodeCard: (d) => sheetNodeCard(d.id),
     addPartner: (d) => sheetPartner(d.id),
     partnerView: (d) => sheetPartnerView(d.id),
+    answerPartner: (d) => sheetAnswerPartner(d.q, d.id),
+    submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
-    viewAsPick: () => { window.API.setViewAs(null); try { sessionStorage.setItem('sarafan.viewAsPick', '1'); } catch (e) { /* */ } location.hash = '#/me'; location.reload(); },
+    // «Другой»: выбор открывается прямо поверх — список ролей сервер собирает вашими глазами
+    viewAsPick: () => sheetViewAs(),
     viewAsGo: (d) => { window.API.setViewAs({ id: d.id, label: d.label, name: d.name }); location.hash = '#/'; location.reload(); },
     viewAsExit: () => { window.API.setViewAs(null); location.hash = '#/me'; location.reload(); },
     toggleSec: (d) => { if (openSecs.has(d.k)) openSecs.delete(d.k); else openSecs.add(d.k); render(); },
