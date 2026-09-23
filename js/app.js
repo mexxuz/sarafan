@@ -969,7 +969,7 @@
       render: () => `${sheetHead(q.from, 'Посоветовать место', esc(U(q.from).name) + ' спрашивает')}
         <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
         <div class="field"><span>Что советуете</span>
-          ${list.length ? list.map((n) => `<button class="pick ${f.node === n.id ? 'on' : ''}" data-act="set" data-k="node" data-v="${n.id}">
+          ${list.length ? list.map((n) => `<button class="pick ${f.node === n.id ? 'on' : ''}" data-act="pickWho" data-k="node" data-v="${n.id}">
             <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
             <span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span>
             <span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}${n.address ? ' · ' + esc(n.address) : ''}</span></span>
@@ -1244,9 +1244,9 @@
       .filter((id) => !f.q.trim() || normCat(U(id).name).includes(normCat(f.q)))
       .sort((a, b) => (G.dist[a] ?? 9) - (G.dist[b] ?? 9)).slice(0, 8);
     const peopleHtml = () => {
-      const a = people().map((id) => `<button class="person" data-act="set" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}
+      const a = people().map((id) => `<button class="person" data-act="pickWho" data-k="user" data-v="${id}" style="width:100%;text-align:left">${av(id, 's')}
           <div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(who(id))}</div></div></button>`).join('');
-      const w = waiters().map((x) => `<button class="person" data-act="set" data-k="wait" data-v="${x.id}" style="width:100%;text-align:left">${waitAv(x, 's')}
+      const w = waiters().map((x) => `<button class="person" data-act="pickWho" data-k="wait" data-v="${x.id}" style="width:100%;text-align:left">${waitAv(x, 's')}
           <div class="grow"><div class="name ellip">${esc(x.name || 'Без имени')}</div><div class="sub ellip">${x.username ? '@' + esc(x.username) + ' · ' : ''}ещё не в Сарафане</div></div></button>`).join('');
       return (a || '') + (w ? `<div class="eyebrow" style="margin:12px 2px 4px">ещё не в Сарафане — ждут в вашем круге</div>${w}` : '')
         || '<p class="small muted">Никого не нашли. Кого нет в Сарафане — сначала добавьте в круг: «Моя сеть» → «Добавить знакомых из Telegram»</p>';
@@ -2499,7 +2499,7 @@
         const canRec = c && !c.mine && !!q.cat;
         return `${sheetHead(q.from, 'Посоветовать', esc(U(q.from).name) + (q.cat ? ' ищет: ' + esc(cat(q.cat).who.toLowerCase()) : ' спрашивает сеть'))}
           <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
-          <div class="field"><span>Кого советуете</span>${cands.map((x) => `<button class="pick ${f.person === x.id ? 'on' : ''}" data-act="set" data-k="person" data-v="${x.id}">${av(x.id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(U(x.id).name)}</span><span class="small muted">${x.mine ? 'Вы уже рекомендуете' : esc(who(x.id))}</span></span>${x.fit ? `<span class="tag brand">${esc(cat(q.cat).who)}</span>` : ''}<span class="radio"></span></button>`).join('')}</div>
+          <div class="field"><span>Кого советуете</span>${cands.map((x) => `<button class="pick ${f.person === x.id ? 'on' : ''}" data-act="pickWho" data-k="person" data-v="${x.id}">${av(x.id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(U(x.id).name)}</span><span class="small muted">${x.mine ? 'Вы уже рекомендуете' : esc(who(x.id))}</span></span>${x.fit ? `<span class="tag brand">${esc(cat(q.cat).who)}</span>` : ''}<span class="radio"></span></button>`).join('')}</div>
           <label class="field"><span>Почему этот человек</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинил мне часы в прошлом году, взял недорого и сделал за три дня">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="20"></p></label>
           ${canRec ? `<div class="note" style="margin-top:12px">Ваш ответ сам ляжет в ваш круг — записью о ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}». Её увидят знакомые, когда будут искать такого же человека.
             <button class="btn ghost xs" style="margin-top:10px" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}">${f.asRec ? 'Не записывать, просто ответить' : 'Всё-таки записать'}</button></div>` : ''}
@@ -3099,6 +3099,8 @@
     submitWork: () => SH.submit(),
     submitFix: () => SH.submit(),
     submitPropose: () => SH.submit(),
+    // выбрать человека в окне: номер кладём как есть — общее «set» превращало «1» в «да»
+    pickWho: (d) => { SH.F[d.k] = d.v; if (SH.onSet) SH.onSet(d.k); drawSheet(); },
     submitPickNode: () => SH.submit(),
     proposePerson: (d) => sheetProposePerson(d.id),
     pickNode: (d) => sheetPickNode(d.id),
