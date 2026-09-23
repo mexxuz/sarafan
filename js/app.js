@@ -2440,8 +2440,10 @@
       const first = new Date(t.getFullYear(), t.getMonth() + m, 1);
       const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
       const lead = (first.getDay() + 6) % 7;
-      let cells = '<i></i>'.repeat(lead);
-      for (let d = 1; d <= total; d++) {
+      // в текущем месяце прошедшие недели не показываем — начинаем с понедельника этой недели
+      const from = m === 0 ? Math.max(1, t.getDate() - ((t.getDay() + 6) % 7)) : 1;
+      let cells = '<i></i>'.repeat(m === 0 ? (lead + from - 1) % 7 : lead);
+      for (let d = from; d <= total; d++) {
         const day = new Date(first.getFullYear(), first.getMonth(), d);
         const key = ymd(day), past = day < t;
         cells += `<button class="cal-d ${sel.has(key) ? 'on' : ''} ${key === ymd(t) ? 'today' : ''}" ${past ? 'disabled' : `data-act="${act}" data-v="${key}"`}>${d}</button>`;
