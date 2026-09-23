@@ -827,7 +827,8 @@
       <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик — те, кого вы советуете в чатах по памяти. Запишите один раз: знакомые найдут их сами, а вам не придётся отвечать на один и тот же вопрос снова.</p>
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)}${p.private ? ' · для себя' : ''} · ${p.phone ? esc(p.phone) : 'записан ' + when(p.at)}</div></div>
-        ${p.private ? '' : `<button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button>`}</div>`).join('')}</div>` : ''}
+        ${p.private ? '' : `<button class="btn xs" data-act="callPending" data-code="${p.code}" data-name="${esc(p.name)}">Позвать</button>`}
+        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropPending" data-code="${p.code}" data-name="${esc(p.name)}" aria-label="Убрать запись">${ic('x')}</button></div>`).join('')}</div>` : ''}
       <button class="btn primary block" data-act="outsider">${ic('user')}Записать человека</button>
       <button class="btn block" style="margin-top:8px" data-act="pickContacts">${ic('send')}Из контактов Telegram</button>
       <div class="btn-row" style="margin-top:8px">
@@ -2543,6 +2544,9 @@
       drawSheet();
     },
     openDraft: (d) => sheetOutsider('', d.id),
+    // Записали человека, а он не нужен — убираем; его ссылка-приглашение перестаёт работать
+    dropPending: (d) => mutate(() => { S.pendingInvites = (S.pendingInvites || []).filter((x) => x.code !== d.code); },
+      '/recommendations/outside/delete', { code: d.code }, 'Убрали: ' + d.name),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropVideo: async () => {
       if (!LIVE) return;
