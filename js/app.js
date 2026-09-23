@@ -1096,10 +1096,33 @@
     if (!list.length) return '';
     return `<div class="sec-title"><h2 class="h2">Ждут в вашем круге</h2><span class="tag">${list.length}</span></div>
       <p class="sec-note">Ещё не в Сарафане. Придут по любой ссылке — сразу получат вашу заявку</p>
-      <div class="card">${list.map((w) => `<div class="person"><span class="av s wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>
-        <div class="grow"><div class="name ellip">${esc(w.name || 'Без имени')}</div><div class="sub ellip">${w.username ? '@' + esc(w.username) + ' · ' : ''}ждёт с ${when(w.at)}</div></div>
-        <button class="btn xs" data-act="sendInvite">Поторопить</button>
-        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}" aria-label="Не ждать">${ic('x')}</button></div>`).join('')}</div>`;
+      <div class="card">${list.map((w) => `<button class="person" data-act="openWaiting" data-id="${w.id}" style="width:100%;text-align:left">${waitAv(w, 's')}
+        <div class="grow" style="min-width:0"><div class="name ellip">${esc(w.name || 'Без имени')}</div>
+        <div class="sub ellip">${esc([w.cat ? cat(w.cat).who : '', w.note, w.username ? '@' + w.username : '', 'ждёт с ' + when(w.at)].filter(Boolean).join(' · '))}</div></div>${ic('chev', 'chev')}</button>`).join('')}</div>`;
+  }
+  const waitAv = (w, size) => `<span class="av ${size} wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>`;
+
+  // Карточка того, кто ждёт в круге: подписать, как вы его знаете, рекомендовать, поторопить
+  function sheetWaiting(id) {
+    const w = (S.waiting || []).find((x) => x.id === id);
+    if (!w) return;
+    const f = { name: w.name || '', note: w.note || '', cat: w.cat || '' };
+    openSheet({
+      F: f,
+      valid: () => f.name.trim().length >= 1,
+      render: () => `<div class="s-head">${waitAv(w, 'l')}<div class="grow"><h2 class="h2">${esc(f.name || 'Без имени')}</h2>
+          <div class="small muted" style="margin-top:4px">${w.username ? '@' + esc(w.username) + ' · ' : ''}ещё не в Сарафане</div></div>
+          <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
+        <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
+        <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
+        ${catPick(f, 'cat', 'who', 'Чем занимается')}
+        <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку, и вы станете знакомыми</p>
+        <div class="s-foot"><button class="btn primary block" data-act="saveWaiting" data-id="${w.id}" data-submit>Сохранить</button>
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}Рекомендовать</button>
+            <button class="btn sm ghost" data-act="sendInvite">${ic('send')}Поторопить</button></div>
+          <button class="btn ghost block" style="margin-top:4px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}">Не ждать</button></div>`,
+    });
   }
 
   // ——— Люди фирмы: кто владелец, кто работает, кто работал раньше ———
@@ -2730,7 +2753,24 @@
     // Записали человека, а он не нужен — убираем; его ссылка-приглашение перестаёт работать
     dropPending: (d) => mutate(() => { S.pendingInvites = (S.pendingInvites || []).filter((x) => x.code !== d.code); },
       '/recommendations/outside/delete', { code: d.code }, 'Убрали: ' + d.name),
-    dropWaiting: (d) => mutate(() => { S.waiting = (S.waiting || []).filter((x) => x.id !== d.id); },
+    openWaiting: (d) => sheetWaiting(d.id),
+    saveWaiting: (d) => {
+      const f = SH.F;
+      closeSheet();
+      mutate(() => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) Object.assign(w, { name: f.name.trim(), note: f.note.trim(), cat: f.cat || '' }); },
+        '/circle/waiting/update', { id: d.id, name: f.name.trim(), note: f.note.trim(), cat: f.cat || '' }, 'Сохранено');
+    },
+    // Рекомендовать того, кто ещё не пришёл: обычная запись «человек вне Сарафана», уже с его именем и ником
+    recWaiting: (d) => {
+      const w = (S.waiting || []).find((x) => x.id === d.id);
+      const f = SH ? SH.F : {};
+      closeSheet();
+      setTimeout(() => {
+        sheetOutsider(f.cat || (w && w.cat) || '');
+        if (SH && w) { SH.F.name = (f.name || w.name || '').trim(); SH.F.phone = w.username ? '@' + w.username : ''; drawSheet(); }
+      }, 320);
+    },
+    dropWaiting: (d) => mutate(() => { if (SH) closeSheet(); S.waiting = (S.waiting || []).filter((x) => x.id !== d.id); },
       '/circle/waiting/delete', { id: d.id }, 'Больше не ждём: ' + (d.name || '')),
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropVideo: async () => {
