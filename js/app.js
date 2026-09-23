@@ -5,6 +5,12 @@
   const tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
   if (tg) {
     tg.ready(); tg.expand();
+    // во весь экран: Telegram рисует свои кнопки поверх — отступаем от них и перерисовываем значок
+    try {
+      tg.onEvent('fullscreenChanged', () => { document.documentElement.classList.toggle('tg-full', !!tg.isFullscreen); if (typeof render === 'function') render(); });
+      tg.onEvent('fullscreenFailed', () => { if (typeof toast === 'function') toast('Telegram не дал развернуть окно'); });
+      if (tg.isFullscreen) document.documentElement.classList.add('tg-full');
+    } catch (e) { /* старый Telegram */ }
     // потянули вниз у верхнего края — Telegram не должен сворачивать приложение: это читалось как «отскок»
     try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) { /* старый Telegram */ }
   }
@@ -197,6 +203,8 @@
     check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     chev: '<path d="m9 6 6 6-6 6"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
     chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',
@@ -477,9 +485,14 @@
   // ——— Общие куски ———
   // Шапка экрана: всегда одной высоты, заголовок одной строкой, подпись под ним,
   // справа — круглые кнопки экрана и последним портрет.
+  // Во весь экран — только в Telegram на компьютере: там мини-приложение открывается небольшим окном
+  const canFull = () => !!(tg && typeof tg.requestFullscreen === 'function' && /tdesktop|macos|web|unigram/i.test(tg.platform || ''));
+  const fullBtn = () => (canFull()
+    ? `<button class="icon-btn full-btn" data-act="toggleFull" aria-label="${tg.isFullscreen ? 'Свернуть в окно' : 'Во весь экран'}" title="${tg.isFullscreen ? 'Свернуть в окно' : 'Во весь экран'}">${ic(tg.isFullscreen ? 'shrink' : 'expand')}</button>`
+    : '');
   const screenHead = (title, sub, tools) => `<div class="top screen">
       <div class="grow"><h1 class="h1 one">${title}</h1>${sub ? `<div class="sub ellip">${sub}</div>` : ''}</div>
-      ${tools || ''}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>`;
+      ${tools || ''}${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>`;
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
 
   // Витрина: то, что человек рассказывает о себе сам. Рекомендации — то, что о нём
@@ -766,7 +779,7 @@
     return `
       <div class="head-bar over">
         <div class="logo grow">${logoMark}сарафан</div>
-        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${starter()}
       ${draftsCard()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
@@ -1019,7 +1032,7 @@
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button>
         <h1 class="h2 grow">Облако сети</h1>
-        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div class="chips" style="margin-bottom:10px">
         ${[['all', 'Всё'], ['people', 'Только люди'], ['places', 'Только места']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
@@ -1494,7 +1507,7 @@
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
     return `<div class="top">
         <label class="search grow">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
-        <a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       <div id="results">${searchResults()}</div>`;
   }
   // Места и фирмы, подходящие под запрос: по названию и по сфере
@@ -2805,6 +2818,7 @@
         drawSheet(); toast('Номер вписан — нажмите «Сохранить»');
       });
     },
+    toggleFull: () => { try { if (tg.isFullscreen) tg.exitFullscreen(); else tg.requestFullscreen(); } catch (e) { toast('В этой версии Telegram так нельзя'); } },
     // Позвать знакомых из контактов — просто в круг, без рекомендаций
     pickCircle: () => {
       const link = `https://t.me/${S.bot || 'sarafanibot'}?start=pickc`;

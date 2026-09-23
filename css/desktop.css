@@ -22,6 +22,7 @@
     padding: var(--s-3); border-radius: 20px;
   }
   .nav.hide { transform: translateX(-120%); }
+  .tg-full .nav { top: calc(26px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)); }
   .nav .pill { display: none; }
   .nav a {
     flex: none; flex-direction: row; justify-content: flex-start; gap: 11px;

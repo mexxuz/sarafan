@@ -592,3 +592,9 @@
 
 /* Ждёт в круге: портрет бледный и в пунктирной рамке — место есть, человек ещё не пришёл */
 .av.wait { opacity: .7; box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--ink-4); filter: grayscale(.35); }
+
+/* Во весь экран (Telegram на компьютере): кнопка в шапке рядом с портретом */
+.full-btn { flex: none; width: 38px; height: 38px; margin-right: 8px; box-shadow: none; background: var(--card-2, #f1f5fa); }
+.full-btn svg { width: 18px; height: 18px; }
+/* Telegram рисует свои кнопки поверх верхнего края — содержимое и меню начинаются ниже них */
+.tg-full #app { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)); }
