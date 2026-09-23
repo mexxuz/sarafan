@@ -230,6 +230,8 @@
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
     eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>',
     phone: '<path d="M6.5 4h3l1.5 4-2 1.5a11 11 0 0 0 5.5 5.5L16 13l4 1.5v3A2 2 0 0 1 18 19.5 15.5 15.5 0 0 1 4.5 6 2 2 0 0 1 6.5 4z"/>',
     chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -298,6 +300,8 @@
     if (!raw || !S || !S.onboarded) return false;
     pendingLanding = '';
     if (raw.startsWith('a-')) { go('#/rec/' + raw.split('_')[0]); return true; }
+    const col = (raw.match(/(?:^|_)(l[a-z0-9]{7})$/) || [])[1];      // подборка: «код-приглашения_lxxxxxxx»
+    if (col) { go('#/l/' + col); return true; }
     const legacy = raw.match(/^([poq])_(\d+)/);
     const tail = legacy ? legacy[1] + legacy[2] : (raw.split('_')[1] || '');
     const m = tail.match(/^([poq])(\d+)$/);
@@ -325,6 +329,7 @@
       html = Profile(id, params); nav = false;
     }
     else if (name === 'ask') { html = Ask(); active = 'ask'; }
+    else if (name === 'l' && id) { html = CollectionScreen(id); nav = false; }
     else if (name === 'q' && id) {
       html = Request(id); nav = false;
       // «Знаю кого» из сообщения бота: сразу открываем ответ, без лишних нажатий
@@ -625,7 +630,7 @@
   };
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
-  const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'зарабатывает на этом' };
+  const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'получает с этого доход' };
   // Что написано на кнопке рекомендации: зависит от того, есть ли уже записи
   const recLabel = (id, catId) => {
     const mine = G.recsFrom(S.me).filter((r) => r.to === id);
@@ -681,7 +686,7 @@
         ${path ? `<span class="tag circle-${r.circle}">${path}</span>` : ''}</div>
       <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
-        <div class="by ellip">${esc(full(best.from))}${best.interest ? ' · ' + esc(INTEREST[best.interest]) : ''}</div>`
+        <div class="by ellip">${esc(full(best.from))}${best.interest ? ` <span class="tag warm xs">${esc(INTEREST[best.interest])}</span>` : ''}</div>`
     : `<p class="quote none">${r.circle === 1 ? 'Вы знакомы, но его пока никто не рекомендовал.' : 'Этого человека пока никто не рекомендовал.'}</p>`}
       <div class="foot">${authors.length ? stack(authors) : ''}
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
@@ -704,7 +709,8 @@
         ? `<div class="row"><span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Вы ответили</span><span class="grow"></span><span class="tiny muted">${pl(q.answers.length, 'ответ', 'ответа', 'ответов')}</span></div>`
         : `<div class="btn-row"><button class="btn primary sm" data-act="answer" data-id="${q.id}">Посоветовать</button><button class="btn ghost sm" data-act="skipReq" data-id="${q.id}">Не знаю</button></div>`;
     return `<div class="card ask-card ${accent ? 'accent' : ''} ${mine ? 'tap' : ''}" ${mine ? `data-act="goto" data-h="#/q/${q.id}" role="link" tabindex="0"` : ''}>${head}
-      <p class="q">${esc(q.text)}</p>${compact || !q.cat ? '' : `<div class="chips" style="margin-bottom:12px"><span class="tag brand">${esc(cat(q.cat).name)}</span></div>`}${foot}</div>`;
+      <p class="q">${esc(q.text)}</p>${(q.roles || []).length || q.date ? `<div class="chips" style="margin-bottom:12px">${q.date ? `<span class="tag warm">${ic('calendar')}${fmtDay(q.date)}</span>` : ''}${(q.roles || []).map((r) => `<span class="tag brand">${esc(cat(r).who)}</span>`).join('')}</div>`
+    : compact || !q.cat ? '' : `<div class="chips" style="margin-bottom:12px"><span class="tag brand">${esc(cat(q.cat).name)}</span></div>`}${foot}</div>`;
   };
 
   // ——— Лента: движение доверия вокруг вас ———
@@ -1093,6 +1099,133 @@
     });
   }
 
+  // ——— Подборки: «Мои диджеи», «Ведущие на свадьбы» — собрал и отправил одной ссылкой ———
+  const colLink = (code) => `https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}${code}`;
+  function collectionsView() {
+    if (!LIVE) return '';
+    const list = S.collections || [];
+    return `<div class="sec-title"><h2 class="h2">Подборки</h2><button class="btn sm" data-act="colNew">${ic('plus')}Новая</button></div>
+      <p class="sec-note">Соберите своих — «Мои диджеи», «Ведущие на свадьбы» — и отправляйте одной ссылкой</p>
+      ${list.length ? `<div class="stack" style="gap:8px">${list.map((c) => `<a class="link-row wide" href="#/l/${c.code}" style="margin:0">${ic('list')}
+        <span class="grow"><b>${esc(c.title)}</b><i>${c.items.length ? pl(c.items.length, 'позиция', 'позиции', 'позиций') : 'пока пусто — добавьте людей и места'}</i></span>${ic('arrow')}</a>`).join('')}</div>` : ''}`;
+  }
+  function sheetColEdit(c) {
+    const f = { title: c ? c.title : '', note: c ? c.note : '' };
+    openSheet({
+      F: f,
+      valid: () => f.title.trim().length >= 2,
+      render: () => `${sheetHead(null, c ? 'Подборка' : 'Новая подборка', 'Название видят все, кому вы её отправите')}
+        <label class="field" style="margin-top:0"><span>Название</span><input class="input" data-bind="title" maxlength="60" placeholder="Мои диджеи, Ведущие на свадьбы" value="${esc(f.title)}"></label>
+        <label class="field"><span>Пара слов, если нужно</span><textarea class="textarea" data-bind="note" rows="2" maxlength="300" placeholder="Проверены на моих вечеринках, звоните от меня">${esc(f.note)}</textarea></label>
+        <div class="s-foot"><button class="btn primary block" data-act="colSave" data-submit>${c ? 'Сохранить' : 'Создать и добавить людей'}</button></div>`,
+      submit: async () => {
+        try {
+          const r = await window.API.post('/collections', { id: c ? c.id : '', title: f.title.trim(), note: f.note.trim() });
+          closeAllSheets();
+          await refresh();
+          F.col = null;
+          if (c) render(); else { go('#/l/' + r.code); setTimeout(() => sheetColAdd(r.id), 400); }
+        } catch (e) { toast(e.message); }
+      },
+    });
+  }
+  // Добавить в подборку: ваши люди и места, поиск по имени и сфере
+  function sheetColAdd(cid) {
+    const col = (S.collections || []).find((c) => c.id === cid);
+    if (!col) return;
+    const f = { q: '', added: new Set(col.items.map((i) => i.user || 'o' + i.node)) };
+    const mine = new Set(G.recsFrom(S.me).map((r) => r.to));
+    const people = Object.keys(S.users).filter((id) => id !== S.me)
+      .sort((a, b) => (mine.has(b) - mine.has(a)) || ((G.dist[a] ?? 9) - (G.dist[b] ?? 9)));
+    const listHtml = () => {
+      const q = normCat(f.q);
+      const ok = (hay) => !q || normCat(hay).includes(q);
+      const ps = people.filter((id) => ok(U(id).name + ' ' + who(id))).slice(0, 25)
+        .map((id) => `<button class="pick ${f.added.has(id) ? 'on' : ''}" data-act="colAddPick" data-u="${id}">${av(id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(full(id))}</span><span class="small muted ellip" style="display:block">${esc(who(id))}${mine.has(id) ? ' · вы рекомендуете' : ''}</span></span>${f.added.has(id) ? ic('check') : ic('plus')}</button>`).join('');
+      const ns = q ? nodesAll().filter((n) => ok(n.name + ' ' + (n.cat ? cat(n.cat).name : ''))).slice(0, 10)
+        .map((n) => `<button class="pick ${f.added.has('o' + n.id) ? 'on' : ''}" data-act="colAddPick" data-n="${n.id}"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span><span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span><span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</span></span>${f.added.has('o' + n.id) ? ic('check') : ic('plus')}</button>`).join('') : '';
+      return ps + ns || '<p class="small muted">Никого не нашли</p>';
+    };
+    openSheet({
+      F: f,
+      render: () => `${sheetHead(null, 'Добавить в «' + esc(col.title) + '»', 'Нажмите — и человек в подборке')}
+        <input class="input" data-live="1" placeholder="Имя или сфера: диджей, ведущий, бар" autocomplete="off" value="${esc(f.q)}">
+        <div class="stack col-pick" style="gap:6px;margin-top:10px">${listHtml()}</div>
+        <div class="s-foot"><button class="btn primary block" data-act="closeSheet">Готово</button></div>`,
+      onLive: (v) => { f.q = v; const b = $('#sheet .col-pick'); if (b) b.innerHTML = listHtml(); },
+      onClose: () => { F.col = null; render(); },
+      add: async (user, node) => {
+        const key = user || 'o' + node;
+        if (f.added.has(key)) return;
+        try {
+          await window.API.post('/collections/item', { collection: cid, user: user || '', node: node || '' });
+          f.added.add(key);
+          col.items.push({ user: user || null, node: node || null });
+          const b = $('#sheet .col-pick'); if (b) b.innerHTML = listHtml();
+        } catch (e) { toast(e.message); }
+      },
+    });
+  }
+  // «В подборку» с профиля человека или страницы места
+  function sheetColPick(user, node) {
+    const list = S.collections || [];
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'В подборку', esc(user ? full(user) : (nodeById(node) || {}).name || ''))}
+        ${list.length ? `<div class="stack" style="gap:8px">${list.map((c) => {
+    const has = c.items.some((i) => (user && i.user === user) || (node && i.node === node));
+    return `<button class="link-row wide" style="margin:0" data-act="colPut" data-id="${c.id}" data-u="${user || ''}" data-n="${node || ''}" ${has ? 'disabled' : ''}>${ic('list')}<span class="grow"><b>${esc(c.title)}</b><i>${has ? 'уже здесь' : pl(c.items.length, 'позиция', 'позиции', 'позиций')}</i></span>${has ? ic('check') : ic('plus')}</button>`;
+  }).join('')}</div>` : '<p class="small muted">Подборок пока нет</p>'}
+        <div class="s-foot"><button class="btn ghost block" data-act="colNew">${ic('plus')}Новая подборка</button></div>`,
+    });
+  }
+
+  function CollectionScreen(code) {
+    if (!F.col || F.col.code !== code) {
+      if (!F.colLoading) {
+        F.colLoading = true;
+        window.API.get('/collections/' + encodeURIComponent(code))
+          .then((r) => { F.col = r; F.colErr = ''; })
+          .catch((e) => { F.colErr = e.message; })
+          .finally(() => { F.colLoading = false; if (location.hash.startsWith('#/l/')) render(); });
+      }
+      return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button></div>
+        <p class="small muted" style="text-align:center;margin-top:30vh">${F.colErr ? esc(F.colErr) : 'Открываем подборку…'}</p>`;
+    }
+    const c = F.col;
+    const personAv = (x) => (U(x.user) ? av(x.user, '') : `<span class="av" style="--h:${hue(x.user)}">${esc((x.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${x.photo ? `<img src="${esc(x.photo)}" alt="" onerror="this.remove()">` : ''}</span>`);
+    const item = (x) => {
+      const del = c.mine ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="colDel" data-id="${x.id}" aria-label="Убрать">${ic('x')}</button>` : '';
+      if (x.kind === 'place') {
+        const known = nodeById(x.node);
+        return `<div class="col-item"><div class="row">${`<span class="node-ic ${x.nodeKind}" style="width:44px;height:44px">${ic(x.nodeKind === 'company' ? 'house' : 'pin')}</span>`}
+          <div class="grow" style="min-width:0">${known ? `<a class="h3 ellip" href="#/o/${x.node}" style="display:block">${esc(x.name)}</a>` : `<div class="h3 ellip">${esc(x.name)}</div>`}
+          <div class="small muted ellip">${esc([x.cat ? cat(x.cat).name : '', x.address].filter(Boolean).join(' · '))}</div></div>${del}</div>
+          ${x.note || x.rec ? `<p class="txt">«${esc(x.note || x.rec)}»</p>` : ''}</div>`;
+      }
+      const tel = (x.phone || '').match(/\+?[\d\s\-()]{7,}/);
+      return `<div class="col-item"><div class="row">${personAv(x)}
+          <div class="grow" style="min-width:0">${U(x.user) ? `<a class="h3 ellip" href="#/p/${x.user}" style="display:block">${esc(x.name)}</a>` : `<div class="h3 ellip">${esc(x.name)}</div>`}
+          <div class="small muted ellip">${esc((x.cats || []).map((k) => cat(k).who).slice(0, 3).join(' · ') || 'Участник сети')}</div></div>${del}</div>
+          ${x.note || x.rec ? `<p class="txt">«${esc(x.note || x.rec)}»${x.interest ? ` <span class="tag warm xs">${esc(INTEREST[x.interest])}</span>` : ''}</p>` : ''}
+          ${!c.mine && (x.username || tel) ? `<div class="btn-row" style="margin-top:8px">${x.username ? `<button class="btn soft sm" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать</button>` : ''}${tel ? `<a class="btn ghost sm" href="tel:${esc(tel[0].replace(/[^\d+]/g, ''))}">${ic('phone')}Позвонить</a>` : ''}</div>` : ''}</div>`;
+    };
+    const author = c.author;
+    return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div>
+        <button class="icon-btn" data-act="colShare" aria-label="Поделиться">${ic('share')}</button></div>
+      <div class="col-head">
+        <div class="row">${author && U(author.id) ? av(author.id, 's') : `<span class="av s" style="--h:${hue(author ? author.id : '0')}">${esc(((author || {}).name || '?')[0])}</span>`}
+          <span class="small muted">Подборка · ${author ? (author.id === S.me ? 'ваша' : esc(author.name)) : ''}</span></div>
+        <h1 class="h1" style="margin-top:10px">${esc(c.title)}</h1>
+        ${c.note ? `<p class="about">${esc(c.note)}</p>` : ''}
+        <p class="small muted" style="margin:8px 0 0">${pl(c.items.length, 'позиция', 'позиции', 'позиций')}${author && author.id !== S.me ? ' · за каждого ручается ' + esc(author.name.split(' ')[0]) : ''}</p></div>
+      ${c.items.length ? `<div class="card">${c.items.map(item).join('')}</div>` : `<div class="card"><p class="small muted" style="margin:0">Пока пусто</p></div>`}
+      <div class="btn-row" style="margin-top:14px">
+        ${c.mine ? `<button class="btn primary" data-act="colAdd" data-id="${c.id}">${ic('plus')}Добавить</button>` : ''}
+        <button class="btn ${c.mine ? 'soft' : 'primary'}" data-act="colShare">${ic('send')}Отправить в чат</button></div>
+      ${c.mine ? `<div class="btn-row" style="margin-top:10px"><button class="btn ghost sm" data-act="colEdit" data-id="${c.id}">Переименовать</button><button class="btn ghost sm" data-act="colDrop" data-id="${c.id}">Удалить подборку</button></div>` : ''}`;
+  }
+
   function sheetFounder() {
     const fc = S.founderCard;
     if (!fc) return;
@@ -1371,7 +1504,7 @@
   const nodePeople = (nid) => (S.nodePeople || []).filter((x) => x.node === nid);
   const jobsOf = (uid) => (S.nodePeople || []).filter((x) => x.user === uid && nodeById(x.node));
   const cap1 = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
-  const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : cap1(x.title) || 'Работает');
+  const jobRole = (x) => (x.role === 'owner' ? cap1(x.title) || 'Владелец' : x.role === 'promoter' ? cap1(x.title) || 'Делает мероприятия' : cap1(x.title) || 'Работает');
   // Неподтверждённая отметка: человек написал о себе сам, никто пока не подтвердил
   const jobState = (x) => (x.accepted === false ? (x.user === S.me ? 'отметил ' + (x.by && U(x.by) ? first(x.by) : 'знакомый') : 'ждёт его согласия')
     : x.waiting ? 'ждёт владельца' : x.confirmed ? '' : x.role === 'owner' ? 'ждёт подтверждения' : 'не подтверждено');
@@ -1617,9 +1750,10 @@
       render: () => `${sheetHead(null, esc(n.name), f.role === 'owner' ? 'Это ваша фирма' : 'Вы здесь работаете')}
         <div class="field" style="margin-top:0"><span>Кто вы здесь</span><div class="chips">
           <button class="chip ${f.role === 'staff' ? 'on' : ''}" data-act="set" data-k="role" data-v="staff">Работаю здесь</button>
+          <button class="chip ${f.role === 'promoter' ? 'on' : ''}" data-act="set" data-k="role" data-v="promoter">Делаю здесь мероприятия</button>
           ${hasOwner ? '' : `<button class="chip ${f.role === 'owner' ? 'on' : ''}" data-act="set" data-k="role" data-v="owner">Владелец</button>`}</div></div>
-        <label class="field"><span>${f.role === 'owner' ? 'Должность, если хотите' : 'Кем'}</span><input class="input" data-bind="title" maxlength="60"
-          placeholder="${f.role === 'owner' ? 'директор, основатель' : 'мастер, врач, администратор'}" value="${esc(f.title)}"></label>
+        <label class="field"><span>${f.role === 'owner' ? 'Должность, если хотите' : f.role === 'promoter' ? 'Что делаете' : 'Кем'}</span><input class="input" data-bind="title" maxlength="60"
+          placeholder="${f.role === 'owner' ? 'директор, основатель' : f.role === 'promoter' ? 'вечеринки по пятницам, арт-директор' : 'мастер, врач, администратор'}" value="${esc(f.title)}"></label>
         <p class="why">${ic('spark')}${f.role === 'owner'
     ? 'Подтвердит ваш знакомый или тот, кто записал фирму. После этого вы сможете подтверждать сотрудников и править карточку'
     : hasOwner ? 'Подтвердит владелец. До этого отметку видите только вы и он'
@@ -1896,6 +2030,8 @@
     openSheet({
       F: {},
       render: () => `${sheetHead(null, esc(n.name), 'Что можно поправить')}
+        ${LIVE ? `<button class="link-row wide" data-act="colFor" data-n="${n.id}">${ic('list')}
+          <span class="grow"><b>В подборку</b><i>Собрать с другими местами и людьми и отправить одной ссылкой</i></span>${ic('arrow')}</button>` : ''}
         ${canCard(n) ? `<button class="link-row wide" data-act="nodeCard" data-id="${n.id}">${ic('edit')}
           <span class="grow"><b>Карточка ${n.kind === 'company' ? 'фирмы' : 'места'}</b><i>Название, сфера, что делаете, адрес, часы, цены, сайт</i></span>${ic('arrow')}</button>`
     : n.by === S.me ? `<button class="link-row wide" data-act="editNode" data-id="${n.id}">${ic('edit')}
@@ -2215,6 +2351,8 @@
       ${partnerOfView('user', id)}
       ${workView(id)}
       ${howView(id)}
+      ${busyView(id)}
+      ${LIVE ? `<p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="colFor" data-u="${id}">${ic('list')}В подборку</button></p>` : ''}
       ${factsView(id)}
       ${showcaseView(id)}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
@@ -2236,16 +2374,21 @@
     const c1 = myContacts();
     const mine = S.requests.filter((q) => q.from === S.me).sort((a, b) => b.at - a.at);
     const inc = incomingRequests();
+    if (F.cats === undefined) F.cats = [];
     return screenHead('Спросить', `Запрос уйдёт ${pl(myContacts().length, 'знакомому', 'знакомым', 'знакомым')}`) + `
       <div class="card">
-        <label class="field" style="margin-top:0"><span>Кого ищете</span><textarea class="textarea" data-bind="t" placeholder="Например: нужен юрист по трудовому спору — уволили, хочу разобраться" maxlength="300">${esc(F.t)}</textarea></label>
-        <div id="askcats">${askCats()}</div>
+        <div class="chips" style="margin-bottom:12px"><button class="chip ${F.team ? '' : 'on'}" data-act="askTeam" data-v="">Нужен человек</button><button class="chip ${F.team ? 'on' : ''}" data-act="askTeam" data-v="1">${ic('calendar')}Собрать команду на дату</button></div>
+        <label class="field" style="margin-top:0"><span>${F.team ? 'Что за событие' : 'Кого ищете'}</span><textarea class="textarea" data-bind="t" placeholder="${F.team ? 'Например: день рождения в баре на 80 человек, нужен вечер под ключ' : 'Например: нужен юрист по трудовому спору — уволили, хочу разобраться'}" maxlength="300">${esc(F.t)}</textarea></label>
+        ${F.team ? `${catPick(F, 'cats', 'who', 'Кто нужен — можно несколько')}
+          <div class="field"><span>На какой день${F.date ? ': <b style="color:var(--ink)">' + fmtDay(F.date) + '</b>' : ''}</span>${calendar(F.date, 'askDay')}</div>`
+    : `<div id="askcats">${askCats()}</div>`}
         ${askTo(c1)}
         <button class="btn primary block" style="margin-top:14px" data-act="postAsk" data-submit ${askValid() ? '' : 'disabled'}>${ic('send')}Отправить запрос</button>
       </div>
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
-  const askValid = () => (F.t || '').trim().length >= 10 && !!F.cat && (!F.quiet || (F.to || []).length > 0);
+  const askValid = () => (F.t || '').trim().length >= 10 && (F.team ? (F.cats || []).length > 0 && !!F.date : !!F.cat)
+    && (!F.quiet || (F.to || []).length > 0);
   // Кому уйдёт запрос: всем знакомым или только выбранным. Деликатное спрашивают тихо
   function askTo(c1) {
     const picked = F.to || [];
@@ -2278,6 +2421,52 @@
         : 'Не нашли подходящую — заведите свою, она появится у всех'}</p></div>`;
   }
 
+  // ——— Даты: календарь на два месяца, свои кнопки вместо системного выбора ———
+  const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  const MONTHS_NOM = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const fmtDay = (s) => { if (!s) return ''; const [, m, d] = s.split('-').map(Number); return `${d} ${MONTHS_GEN[m - 1]}`; };
+  const todayYmd = () => ymd(new Date());
+  const busyOn = (uid, day) => !!(U(uid) && (U(uid).busyDays || []).includes(day));
+  function calendar(selected, act, months = 2) {
+    const sel = new Set([].concat(selected || []));
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    let out = '';
+    for (let m = 0; m < months; m++) {
+      const first = new Date(t.getFullYear(), t.getMonth() + m, 1);
+      const total = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+      const lead = (first.getDay() + 6) % 7;
+      let cells = '<i></i>'.repeat(lead);
+      for (let d = 1; d <= total; d++) {
+        const day = new Date(first.getFullYear(), first.getMonth(), d);
+        const key = ymd(day), past = day < t;
+        cells += `<button class="cal-d ${sel.has(key) ? 'on' : ''} ${key === ymd(t) ? 'today' : ''}" ${past ? 'disabled' : `data-act="${act}" data-v="${key}"`}>${d}</button>`;
+      }
+      out += `<div class="cal"><div class="cal-m">${MONTHS_NOM[first.getMonth()]}</div><div class="cal-w">${['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((w) => `<span>${w}</span>`).join('')}</div><div class="cal-g">${cells}</div></div>`;
+    }
+    return out;
+  }
+
+  // Занятые даты: у себя — отметить, у другого — увидеть ближайшие
+  function busyView(id) {
+    const days = ((U(id) || {}).busyDays || []).filter((d) => d >= todayYmd());
+    const list = days.slice(0, 6).map(fmtDay).join(', ') + (days.length > 6 ? ` и ещё ${days.length - 6}` : '');
+    if (id !== S.me) return days.length ? `<p class="small" style="margin:12px 0 0">${ic('calendar')} Занят: ${esc(list)}</p>` : '';
+    return `<button class="link-row wide" data-act="busyEdit" style="margin-top:12px">${ic('calendar')}
+      <span class="grow"><b>Занятые даты</b><i>${days.length ? 'Заняты: ' + esc(list) : 'Отметьте дни, когда вы заняты, — вас не позовут на них'}</i></span>${ic('arrow')}</button>`;
+  }
+  function sheetBusy() {
+    const f = { days: [...((U(S.me) || {}).busyDays || [])].filter((d) => d >= todayYmd()) };
+    openSheet({
+      F: f,
+      render: () => `${sheetHead(null, 'Занятые даты', 'Нажмите на день — он станет занятым. Ещё раз — свободным')}
+        ${calendar(f.days, 'busyDay', 3)}
+        <p class="why">${ic('spark')}Кто собирает команду на дату, сразу видит, свободны вы или нет</p>
+        <div class="s-foot"><button class="btn primary block" data-act="busySave">Сохранить${f.days.length ? ' · ' + pl(f.days.length, 'день', 'дня', 'дней') : ''}</button></div>`,
+    });
+  }
+
   // ——— Запрос: ответы ———
   function Request(id) {
     const q = S.requests.find((x) => x.id === id);
@@ -2304,7 +2493,9 @@
           : `<button class="btn primary sm block" data-act="intro" data-id="${a.person}" data-via="${a.from}" data-cat="${q.cat}" data-q="${mine ? q.id : ''}">${ic('hand')}Попросить знакомство</button>
              <p class="tiny muted" style="margin:7px 0 0;text-align:center">${esc(first(a.from))} передаст вашу просьбу</p>`;
       const thanks = mine ? (a.thanked ? `<span class="tag brand">${ic('check').replace('<svg', '<svg style="width:13px;height:13px"')} Спасибо</span>` : `<button class="btn ghost xs" data-act="thank" data-q="${q.id}" data-i="${i}">Сказать спасибо</button>`) : '';
-      return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">советует · ${when(a.at)}</span></div>${thanks}</div>
+      const free = q.date ? (busyOn(a.person, q.date) ? `<span class="tag warm">занят ${fmtDay(q.date)}</span>` : `<span class="tag mutual">свободен ${fmtDay(q.date)}</span>`) : '';
+      return `<div class="answer"><div class="row">${av(a.from, 'xs')}<div class="grow small"><b>${esc(full(a.from))}</b> <span class="muted">${a.person === a.from ? 'предлагает себя' : 'советует'}${a.role ? ' · ' + esc(cat(a.role).who.toLowerCase()) : ''} · ${when(a.at)}</span></div>${thanks}</div>
+        ${free ? `<div class="chips" style="margin-top:8px">${free}</div>` : ''}
         <a href="#/p/${a.person}?cat=${q.cat}" style="text-decoration:none;display:block;margin-top:10px"><div class="row">${av(a.person)}<div class="grow"><div class="h3">${esc(full(a.person))}</div><div class="small muted">${esc(cat(q.cat).who)} · ${pl(G.recsTo(a.person, q.cat).length, 'рекомендация', 'рекомендации', 'рекомендаций')}</div></div></div></a>
         <div style="margin-top:10px">${chainLine(direct ? [S.me, a.person] : [S.me, a.from, a.person].filter((x, k, arr) => arr.indexOf(x) === k))}</div>
         <p class="txt">«${esc(a.text)}»</p>${act}</div>`;
@@ -2314,7 +2505,11 @@
         ? `<div class="row">${av(q.from, 's')}<div class="grow"><div class="h3">${esc(U(q.from).name)}</div><div class="tiny muted">${when(q.at)}</div></div></div>`
         : `<div class="row"><span class="av s ghost-av">${ic('user')}</span><div class="grow"><div class="h3">Кто-то из ваших знакомых</div><div class="tiny muted">имя откроется, когда вы ответите · ${when(q.at)}</div></div></div>`}
         <p style="font-size:17px;margin:${mine ? 0 : '12px'} 0 12px">${esc(q.text)}</p>
-        <div class="row">${q.cat ? `<span class="tag brand">${esc(cat(q.cat).name)}</span>` : ''}<span class="grow"></span><span class="tiny muted">${mine ? 'отправлен ' + when(q.at) : ''}</span></div></div>
+        ${(q.roles || []).length ? `<div class="chips" style="margin-bottom:10px">${q.date ? `<span class="tag warm">${ic('calendar')}${fmtDay(q.date)}</span>` : ''}${q.roles.map((r) => {
+    const n = q.answers.filter((a) => a.role === r).length;
+    return `<span class="tag ${n ? 'brand' : ''}">${esc(cat(r).who)}${n ? ' · ' + n : ''}</span>`;
+  }).join('')}</div>` : ''}
+        <div class="row">${q.cat && !(q.roles || []).length ? `<span class="tag brand">${esc(cat(q.cat).name)}</span>` : ''}<span class="grow"></span><span class="tiny muted">${mine ? 'отправлен ' + when(q.at) : ''}</span></div></div>
       <div class="sec-title"><h2 class="h2">${q.answers.length ? pl(q.answers.length, 'ответ', 'ответа', 'ответов') : 'Ответов пока нет'}</h2></div>
       ${answers ? `<div class="card" style="padding:6px 10px 10px">${answers}</div>` : `<div class="card"><p class="small muted" style="margin:0">${mine ? 'Мы сообщим в Telegram, как только кто-то посоветует человека.' : 'Будьте первым, кто поможет.'}</p></div>`}
       <div style="margin-top:16px">${mine
@@ -2412,6 +2607,8 @@
         <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
       ${workView(S.me)}
       ${howView(S.me)}
+      ${busyView(S.me)}
+      ${collectionsView()}
       ${factsView(S.me)}
       ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
         <h2 class="h2" style="margin:6px 0 6px">Расскажите о работе</h2>
@@ -2968,20 +3165,27 @@
   // Посоветовать человека в ответ на запрос
   function sheetAnswer(qid) {
     const q = S.requests.find((x) => x.id === qid);
-    const cands = myContacts().filter((c) => c !== q.from)
-      .map((c) => ({ id: c, fit: !!q.cat && G.catsOf(c).includes(q.cat), mine: !!q.cat && G.recsFrom(S.me).some((r) => r.to === c && r.cat === q.cat) }))
-      .sort((a, b) => (b.mine - a.mine) || (b.fit - a.fit) || U(a.id).name.localeCompare(U(b.id).name));
-    const f = { person: '', text: '', asRec: true };
+    const roles = q.roles || [];
+    const f = { person: '', text: '', asRec: true, role: roles[0] || '' };
+    // В командный запрос можно предложить и себя: «я диджей, в этот день свободен»
+    const base = [...(roles.length ? [S.me] : []), ...myContacts().filter((c) => c !== q.from)];
+    const candsFor = (c0) => base
+      .map((c) => ({ id: c, fit: !!c0 && G.catsOf(c).includes(c0), mine: !!c0 && G.recsFrom(S.me).some((r) => r.to === c && r.cat === c0) }))
+      .sort((a, b) => (b.fit - a.fit) || (b.mine - a.mine) || U(a.id).name.localeCompare(U(b.id).name));
+    let cands = candsFor(f.role || q.cat);
     const fits = partnersForRequest(q);
     openSheet({
       F: f,
       valid: () => f.person && f.text.trim().length >= 8,
       render: () => {
+        cands = candsFor(f.role || q.cat);
         const c = cands.find((x) => x.id === f.person);
-        const canRec = c && !c.mine && !!q.cat;
+        const canRec = c && !c.mine && !!q.cat && f.person !== S.me;
+        const dayTag = (id) => (q.date ? (busyOn(id, q.date) ? '<span class="tag warm">занят</span>' : '<span class="tag mutual">свободен</span>') : '');
         return `${sheetHead(q.from, 'Посоветовать', esc(U(q.from).name) + (q.cat ? ' ищет: ' + esc(cat(q.cat).who.toLowerCase()) : ' спрашивает сеть'))}
           <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
-          <div class="field"><span>Кого советуете</span>${cands.map((x) => `<button class="pick ${f.person === x.id ? 'on' : ''}" data-act="pickWho" data-k="person" data-v="${x.id}">${av(x.id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(U(x.id).name)}</span><span class="small muted">${x.mine ? 'Вы уже рекомендуете' : esc(who(x.id))}</span></span>${x.fit ? `<span class="tag brand">${esc(cat(q.cat).who)}</span>` : ''}<span class="radio"></span></button>`).join('')}</div>
+          ${roles.length ? `<div class="field"><span>На какую роль${q.date ? ' · ' + fmtDay(q.date) : ''}</span><div class="chips">${roles.map((r) => `<button class="chip ${f.role === r ? 'on' : ''}" data-act="pickWho" data-k="role" data-v="${r}">${esc(cat(r).who)}</button>`).join('')}</div></div>` : ''}
+          <div class="field"><span>Кого советуете</span>${cands.map((x) => `<button class="pick ${f.person === x.id ? 'on' : ''}" data-act="pickWho" data-k="person" data-v="${x.id}">${av(x.id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${x.id === S.me ? 'Я сам' : esc(U(x.id).name)}</span><span class="small muted">${x.id === S.me ? 'Предложить себя' : x.mine ? 'Вы уже рекомендуете' : esc(who(x.id))}</span></span>${dayTag(x.id)}${x.fit ? `<span class="tag brand">${esc(cat(f.role || q.cat).who)}</span>` : ''}<span class="radio"></span></button>`).join('')}</div>
           <label class="field"><span>Почему этот человек</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: чинил мне часы в прошлом году, взял недорого и сделал за три дня">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="20"></p></label>
           ${canRec ? `<div class="note" style="margin-top:12px">Ваш ответ сам ляжет в ваш круг — записью о ${esc(U(f.person).name.split(' ')[0])} в сфере «${esc(cat(q.cat).name)}». Её увидят знакомые, когда будут искать такого же человека.
             <button class="btn ghost xs" style="margin-top:10px" data-act="set" data-k="asRec" data-v="${f.asRec ? '' : '1'}">${f.asRec ? 'Не записывать, просто ответить' : 'Всё-таки записать'}</button></div>` : ''}
@@ -3000,7 +3204,7 @@
           q.answers.push({ from: S.me, person, text, at: Date.now() });
           if (asRec && c && !c.mine && text.length >= 20)
             S.recs.push({ id: 'r' + uid(), from: S.me, to: person, cat: q.cat, rel: 'other', text, at: Date.now(), confirmed: false });
-        }, '/answers', { request: q.id, person, text, as_rec: asRec }, 'Ответ отправлен: ' + U(q.from).name);
+        }, '/answers', { request: q.id, person, text, as_rec: asRec && person !== S.me, role: f.role || '' }, 'Ответ отправлен: ' + (q.from ? U(q.from).name : 'знакомому'));
       },
     });
   }
@@ -3506,13 +3710,14 @@
     askCat: (d) => { F.cat = d.v || ''; F.catTouched = true; F.allCats = false; $('#askcats').innerHTML = askCats(); syncForm(); },
     askAllCats: () => { F.allCats = true; $('#askcats').innerHTML = askCats(); },
     postAsk: async () => {
-      const text = F.t.trim(), cat = F.cat;
+      const text = F.t.trim(), cat = F.team ? (F.cats || [])[0] : F.cat;
+      const team = F.team ? { roles: F.cats || [], date: F.date || '' } : {};
       const to = F.quiet ? (F.to || []) : [];
       const anon = !!(F.quiet && F.anon);
       const sent = to.length ? pl(to.length, 'человеку', 'людям', 'людям') : pl(myContacts().length, 'человеку', 'людям', 'людям');
       if (LIVE) {
         try {
-          const res = await window.API.post('/requests', { text, cat, to, anon });
+          const res = await window.API.post('/requests', { text, cat, to, anon, ...team });
           await refresh();
           go('#/q/' + res.id);
           toast('Запрос отправлен ' + sent);
@@ -3591,6 +3796,34 @@
     addPartner: (d) => sheetPartner(d.id),
     partnerView: (d) => sheetPartnerView(d.id),
     chatHelp: () => sheetChatHelp(),
+    busyEdit: () => sheetBusy(),
+    busyDay: (d) => { const a = SH.F.days; const i = a.indexOf(d.v); if (i < 0) a.push(d.v); else a.splice(i, 1); drawSheet(); },
+    busySave: async () => {
+      const days = SH.F.days.slice().sort();
+      closeAllSheets();
+      try { await window.API.post('/profile/busy', { days }); await refresh(); toast(days.length ? 'Занятые даты сохранены' : 'Все даты свободны'); } catch (e) { toast(e.message); }
+    },
+    askTeam: (d) => { F.team = !!d.v; render(); },
+    askDay: (d) => { F.date = F.date === d.v ? '' : d.v; render(); },
+    colNew: () => { closeAllSheets(); sheetColEdit(null); },
+    colSave: () => SH.submit(),
+    colEdit: (d) => sheetColEdit((S.collections || []).find((c) => c.id === d.id)),
+    colAdd: (d) => sheetColAdd(d.id),
+    colAddPick: (d) => SH && SH.add && SH.add(d.u, d.n),
+    colFor: (d) => sheetColPick(d.u, d.n),
+    colPut: async (d) => {
+      try { await window.API.post('/collections/item', { collection: d.id, user: d.u || '', node: d.n || '' }); await refresh(); closeAllSheets(); toast('Добавлено в подборку'); } catch (e) { toast(e.message); }
+    },
+    colDel: async (d) => {
+      try { await window.API.post('/collections/item/delete', { id: d.id }); F.col = null; await refresh(); render(); } catch (e) { toast(e.message); }
+    },
+    colDrop: async (d) => {
+      const text = 'Удалить подборку? Ссылка на неё перестанет открываться';
+      const ok = await new Promise((r) => (tg && tg.showConfirm ? tg.showConfirm(text, r) : r(window.confirm(text))));
+      if (!ok) return;
+      try { await window.API.post('/collections/delete', { id: d.id }); await refresh(); go('#/me'); toast('Подборка удалена'); } catch (e) { toast(e.message); }
+    },
+    colShare: () => { const c = F.col; if (!c) return; tgShareLink(colLink(c.code), `${c.title} — ${c.author && c.author.id === S.me ? 'моя подборка' : 'подборка'} в Сарафане, за каждого ручаюсь:`); },
     answerPartner: (d) => sheetAnswerPartner(d.q, d.id),
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
