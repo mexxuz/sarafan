@@ -2498,7 +2498,33 @@
       <div class="stack">${nodesOf(id).slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, cat(r.cat).who)).join('')}</div>` : ''}
+      ${direct && LIVE ? `<p style="text-align:center;margin-top:22px"><button class="btn ghost xs" data-act="connMenu" data-id="${id}">${connOf(id) && connOf(id).hidden ? 'Знакомство скрыто от других' : 'Скрыть знакомство или убрать из знакомых'}</button></p>` : ''}
       <div class="actions"><div class="inner">${actions}</div></div>`;
+  }
+
+  // Знакомство со своим человеком: скрыть от остальных или убрать совсем
+  const connOf = (id) => S.conns.find((c) => c.status === 'ok' && ((c.a === S.me && c.b === id) || (c.b === S.me && c.a === id)));
+  function sheetConn(id) {
+    const f = { sure: false };
+    const name = U(id).name;
+    openSheet({
+      F: f,
+      render: () => {
+        const hidden = !!(connOf(id) || {}).hidden;
+        const mineRecs = S.recs.filter((r) => (r.from === S.me && r.to === id) || (r.from === id && r.to === S.me)).length;
+        return `${sheetHead(id, 'Вы знакомы', esc(name))}
+        <div class="stack" style="gap:8px">
+          <button class="link-row wide" data-act="connHide" data-id="${id}" data-v="${hidden ? '' : '1'}">${ic('eye')}
+            <span class="grow"><b>${hidden ? 'Снова показывать знакомство' : 'Скрыть, что мы знакомы'}</b><i>${hidden
+    ? 'Сейчас эту связь видите только вы двое'
+    : `Остальные не увидят вашу связь и цепочки через неё. Вы двое по-прежнему знакомы и видите друг друга${mineRecs ? '. Рекомендации между вами остаются на виду — по ним знакомство всё же заметно' : ''}`}</i></span></button>
+          <button class="link-row wide ${f.sure ? 'danger' : ''}" data-act="connRemove" data-id="${id}">${ic('x')}
+            <span class="grow"><b>${f.sure ? 'Нажмите ещё раз — убрать' : 'Убрать из знакомых'}</b><i>${mineRecs
+    ? `Связь пропадёт, ${pl(mineRecs, 'рекомендация', 'рекомендации', 'рекомендаций')} между вами скроются. `
+    : 'Связь пропадёт. '}${esc(first(id))} ничего не получит. Снова стать знакомыми — обычной заявкой</i></span></button>
+        </div>`;
+      },
+    });
   }
 
   // ——— Спросить сеть ———
@@ -3976,6 +4002,23 @@
     answerPartner: (d) => sheetAnswerPartner(d.q, d.id),
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
+    connMenu: (d) => sheetConn(d.id),
+    connHide: async (d) => {
+      try {
+        await window.API.post('/connections/hide', { user: d.id, on: !!d.v });
+        const c = connOf(d.id); if (c) c.hidden = !!d.v;
+        closeAllSheets(); render();
+        toast(d.v ? 'Знакомство скрыто: видите только вы двое' : 'Знакомство снова видно');
+      } catch (e) { toast(e.message); }
+    },
+    connRemove: async (d) => {
+      if (!SH.F.sure) { SH.F.sure = true; drawSheet(); return; }
+      try {
+        await window.API.post('/connections/remove', { user: d.id });
+        closeAllSheets(); await refresh(); render();
+        toast('Убрали из знакомых');
+      } catch (e) { toast(e.message); }
+    },
     // «Другой»: выбор открывается прямо поверх — список ролей сервер собирает вашими глазами
     viewAsPick: () => sheetViewAs(),
     viewAsGo: (d) => { window.API.setViewAs({ id: d.id, label: d.label, name: d.name }); location.hash = '#/'; location.reload(); },

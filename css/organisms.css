@@ -702,3 +702,7 @@ body.viewing-as #app { padding-top: 48px; }
 .todo-rail { margin: 0 0 14px; }
 .card .todo-rail .face-rail { margin-left: calc(-1 * var(--s-4)); margin-right: calc(-1 * var(--s-4)); padding-left: var(--s-4); padding-right: var(--s-4); margin-top: 8px; }
 .card > .todo-rail:only-child { margin: 0; }
+
+/* «Убрать из знакомых» после первого нажатия: второе — уже насовсем */
+.link-row.danger { background: var(--warn-soft); color: var(--warn); }
+.link-row.danger i { color: var(--warn); opacity: .8; }
