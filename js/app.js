@@ -4186,6 +4186,7 @@
     whoisAnswer: () => sheetWhoisAnswer(),
     submitWhois: () => SH && SH.submit(),
     whoisAsk: async (d) => {
+      if (!LIVE) { toast('В рабочей версии ему придёт вопрос в Telegram'); return; }
       try {
         const r = await window.API.post('/whois/ask', { user: d.id });
         S.whoisAsked = [...new Set([...(S.whoisAsked || []), d.id])];
