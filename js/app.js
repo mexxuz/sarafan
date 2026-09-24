@@ -3875,13 +3875,13 @@
     pickCircle: () => {
       const link = `https://t.me/${S.bot || 'sarafanibot'}?start=pickc`;
       if (!LIVE) { toast('В рабочей версии откроется бот с кнопкой «Выбрать знакомых»'); return; }
-      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank');
+      toBot(link);
     },
     // Выбрать людей из контактов: Telegram сам показывает список, бот сохраняет отмеченных в черновики
     pickContacts: () => {
       const link = `https://t.me/${S.bot || 'sarafanibot'}?start=pick`;
       if (!LIVE) { toast('В рабочей версии откроется бот с кнопкой «Выбрать из контактов»'); return; }
-      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank');
+      toBot(link);
     },
     // Нажали «Сохранить» в чате по ошибке — черновик убираем, открываем следующий, если есть
     skipDraft: async (d) => {
@@ -4219,6 +4219,17 @@
         .then(() => { if (!applyLanding()) go('#/'); });
     },
   };
+
+  // Выбор людей из контактов живёт в чате с ботом: Telegram показывает список только там.
+  // Чат открывается позади приложения — во весь экран его не видно, и кажется, что кнопка не сработала.
+  // Поэтому приложение закрываем: человек сразу видит бота и кнопку выбора внизу
+  function toBot(link) {
+    if (!(tg && tg.openTelegramLink)) { window.open(link, '_blank'); return; }
+    toast('Открываю чат с ботом — кнопка выбора будет внизу');
+    try { if (tg.isFullscreen) tg.exitFullscreen(); } catch (e) { /* старый Telegram */ }
+    tg.openTelegramLink(link);
+    setTimeout(() => { try { tg.close(); } catch (e) { /* уже закрыто */ } }, 600);
+  }
 
   // Действия, после которых человек остаётся на месте: кнопка сама отвечает галочкой,
   // чтобы нажатие не проваливалось в пустоту
