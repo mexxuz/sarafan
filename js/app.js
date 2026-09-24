@@ -3219,7 +3219,7 @@
       ${chosen.length ? `<div class="chips" style="margin-bottom:8px">${chosen.map((id) => `<span class="chip on">${show(id)}
         <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать">${ic('x')}</button></span>`).join('')}</div>` : ''}
       <input class="input" data-catq="${key}" data-label="${label}" autocomplete="off" maxlength="40"
-        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: типография, юрист…'}">
+        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: врач, юрист, магазин…'}">
       <div class="cat-sugg"></div></div>`;
   };
 
