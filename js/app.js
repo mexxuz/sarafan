@@ -848,7 +848,8 @@
       if (was && people.length > was.n) grew = people.length - was.n;
       if (!was || Date.now() - was.at > 864e5) localStorage.setItem('sarafan.dir', JSON.stringify({ n: people.length, at: Date.now() }));
     } catch (e) { /* приватный режим — без «+N» */ }
-    return `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? ` <span class="grew">+${grew} с прошлого раза</span>` : ''}</p>`;
+    const why = c1.length < 10 ? '<p class="dir-why">Чем больше ваших знакомых здесь, тем вероятнее, что на вопрос «кто знает хорошего…» кто-то ответит — и что найдут вас</p>' : '';
+    return why + `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? ` <span class="grew">+${grew} с прошлого раза</span>` : ''}</p>`;
   }
 
   function Home() {
@@ -1615,9 +1616,21 @@
   const first2 = (name) => (name || '').split(' ')[0];
   // Приглашение конкретному человеку: есть имя пользователя — сразу его чат с готовым текстом,
   // нет — обычный выбор, кому отправить
+  // Приглашение карточкой от вашего имени; где Telegram так не умеет — как раньше, ссылкой
+  async function inviteCard(name, fallback) {
+    if (!(LIVE && tg && tg.shareMessage)) { fallback(); return; }
+    try {
+      const res = await window.API.post('/invite/prepare', { name: name || '' });
+      tg.shareMessage(res.id, (sent) => { if (sent) toast('Приглашение ушло'); });
+    } catch (e) { fallback(); }
+  }
   function inviteWaiting(w) {
+    if (!w.username) { inviteCard(w.name, () => inviteWaitingText(w)); return; }
+    inviteWaitingText(w);
+  }
+  function inviteWaitingText(w) {
     const url = `https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`;
-    const text = `${first2(w.name) ? first2(w.name) + ', з' : 'З'}ову тебя в Сарафан — это справочник контактов, который растёт через знакомых. Расскажи там, чем занимаешься, — буду советовать тебя своим. Я уже добавил тебя в свой круг: ${url}`;
+    const text = `${first2(w.name) ? first2(w.name) + ', д' : 'Д'}обавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим. Вот приглашение: ${url}`;
     if (w.username && tg && tg.openTelegramLink) tg.openTelegramLink(`https://t.me/${w.username}?text=${encodeURIComponent(text)}`);
     else tgShareLink(url, text.replace(': ' + url, ''));
   }
@@ -3041,6 +3054,26 @@
   // разыгрывает, поэтому объяснять словами почти не приходится.
   const TOUR = [
     {
+      key: 'ask',
+      eyebrow: 'как это работает',
+      title: 'Нужен юрист? Спросите своих',
+      gain: 'Ваш знакомый Азиз знает Нигору — вы видите её, что о ней говорят и через кого она. Пишете ей напрямую, без рекламы и случайных отзывов',
+      scene: `<div class="sc sc-ask">
+        <span class="bubble">Нужен педиатр${ic('ask')}</span>
+        <div class="mates">
+          <i class="mate m1"><b>АК</b><s>Азиз</s></i>
+          <i class="mate m2"><b>ЭС</b><s>Эстелла</s></i>
+          <i class="mate m3"><b>УХ</b><s>Улугбек</s></i>
+          <i class="mate more"><b>+3</b><s>ещё</s></i></div>
+        <div class="reply">
+          <span class="from">АК</span>
+          <div class="bubble-in">
+            <b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s>
+            <em>${ic('seal')}рекомендую, вожу к ней дочку</em></div>
+        </div>
+        <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div>`,
+    },
+    {
       key: 'write',
       eyebrow: 'ваш справочник',
       title: 'Справочник, который растёт через знакомых',
@@ -3077,26 +3110,6 @@
         <i class="dot n3"><em>РЮ</em><s>Рустам</s></i>
         <i class="dot n4"><em>${ic('pin')}</em><s>Чайхана</s></i>
         <span class="lbl">${ic('check')}круг Азиза открыт вам</span></div>`,
-    },
-    {
-      key: 'ask',
-      eyebrow: 'запрос',
-      title: 'Спросите свой круг',
-      gain: 'Вопрос видят знакомые ваших знакомых — без спама в общем чате. Ответ приходит с именем того, кто рекомендует',
-      scene: `<div class="sc sc-ask">
-        <span class="bubble">Нужен педиатр${ic('ask')}</span>
-        <div class="mates">
-          <i class="mate m1"><b>АК</b><s>Азиз</s></i>
-          <i class="mate m2"><b>ЭС</b><s>Эстелла</s></i>
-          <i class="mate m3"><b>УХ</b><s>Улугбек</s></i>
-          <i class="mate more"><b>+3</b><s>ещё</s></i></div>
-        <div class="reply">
-          <span class="from">АК</span>
-          <div class="bubble-in">
-            <b>Нигора Ахмедова</b><s>педиатр · Юнусабад</s>
-            <em>${ic('seal')}рекомендую, вожу к ней дочку</em></div>
-        </div>
-        <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div>`,
     },
     {
       key: 'places',
@@ -4094,7 +4107,7 @@
       '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
     tab: (d) => { F.tab = d.v; render(); },
-    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — это справочник контактов, который растёт через знакомых. Расскажи там, чем занимаешься, — буду советовать тебя своим.'),
+    sendInvite: () => inviteCard('', () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Добавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим.')),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     pickCat: (d, el) => {
       const inSheet = !!el.closest('#sheet');
