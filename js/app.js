@@ -670,6 +670,7 @@
   const mutualRec = (a, b) => S.recs.some((x) => !x.private && x.from === a && x.to === b)
     && S.recs.some((x) => !x.private && x.from === b && x.to === a);
 
+  let declineArm = null;   // какую рекомендацию о себе человек собирается убрать — ждём второго касания
   const recItem = (r, showTarget) => {
     const author = r.from;
     const d = G.dist[author];
@@ -679,11 +680,14 @@
     const canThank = author !== S.me && r.to !== S.me && !r.private && LIVE;
     const thank = canThank ? (r.thanked ? `<span class="tiny muted">${ic('check')} Вы сказали спасибо</span>`
       : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Сходил(а) по совету — спасибо</button>`) : '';
+    // рекомендация о вас — можно убрать со своей страницы: шутка, чужая сфера. Второе касание — насовсем
+    const decline = r.to === S.me && author !== S.me && LIVE
+      ? `<button class="btn ghost xs ${declineArm === r.id ? 'warn' : ''}" data-act="recDecline" data-id="${r.id}">${declineArm === r.id ? 'Нажмите ещё раз — автор не узнает' : 'Убрать с моей страницы'}</button>` : '';
     const target = showTarget ? `<div class="small muted" style="margin-top:8px">→ <a href="#/p/${r.to}"><b style="color:var(--ink)">${esc(full(r.to))}</b></a></div>` : '';
     return `<div class="rec"><div class="row"><a href="#/p/${author}">${av(author, 's')}</a><div class="grow"><div class="row" style="gap:8px"><a href="#/p/${author}" class="h3 ellip" style="text-decoration:none">${esc(full(author))}</a>${tag}</div><div class="tiny muted">${when(r.at)}${r.edited ? ' · изменена' : ''}</div></div></div>
       <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}${r.anon ? '<span class="tag">без вашего имени</span>' : ''}</div>
       <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}${target}
-      ${thank || r.thanks ? `<div class="row" style="margin-top:10px;gap:10px">${thank}<span class="grow"></span>${r.thanks ? `<span class="tiny muted">спасибо · ${r.thanks}</span>` : ''}</div>` : ''}</div>`;
+      ${thank || r.thanks || decline ? `<div class="row" style="margin-top:10px;gap:10px">${thank}${decline}<span class="grow"></span>${r.thanks ? `<span class="tiny muted">спасибо · ${r.thanks}</span>` : ''}</div>` : ''}</div>`;
   };
 
   // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто рекомендует.
@@ -4006,6 +4010,12 @@
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
     connMenu: (d) => sheetConn(d.id),
+    recDecline: (d) => {
+      if (declineArm !== d.id) { declineArm = d.id; render(); return; }
+      declineArm = null;
+      mutate(() => { S.recs = S.recs.filter((x) => x.id !== d.id); G = window.Graph(S); },
+        '/recommendations/decline', { id: d.id }, 'Убрали с вашей страницы');
+    },
     connHide: async (d) => {
       try {
         await window.API.post('/connections/hide', { user: d.id, on: !!d.v });

@@ -141,3 +141,6 @@ p { text-wrap: pretty; }
 @media (hover: hover) { .vz-pill:hover { background: #efe6fc; box-shadow: inset 0 0 0 1px rgba(139, 69, 232, .3); } }
 .vz-pill:focus-visible { outline: 2px solid #8b45e8; outline-offset: 2px; }
 .peek-founder { margin-top: 8px; }
+
+/* Кнопка перед необратимым шагом: второе касание — уже насовсем */
+.btn.warn { background: var(--warn-soft); color: var(--warn); box-shadow: none; }
