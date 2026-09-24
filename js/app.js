@@ -2523,19 +2523,19 @@
     if (!LIVE || id === S.me || !G.connected(S.me, id) || G.catsOf(id).length) return '';
     const asked = (S.whoisAsked || []).includes(id);
     return `<div class="card" style="margin-top:14px"><div class="eyebrow">кем советовать</div>
-      <p class="small" style="margin:6px 0 12px">${esc(first(id))} не написал, чем занимается. ${asked ? 'Вы уже спросили — ответ придёт в Telegram' : 'Спросите у него — вопрос придёт в Telegram, ответ — вам'}</p>
-      ${asked ? '' : `<button class="btn primary block" data-act="whoisAsk" data-id="${id}">${ic('send')}Спросить, кем его советовать</button>`}</div>`;
+      <p class="small" style="margin:6px 0 12px">Пока не видно, чем занимается ${esc(first(id))}. ${asked ? 'Вы уже спросили — ответ придёт в Telegram' : 'Спросите — вопрос придёт в Telegram, ответ — вам'}</p>
+      ${asked ? '' : `<button class="btn primary block" data-act="whoisAsk" data-id="${id}">${ic('send')}Спросить, кем советовать</button>`}</div>`;
   }
   function sheetWhoIs(id) {
     const asked = (S.whoisAsked || []).includes(id);
     openSheet({
       F: {},
-      render: () => `${sheetHead(id, esc(U(id).name), 'Вы знакомы, но он не написал, чем занимается')}
+      render: () => `${sheetHead(id, esc(U(id).name), 'Вы знакомы, но пока не видно, чем занимается')}
         <div class="stack" style="gap:8px">
           ${asked ? `<div class="note">Вы уже спросили — ответ придёт в Telegram</div>` : `<button class="link-row wide" data-act="whoisAsk" data-id="${id}">${ic('send')}
-            <span class="grow"><b>Спросить у него</b><i>Ему придёт вопрос «кем вас советовать?», ответ — вам</i></span>${ic('arrow')}</button>`}
+            <span class="grow"><b>Спросить, кем советовать</b><i>Придёт вопрос в Telegram, ответ — вам</i></span>${ic('arrow')}</button>`}
           <button class="link-row wide" data-act="recommend" data-id="${id}">${ic('seal')}
-            <span class="grow"><b>Рекомендовать самому</b><i>Если знаете, чем он хорош, — выберите сферу сами</i></span>${ic('arrow')}</button>
+            <span class="grow"><b>Рекомендовать самому</b><i>Если знаете сами — выберите сферу</i></span>${ic('arrow')}</button>
         </div>`,
     });
   }
