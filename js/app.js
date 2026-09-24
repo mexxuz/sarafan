@@ -3205,10 +3205,11 @@
       ${chosen.length ? `<div class="chips" style="margin-bottom:8px">${chosen.map((id) => `<span class="chip on">${show(id)}
         <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать">${ic('x')}</button></span>`).join('')}</div>` : ''}
       <input class="input" data-catq="${key}" data-label="${label}" autocomplete="off" maxlength="40"
-        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: дизайнер, юрист…' : 'Начните печатать: типография, юрист…'}">
+        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: типография, юрист…'}">
       <div class="cat-sugg"></div></div>`;
   };
 
+  const START_CATS = ['therapist', 'dentist', 'lawyer', 'realty', 'repair', 'beauty', 'tutor', 'auto', 'account', 'cook'];
   function catSuggest(input) {
     const box = input.parentElement.querySelector('.cat-sugg');
     if (!box) return;
@@ -3218,7 +3219,11 @@
     const q = input.value.trim();
     const pop = catPopularity();
     let list;
-    if (!q) {   // пустое поле — самые частые в вашей сети, чтобы было с чего начать
+    if (!q && key === 'cats') {
+      // своё занятие: не «что частое у знакомых» (в маленькой сети это сферы одного человека),
+      // а разные области жизни — врач, юрист, дом, красота, учёба, машина, деньги, еда
+      list = START_CATS.map((id) => S.cats.find((c) => c.id === id)).filter((c) => c && !chosen.includes(c.id));
+    } else if (!q) {   // пустое поле — самые частые в вашей сети, чтобы было с чего начать
       list = S.cats.filter((c) => !chosen.includes(c.id)).sort((a, b) => (pop[b.id] || 0) - (pop[a.id] || 0)).slice(0, 6);
     } else {
       list = S.cats.map((c) => ({ c, s: catScore(c, q) })).filter((x) => x.s > 0 && !chosen.includes(x.c.id))
