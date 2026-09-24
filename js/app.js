@@ -2910,9 +2910,9 @@
     $('#app').innerHTML = `<div class="onb fade-in" style="padding-bottom:40px">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       <div class="reveal" style="text-align:center;margin-top:10px">
-        <h1 class="h1" style="--k:0">Спросите своих —</h1>
-        <h1 class="h1" style="--k:1">получите имя</h1>
-        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен врач, юрист, риелтор или мастер? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, кого рекомендуют сами. Видно, кто рекомендует и через кого вы на него вышли.</p>
+        <h1 class="h1" style="--k:0">Справочник, который</h1>
+        <h1 class="h1" style="--k:1">растёт через знакомых</h1>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">У каждого есть полезные знакомые — врач, юрист, мастер, продавец. Здесь они собираются в один справочник: ваши, ваших знакомых и их знакомых. Нужен совет — спросите своих. Войти можно только по приглашению.</p>
       </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
