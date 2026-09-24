@@ -27,8 +27,8 @@ window.Graph = function (S) {
   const catsOf = (id) => {
     const count = {};
     (S.users[id].cats || []).forEach((c) => { count[c] = count[c] || 0; });
-    recsTo(id).forEach((r) => { count[r.cat] = (count[r.cat] || 0) + 1; });
-    (S.users[id].anonRecs || []).forEach((r) => { count[r.cat] = (count[r.cat] || 0) + 1; });   // советы без имени тоже говорят, кто он
+    recsTo(id).forEach((r) => { if (r.cat) count[r.cat] = (count[r.cat] || 0) + 1; });   // «не моя сфера» — без сферы
+    (S.users[id].anonRecs || []).forEach((r) => { if (r.cat) count[r.cat] = (count[r.cat] || 0) + 1; });   // советы без имени тоже говорят, кто он
     return Object.keys(count).sort((a, b) => count[b] - count[a]);
   };
 
@@ -131,7 +131,7 @@ window.Graph = function (S) {
   // Репутация рекомендателя: скольких людей советует, в скольких сферах, и как часто его советы подхватывают
   const recommenderStats = (id) => {
     const given = recsFrom(id);
-    const cats = new Set(given.map((r) => r.cat));
+    const cats = new Set(given.map((r) => r.cat).filter(Boolean));
     const answers = S.requests.flatMap((q) => q.answers).filter((a) => a.from === id).length;
     const shared = S.shares.filter((s) => s.from === id).length;
     return { given: given.length, people: new Set(given.map((r) => r.to)).size, cats: cats.size, answers, shared };

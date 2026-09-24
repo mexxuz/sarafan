@@ -111,6 +111,7 @@
   const first = (id) => (id === S.me ? 'Вы' : U(id).name.split(' ')[0]);
   const full = (id) => (id === S.me ? 'Вы' : U(id).name);
   const cat = (id) => G.catById[id] || { name: 'Другое', who: '' };
+  const recCat = (r) => (r.cat ? cat(r.cat).name : 'о человеке');   // сферу снял тот, о ком рекомендация
   const focusOf = (id, c) => ((U(id) || {}).focus || {})[c] || '';
   // Подпись над именем — только сферы, которые человек указал сам: чужая рекомендация не вешает ярлык.
   // Кто сам ничего не указал (позвали, профиль пустой) — тогда по рекомендациям, иначе не понять, кто он
@@ -683,13 +684,15 @@
     const thank = canThank ? (r.thanked ? `<span class="tiny muted">${ic('check')} Вы сказали спасибо</span>`
       : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Сходил(а) по совету — спасибо</button>`) : '';
     // рекомендация о вас — можно убрать со своей страницы: шутка, чужая сфера. Второе касание — насовсем
+    const uncat = r.to === S.me && author !== S.me && LIVE
+      ? `<button class="btn ghost xs" data-act="recUncat" data-id="${r.id}" data-v="${r.catOff ? '' : '1'}">${r.catOff ? 'Вернуть сферу' : 'Не моя сфера'}</button>` : '';
     const decline = r.to === S.me && author !== S.me && LIVE
       ? `<button class="btn ghost xs ${declineArm === r.id ? 'warn' : ''}" data-act="recDecline" data-id="${r.id}">${declineArm === r.id ? 'Нажмите ещё раз — автор не узнает' : 'Убрать с моей страницы'}</button>` : '';
     const target = showTarget ? `<div class="small muted" style="margin-top:8px">→ <a href="#/p/${r.to}"><b style="color:var(--ink)">${esc(full(r.to))}</b></a></div>` : '';
     return `<div class="rec"><div class="row"><a href="#/p/${author}">${av(author, 's')}</a><div class="grow"><div class="row" style="gap:8px"><a href="#/p/${author}" class="h3 ellip" style="text-decoration:none">${esc(full(author))}</a>${tag}</div><div class="tiny muted">${when(r.at)}${r.edited ? ' · изменена' : ''}</div></div></div>
-      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}${r.anon ? '<span class="tag">без вашего имени</span>' : ''}</div>
+      <div class="chips" style="gap:6px;margin-top:10px"><span class="tag ${r.cat ? 'brand' : ''}">${esc(recCat(r))}</span><span class="tag">${esc(REL[r.rel] || REL.other)}</span>${r.interest ? `<span class="tag warm">${esc(INTEREST[r.interest])}</span>` : ''}${mutualRec(r.from, r.to) ? `<span class="tag mutual">${ic('swap')}взаимно</span>` : ''}${r.anon ? '<span class="tag">без вашего имени</span>' : ''}</div>
       <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}${target}
-      ${thank || r.thanks || decline ? `<div class="row" style="margin-top:10px;gap:10px">${thank}${decline}<span class="grow"></span>${r.thanks ? `<span class="tiny muted">спасибо · ${r.thanks}</span>` : ''}</div>` : ''}</div>`;
+      ${thank || r.thanks || decline ? `<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">${thank}${uncat}${decline}<span class="grow"></span>${r.thanks ? `<span class="tiny muted">спасибо · ${r.thanks}</span>` : ''}</div>` : ''}</div>`;
   };
 
   // Карточка человека в ленте: имя, сфера, живая цитата из рекомендации и кто рекомендует.
@@ -758,9 +761,9 @@
     const c1 = new Set(G.adj[S.me] || []);
     const ev = [];
     S.recs.forEach((r) => {
-      if (r.to === S.me) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.from).name)}</b> рекомендует вас · ${esc(cat(r.cat).name)}</div><div class="quote sm">${esc(r.text)}</div>`, who: r.from, link: '#/me' });
-      else if (c1.has(r.from) && r.from !== S.me) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.from).name)}</b> рекомендует · ${esc(cat(r.cat).name)}</div><div class="mini">${chainLine([S.me, r.from, r.to])}</div>`, who: r.from, link: `#/p/${r.to}?cat=${r.cat}` });
-      else if (c1.has(r.to) && r.from !== S.me && Date.now() - r.at < 30 * 864e5) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.to).name)}</b> · новая рекомендация: ${esc(cat(r.cat).name)}</div>`, who: r.to, link: `#/p/${r.to}?cat=${r.cat}` });
+      if (r.to === S.me) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.from).name)}</b> рекомендует вас · ${esc(recCat(r))}</div><div class="quote sm">${esc(r.text)}</div>`, who: r.from, link: '#/me' });
+      else if (c1.has(r.from) && r.from !== S.me) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.from).name)}</b> рекомендует · ${esc(recCat(r))}</div><div class="mini">${chainLine([S.me, r.from, r.to])}</div>`, who: r.from, link: `#/p/${r.to}?cat=${r.cat}` });
+      else if (c1.has(r.to) && r.from !== S.me && Date.now() - r.at < 30 * 864e5) ev.push({ at: r.at, html: `<div class="txt"><b>${esc(U(r.to).name)}</b> · новая рекомендация: ${esc(recCat(r))}</div>`, who: r.to, link: `#/p/${r.to}?cat=${r.cat}` });
     });
     S.shares.filter((s) => s.to === S.me).forEach((s) => ev.push({ at: s.at, html: `<div class="txt"><b>${esc(U(s.from).name)}</b> делится с вами контактом</div><div class="mini person-box">${personMini(s.person, undefined, 'div')}</div>${s.note ? `<div class="quote sm">${esc(s.note)}</div>` : ''}`, who: s.from, link: `#/p/${s.person}?share=${s.id}` }));
     S.requests.filter((q) => q.from === S.me).forEach((q) => q.answers.forEach((a) => ev.push({ at: a.at, html: `<div class="txt">Ответ на ваш запрос · <b>${esc(U(a.from).name)}</b> советует</div><div class="mini">${chainLine([S.me, a.from, a.person])}</div>`, who: a.from, link: `#/q/${q.id}` })));
@@ -910,7 +913,7 @@
 
   // ——— Свой список проверенных ———
   // Пока сеть мала, искать в ней некого. Но у каждого уже есть люди, которых он советует
-  // знакомым: часовщик, педиатр, электрик. Записать их — польза с первой минуты,
+  // знакомым: врач, юрист, риелтор, мастер. Записать их — польза с первой минуты,
   // а сеть вырастает сама: запись станет первой рекомендацией, когда человек войдёт.
   // Знакомые, которых вы ещё не рекомендовали: касание — и сразу запись. Порекомендовали — ушёл из ряда
   function todoRail() {
@@ -951,7 +954,7 @@
     return `<div class="card" style="margin-top:18px">
       <div class="eyebrow">ваш круг</div>
       <h2 class="h2" style="margin:6px 0 6px">Запишите своих проверенных</h2>
-      <p class="small muted" style="margin:0 0 12px">Часовщик, педиатр, электрик — те, кого вы советуете в чатах по памяти. Запишите один раз: знакомые найдут их сами, а вам не придётся отвечать на один и тот же вопрос снова.</p>
+      <p class="small muted" style="margin:0 0 12px">Врач, юрист, риелтор, мастер — те, кого вы советуете в чатах по памяти. Запишите один раз: знакомые найдут их сами, а вам не придётся отвечать на один и тот же вопрос снова.</p>
       ${todoRail()}
       ${waiting.length ? `<div class="stack" style="margin-bottom:12px">${waiting.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span>
         <div class="grow"><div class="name ellip">${esc(p.name)}</div><div class="sub ellip">${esc(cat(p.cat).who)}${p.private ? ' · для себя' : ''} · ${p.phone ? esc(p.phone) : 'записан ' + when(p.at)}</div></div>
@@ -1640,7 +1643,7 @@
     return `${tags.length || peers ? `<div class="chips" style="margin-top:14px">${peers ? `<span class="tag brand">${ic('seal')}${pl(peers, 'коллега советует', 'коллеги советуют', 'коллег советуют')}</span>` : ''}${tags.map((t) => `<span class="tag soft">${esc(t)} · ${count[t]}</span>`).join('')}</div>` : ''}
       ${anon.length ? `<div class="sec-title"><h2 class="h2">Советуют без имени</h2><span class="tag">${anon.length}</span></div>
         <p class="sec-note">${id === S.me ? 'Кто именно — не видно никому, и вам тоже' : 'Человек попросил не показывать своё имя — видно только, насколько он близко к вам'}</p>
-        <div class="card">${anon.map((r) => `<div class="rec"><div class="chips" style="gap:6px"><span class="tag brand">${esc(cat(r.cat).name)}</span><span class="tag">${circleWord(r.circle)}</span>${r.rel === 'colleague' ? '<span class="tag">коллега</span>' : ''}</div>
+        <div class="card">${anon.map((r) => `<div class="rec"><div class="chips" style="gap:6px"><span class="tag ${r.cat ? 'brand' : ''}">${esc(recCat(r))}</span><span class="tag">${circleWord(r.circle)}</span>${r.rel === 'colleague' ? '<span class="tag">коллега</span>' : ''}</div>
           <p class="txt">${esc(r.text)}</p>${(r.tags || []).length ? `<div class="chips" style="gap:6px;margin-top:8px">${r.tags.map((t) => `<span class="tag soft">${esc(t)}</span>`).join('')}</div>` : ''}</div>`).join('')}</div>` : ''}`;
   }
 
@@ -2506,7 +2509,7 @@
       ${nodesOf(id).length ? `<div class="sec-title"><h2 class="h2">Какие места советует</h2><span class="small muted">${nodesOf(id).length}</span></div>
       <div class="stack">${nodesOf(id).slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
-      <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, cat(r.cat).who)).join('')}</div>` : ''}
+      <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, r.cat ? cat(r.cat).who : '')).join('')}</div>` : ''}
       ${direct && LIVE ? `<p style="text-align:center;margin-top:22px"><button class="btn ghost xs" data-act="connMenu" data-id="${id}">${connOf(id) && connOf(id).hidden ? 'Знакомство скрыто от других' : 'Скрыть знакомство или убрать из знакомых'}</button></p>` : ''}
       <div class="actions"><div class="inner">${actions}</div></div>`;
   }
@@ -2700,7 +2703,7 @@
     const link = `t.me/${bot}?start=${inv.code}`;
     const left = inv.max - inv.used;
     const empty = c1.length === 0;
-    const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id).map((r) => cat(r.cat).who);
+    const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id && r.cat).map((r) => cat(r.cat).who);
     // места и фирмы, которые есть в вашей сети: сначала ваши, потом от знакомых
     const mineNodes = myNodes();
     const allPlaces = [...mineNodes, ...nodesNear().filter((n) => !mineNodes.includes(n))];
@@ -2823,7 +2826,7 @@
       <div class="reveal" style="text-align:center;margin-top:10px">
         <h1 class="h1" style="--k:0">Спросите своих —</h1>
         <h1 class="h1" style="--k:1">получите имя</h1>
-        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен часовщик, педиатр, электрик? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, кого рекомендуют сами. Видно, кто рекомендует и через кого вы на него вышли.</p>
+        <p class="small muted" style="--k:2;margin:10px auto 6px;max-width:320px">Нужен врач, юрист, риелтор или мастер? Вопрос уходит вашим знакомым, они смотрят у себя и советуют того, кого рекомендуют сами. Видно, кто рекомендует и через кого вы на него вышли.</p>
       </div>
       ${note ? `<div class="note" style="margin-top:14px">${esc(note)}</div>` : ''}
 
@@ -2908,7 +2911,7 @@
           <path class="w3" d="M134 156Q115 163 101 178"/>
           <path class="w4" d="M198 154Q213 169 233 175"/></svg>
         <span class="me"><b>вы</b></span>
-        <i class="dot d1"><em>РТ</em><b>Рустам</b><s>часовщик</s></i>
+        <i class="dot d1"><em>РТ</em><b>Рустам</b><s>риелтор</s></i>
         <i class="dot d2"><em>НА</em><b>Нигора</b><s>педиатр</s></i>
         <i class="dot d3"><em>УХ</em><b>Улугбек</b><s>электрик</s></i>
         <i class="dot d4"><em>АК</em><b>Азиз</b><s>юрист</s></i>
@@ -2986,7 +2989,7 @@
       key: 'founder',
       eyebrow: 'от создателя',
       title: 'Сарафан делает Макс',
-      gain: 'Сделал его для себя и друзей — чтобы хороших мастеров не теряли в чатах. Что-то неудобно или не хватает — пишите мне, читаю всё сам',
+      gain: 'Сделал его для себя и друзей — чтобы своих проверенных людей не теряли в чатах: врача, юриста, мастера, продавца. Что-то неудобно или не хватает — пишите мне, читаю всё сам',
       scene: () => `<div class="sc sc-founder">${founderPortrait('xl')}</div>`,
     },
   ];
@@ -3400,7 +3403,7 @@
         ${catChips(f, prefer)}${relChips(f)}
         <label class="field"><span>Как всё прошло</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
         ${quickChips()}
-        <p class="why">${ic('spark')}Хороших мастеров находят по словам клиентов, а не по рекламе. Ваша фраза — лучшее спасибо</p>
+        <p class="why">${ic('spark')}Хороших специалистов находят по словам клиентов, а не по рекламе. Ваша фраза — лучшее спасибо</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitAskRec" data-submit>${ic('seal')}Рекомендовать</button></div>`,
       submit: async () => {
         try {
@@ -4012,6 +4015,13 @@
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
     connMenu: (d) => sheetConn(d.id),
+    recUncat: async (d) => {
+      try {
+        await window.API.post('/recommendations/uncat', { id: d.id, off: !!d.v });
+        await refresh(); render();
+        toast(d.v ? 'Сфера снята: слова остались, а сфера вам не засчитывается' : 'Сфера снова засчитывается');
+      } catch (e) { toast(e.message); }
+    },
     recDecline: (d) => {
       if (declineArm !== d.id) { declineArm = d.id; render(); return; }
       declineArm = null;
