@@ -314,7 +314,8 @@ window.Cloud = function (canvas, opts) {
 
       const saved = n.r;
       n.r = R;
-      if (n.star) drawStar(n, dim);
+      if (n.founder && !n.self) drawFounder(n);
+      else if (n.star) drawStar(n, dim);
       else if (n.kind === 'node') drawPlace(n);
       else drawPerson(n);
       n.r = saved;
@@ -386,6 +387,41 @@ window.Cloud = function (canvas, opts) {
       ctx.lineWidth = 1.1;
       ctx.stroke();
     }
+  }
+
+  // Создатель для других — золотая звезда. Навели или зажали — звезда поворачивается,
+  // растворяется и раскрывается в портрет; отпустили — сворачивается обратно
+  function drawFounder(n) {
+    const m = calm ? ((hover === n || held === n) ? 1 : 0) : Math.min(1, Math.max(0, n.glow));
+    const a = ctx.globalAlpha;
+    if (m > 0.02) {
+      const r0 = n.r;
+      n.r = r0 * (0.55 + 0.45 * m);
+      ctx.globalAlpha = a * m;
+      drawPerson(n);
+      n.r = r0;
+    }
+    if (m < 0.98) {
+      const R = n.r * (1.15 + 0.3 * m), r = R * 0.46, rot = -Math.PI / 2 + m * 1.2;
+      ctx.globalAlpha = a * (1 - m);
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 ? r : R, ang = rot + (i * Math.PI) / 5;
+        if (i) ctx.lineTo(n.x + rad * Math.cos(ang), n.y + rad * Math.sin(ang));
+        else ctx.moveTo(n.x + rad * Math.cos(ang), n.y + rad * Math.sin(ang));
+      }
+      ctx.closePath();
+      const g = ctx.createLinearGradient(n.x, n.y - R, n.x, n.y + R);
+      g.addColorStop(0, '#ffd66b');
+      g.addColorStop(1, '#e39a1c');
+      ctx.fillStyle = g;
+      ctx.lineJoin = 'round';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.9)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = a;
   }
 
   // Звезда: ядро и мягкое свечение, мерцает в своём ритме. Голубые — люди (кого рекомендуют — ярче),
