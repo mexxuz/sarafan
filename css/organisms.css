@@ -706,3 +706,7 @@ body.viewing-as #app { padding-top: 48px; }
 /* «Убрать из знакомых» после первого нажатия: второе — уже насовсем */
 .link-row.danger { background: var(--warn-soft); color: var(--warn); }
 .link-row.danger i { color: var(--warn); opacity: .8; }
+
+/* «Тестовая версия» на главной — тёплая, чтобы не путалась с делами */
+.beta-note { margin-bottom: 14px; background: linear-gradient(170deg, #fff8ec, #fff3e0); box-shadow: inset 0 0 0 1px rgba(232, 165, 40, .25); }
+.beta-note .eyebrow { color: #b57300; }

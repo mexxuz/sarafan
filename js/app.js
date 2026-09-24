@@ -854,6 +854,7 @@
       <div class="head-bar over">
         <div class="logo grow">${logoMark}сарафан</div>
         ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+      ${betaNote()}
       ${starter()}
       ${draftsCard()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
@@ -923,6 +924,19 @@
     if (!todo.length) return '';
     return `<div class="todo-rail"><div class="small" style="font-weight:600">Вы знакомы, но ещё не рекомендовали · ${todo.length}</div>
       <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div></div>`;
+  }
+
+  // Тестовая версия: честно предупреждаем и просим помочь. Закрыли — больше не показываем;
+  // сообщить о проблеме можно и потом, из профиля
+  let betaHidden = false;
+  try { betaHidden = localStorage.getItem('sarafan.betaHidden') === '1'; } catch (e) { /* приватный режим */ }
+  function betaNote() {
+    if (!LIVE || betaHidden) return '';
+    return `<div class="card beta-note"><div class="row" style="align-items:flex-start;gap:10px">
+      <div class="grow"><div class="eyebrow">тестовая версия</div>
+        <p class="small" style="margin:6px 0 0">Сарафан только запускается: что-то может не работать или быть непонятным. Заметили — напишите. Каждое замечание делает его лучше для всех, кто придёт после вас 🙂</p></div>
+      <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="betaHide" aria-label="Скрыть">${ic('x')}</button></div>
+      <button class="btn sm" style="margin-top:12px" data-act="report">${ic('send')}Сообщить о проблеме</button></div>`;
   }
 
   // Мастеру — первым делом: его ищут, а находят не всегда. Показываем, только когда есть что сказать
@@ -1849,19 +1863,22 @@
 
   function sheetFix() {
     const f = { text: '', file: null, screen: location.hash || '#/' };
+    const own = isFounder(S.me);
+    const by = ((S.founderCard || {}).name || '').split(' ')[0] || 'создатель';
     openSheet({
       F: f,
       valid: () => f.text.trim().length >= 3 || !!f.file,
-      render: () => `${sheetHead(null, 'Правка', 'Уйдёт в разработку, ответ придёт в бота')}
-        <label class="field"><span>Что поправить</span><textarea class="textarea" data-bind="text" rows="4" maxlength="2000" placeholder="Кнопка кривая, текст непонятный, хочу чтобы…">${esc(f.text)}</textarea></label>
+      render: () => `${own ? sheetHead(null, 'Правка', 'Уйдёт в разработку, ответ придёт в бота')
+    : sheetHead(null, 'Сообщить о проблеме', `Это тестовая версия. Прочитает ${esc(by)} — каждое замечание делает Сарафан лучше для всех`)}
+        <label class="field"><span>${own ? 'Что поправить' : 'Что случилось'}</span><textarea class="textarea" data-bind="text" rows="4" maxlength="2000" placeholder="${own ? 'Кнопка кривая, текст непонятный, хочу чтобы…' : 'Не сработала кнопка, непонятно, что делать на экране, не хватает…'}">${esc(f.text)}</textarea></label>
         <label class="link-row wide" style="cursor:pointer;margin-top:8px">${ic('cam')}<span class="grow"><b>${f.file ? 'Скриншот приложен' : 'Приложить скриншот'}</b><i>${f.file ? esc(f.file.name) : 'Необязательно, но так понятнее'}</i></span>
           <input type="file" accept="image/*" id="fixfile" hidden></label>
         <p class="tiny muted" style="margin:8px 2px 0">Экран, на котором вы были, приложу сам: ${esc(f.screen)}</p>
-        <div class="s-foot"><button class="btn primary block" data-act="submitFix" data-submit>${ic('send')}Отправить правку</button></div>`,
+        <div class="s-foot"><button class="btn primary block" data-act="submitFix" data-submit>${ic('send')}${own ? 'Отправить правку' : 'Отправить'}</button></div>`,
       submit: async () => {
         try {
           await window.API.upload('/feedback', f.file, { text: f.text.trim(), screen: f.screen, size: innerWidth + '×' + innerHeight });
-          closeSheet(); toast('Правка ушла в разработку');
+          closeSheet(); toast(own ? 'Правка ушла в разработку' : 'Спасибо! Сообщение ушло создателю');
         } catch (e) { toast(e.message); }
       },
     });
@@ -2802,6 +2819,7 @@
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
       <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
+      ${LIVE ? `<button class="link-row wide" data-act="report">${ic('send')}<span class="grow"><b>Сообщить о проблеме</b><i>Это тестовая версия: не работает, непонятно, чего-то не хватает — напишите</i></span>${ic('arrow')}</button>` : ''}
       <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
@@ -3001,7 +3019,7 @@
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
         <button class="btn primary block" data-act="tourNext">Дальше</button>
-        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}<span>Сарафан делает ${esc((S.founderCard.name || '').split(' ')[0])} — пишите, если что-то неудобно</span></button>` : ''}
+        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}<span>Это тестовая версия, её делает ${esc((S.founderCard.name || '').split(' ')[0])}. Что-то не работает или непонятно — напишите</span></button>` : ''}
       </div>
       <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
       <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
@@ -4109,6 +4127,8 @@
     tourPrev: () => tourStep(-1),
     tourEnd: () => endTour(),
     founderOpen: () => sheetFounder(),
+    report: () => sheetFix(),
+    betaHide: () => { betaHidden = true; try { localStorage.setItem('sarafan.betaHidden', '1'); } catch (e) { /* и так скрыто до перезапуска */ } render(); },
     tourOpen: () => go('#/tour'),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
       '/nodes/close', { id: d.id, closed: !!d.v }, d.v ? 'Отметили: закрылось' : 'Отметили: снова работает'),
