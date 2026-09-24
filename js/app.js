@@ -982,13 +982,13 @@
       const rep0 = cats.length ? G.reputation(id, cats[0]) : null;
       return {
         id, ring: ring(id), self: id === S.me, kind: 'person',
-        r: id === S.me ? 21 : ring(id) === 1 ? 15 : ring(id) === 2 ? 10 : 7.5,
+        r: id === S.me ? 21 : ring(id) === 1 ? 15 : isFounder(id) ? 12 : ring(id) === 2 ? 10 : 7.5,
         photo: U(id).photo || null,
         video: U(id).video && (id === S.me || ring(id) <= 1) ? srvUrl(U(id).video) : null,   // дальних — фото, телефон не тянет десятки роликов
         trusted: !!(rep0 && rep0.independent >= 3),
         founder: (S.founders || []).includes(id),
         initials: (U(id).name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
-        label: id === S.me ? 'вы' : first(id),
+        label: id === S.me ? 'вы' : isFounder(id) && ring(id) >= 2 ? 'создатель Сарафана' : first(id),
         go: id === S.me ? '#/me' : '#/p/' + id,
       };
     });
@@ -1077,7 +1077,7 @@
       const core = new Set();
       firmsOf.forEach((set, who) => { if (who === S.me || String(who).startsWith('w') || ring(who) <= 1) set.forEach((f) => core.add(f)); });
       nodes.forEach((n) => {
-        if (n.self || n.fc || n.anon || n.ghost) return;
+        if (n.self || n.fc || n.anon || n.ghost || n.founder) return;   // создатель — не безымянная звезда
         if (core.has(n.id)) { n.ring = 1; return; }
         if (isPlace(n.id)) {
           const k = nodeRecs(nodeById(n.id.slice(1)) || { recs: [] }).length;
