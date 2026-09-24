@@ -968,6 +968,15 @@
       const keep = new Set([...people.filter((id) => ring(id) <= 1), ...far]);
       people = people.filter((id) => keep.has(id));
     }
+    // Создатель виден всем: если он в сети, но дальше, чем рисует это облако, — всё равно на месте,
+    // вместе с общим знакомым, через которого до него дотягивается нить
+    const fid0 = (S.founderCard || {}).id;
+    if (!onlyPlaces && fid0 && U(fid0) && fid0 !== S.me && !people.includes(fid0)) {
+      const via = people.find((id) => id !== S.me && G.connected(id, fid0))
+        || Object.keys(S.users).find((id) => ring(id) === 1 && G.connected(id, fid0));
+      if (via && !people.includes(via)) people.push(via);
+      people.push(fid0);
+    }
     const nodes = people.map((id) => {
       const cats = G.catsOf(id);
       const rep0 = cats.length ? G.reputation(id, cats[0]) : null;
