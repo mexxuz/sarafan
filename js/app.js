@@ -3592,7 +3592,7 @@
       render: () => `${sheetHead(null, 'Попросите довольных клиентов', res.got ? `Вас уже рекомендуют ${pl(res.got, 'человек', 'человека', 'человек')}` : 'Первая рекомендация — самая важная')}
         <p class="small" style="color:var(--ink-2);margin:0 0 12px">Отправьте ссылку в чат, где договаривались о работе. Клиент напишет одну фразу — и вас найдут его знакомые. Про Сарафан ему знать не нужно: ссылка сама всё объяснит.</p>
         <div class="invite-card"><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${esc(link.replace('https://', ''))}</span></div>
-          <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc('Если вам понравилась моя работа — напишите, пожалуйста, пару слов. Это займёт минуту:')}" data-url="${esc(link)}">${ic('send')}Отправить</button>
+          <div class="btn-row"><button class="btn sm" data-act="cardSend" data-kind="ask" data-text="${esc('Если вам понравилась моя работа — напишите, пожалуйста, пару слов. Это займёт минуту:')}" data-url="${esc(link)}">${ic('send')}Отправить</button>
             <button class="btn ghost sm" data-act="copy" data-v="${esc(link)}">${ic('copy')}Скопировать</button></div></div>
         ${window.API.inTelegram ? '' : `<p class="hint" style="margin-top:10px">Для тех, у кого нет Telegram: <a class="link" href="${esc(webLink)}" target="_blank" rel="noopener">${esc(webLink.replace(/^https?:\/\//, ''))}</a></p>`}
         <p class="why">${ic('spark')}Одна ссылка на всех: её можно отправлять каждому клиенту снова и снова</p>
@@ -3616,7 +3616,7 @@
           const link = `t.me/${S.bot || 'sarafanibot'}?start=${f.done.code}`;
           return `${sheetHead(null, 'Записали. Позвать его?', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
-            <div class="btn-row"><button class="btn sm" data-act="tgSend" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
+            <div class="btn-row"><button class="btn sm" data-act="cardSend" data-kind="rec" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
             <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым контактом, а рекомендация появится в профиле.</div>
             <div class="s-foot">${f.next ? `<button class="btn primary block" data-act="openDraft" data-id="${f.next}">Следующий из переписки</button>` : ''}<button class="btn ghost block" data-act="closeSheet">Позову позже</button></div>`;
         }
@@ -3960,6 +3960,15 @@
     submitShare: () => SH.submit(),
     tgShare: (d) => shareCard('person', d.id, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`)),
     tgSend: (d) => tgShareLink(d.url, d.text),
+    // карточкой с картинкой и кнопкой; где Telegram так не умеет — как раньше, текстом со ссылкой
+    cardSend: async (d) => {
+      const code = (String(d.url).match(/start=([\w-]+)/) || [])[1];
+      if (!(LIVE && tg && tg.shareMessage && code)) { tgShareLink(d.url, d.text); return; }
+      try {
+        const res = await window.API.post('/cards/prepare', { kind: d.kind, code });
+        tg.shareMessage(res.id, (sent) => { if (sent) toast('Отправили'); });
+      } catch (e) { tgShareLink(d.url, d.text); }
+    },
     addPhrase: (d) => {
       const t = (SH.F.text || '').trim();
       if (t.includes(d.v)) return;
