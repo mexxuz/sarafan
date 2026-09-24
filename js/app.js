@@ -162,7 +162,7 @@
   const otherProject = '<div class="vz-line"><span class="vz-note">Ещё один мой проект:</span><button class="vz-pill" data-act="openTg" data-u="vzaimnodatingbot" aria-label="Взаимно — знакомства в Ташкенте, второй проект создателя">'
     + '<svg viewBox="0 0 64 44" aria-hidden="true"><path stroke="#8b45e8" d="M32 12C30 7.5 26.5 5 22.5 5C16.5 5 12.5 10 13.5 17C15 26.5 25.5 33.5 36 41"/>'
     + '<path stroke="#f0508c" d="M32 12C34 7.5 37.5 5 41.5 5C47.5 5 51.5 10 50.5 17C49 26.5 38.5 33.5 28 41"/></svg>'
-    + '<span><b>Взаимно</b> · знакомства в Ташкенте</span></button></div>';
+    + '<span><b>Взаимно</b> · знакомства</span></button></div>';
   // живая аватарка — только в крупных портретах: в списках десятки роликов разом тяжелы для телефона
   const video = (id) => (U(id) && U(id).video ? srvUrl(U(id).video) : '');
   const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${video(id) && (size === 'xl' || size === 'l') ? `<video src="${esc(video(id))}" autoplay muted loop playsinline preload="auto"></video>` : ''}</span>`;
