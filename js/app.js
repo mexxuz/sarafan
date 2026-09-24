@@ -3078,7 +3078,9 @@
   // ——— Первый вход ———
   function Onboarding() {
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
-    if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
+    // Уже в сети и открыли регистрацию — это просмотр глазами новичка: поля пустые, сохранять нечего
+    const preview = S.onboarded;
+    if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
     const ring = inviter ? [inviter, ...[...(G.adj[inviter] || [])].filter((x) => x !== S.me)] : [...(G.adj[S.me] || [])];
     const rule = (icon, t, d) => `<div class="rule"><span class="ic">${ic(icon)}</span><div><b>${t}</b>${d}</div></div>`;
     return `<div class="onb">
@@ -3094,7 +3096,8 @@
           <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Нет, я пока просто ищу своих</button></div>
           ${F.pro === 'no' ? '<p class="hint">Хорошо. Передумаете — сферу можно добавить в профиле в любой момент</p>' : ''}</div>
         ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь — одна-две сферы').replace('</div></div>', '</div>') + '<p class="hint">По сфере вас найдут знакомые и их знакомые — с именем того, кто вас рекомендует</p></div>' : ''}
-        <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти в сеть</button>
+        ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
+    : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти в сеть</button>`}
         <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
       </div>
       <div class="card onb" style="margin-top:10px"><div class="rules">
