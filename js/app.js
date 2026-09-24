@@ -1609,7 +1609,7 @@
   function sheetWaiting(id) {
     const w = (S.waiting || []).find((x) => x.id === id);
     if (!w) return;
-    const f = { name: w.name || '', note: w.note || '', cat: w.cat || '' };
+    const f = { name: w.name || '', note: w.note || '', cat: w.cat || '', greeting: w.greeting || '' };
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 1,
@@ -1617,6 +1617,7 @@
           <div class="small muted" style="margin-top:4px">${w.username ? '@' + esc(w.username) + ' · ' : ''}ещё не в Сарафане</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
+        <label class="field"><span>Приветствие — бот покажет ему цитатой, когда он откроет приглашение</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
@@ -3860,12 +3861,21 @@
     dropPending: (d) => mutate(() => { S.pendingInvites = (S.pendingInvites || []).filter((x) => x.code !== d.code); },
       '/recommendations/outside/delete', { code: d.code }, 'Убрали: ' + d.name),
     openWaiting: (d) => sheetWaiting(d.id),
-    inviteWaiting: (d) => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) inviteWaiting(w); },
+    inviteWaiting: (d) => {
+      const w = (S.waiting || []).find((x) => x.id === d.id);
+      if (!w) return;
+      const f = SH ? SH.F : null;
+      if (f && (f.greeting || '').trim() !== (w.greeting || '')) {
+        w.greeting = (f.greeting || '').trim();
+        window.API.post('/circle/waiting/update', { id: w.id, name: (f.name || w.name).trim(), note: (f.note || '').trim(), cat: f.cat || '', greeting: w.greeting }).catch(() => {});
+      }
+      inviteWaiting(w);
+    },
     saveWaiting: (d) => {
       const f = SH.F;
       closeSheet();
-      mutate(() => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) Object.assign(w, { name: f.name.trim(), note: f.note.trim(), cat: f.cat || '' }); },
-        '/circle/waiting/update', { id: d.id, name: f.name.trim(), note: f.note.trim(), cat: f.cat || '' }, 'Сохранено');
+      mutate(() => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) Object.assign(w, { name: f.name.trim(), note: f.note.trim(), cat: f.cat || '', greeting: (f.greeting || '').trim() }); },
+        '/circle/waiting/update', { id: d.id, name: f.name.trim(), note: f.note.trim(), cat: f.cat || '', greeting: (f.greeting || '').trim() }, 'Сохранено');
     },
     // Рекомендовать того, кто ещё не пришёл: обычная запись «человек вне Сарафана», уже с его именем и ником
     recWaiting: (d) => {
