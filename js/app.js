@@ -836,6 +836,21 @@
   };
 
   // ——— Главная ———
+  // Справочник: сколько людей и сфер вам открыто через знакомых — и на сколько он вырос с прошлого раза
+  function dirLine(c1) {
+    if (!c1.length) return '';
+    const people = Object.keys(S.users).filter((id) => id !== S.me && (G.dist[id] ?? 9) <= 3);
+    const spheres = new Set();
+    people.forEach((id) => G.catsOf(id).forEach((c) => spheres.add(c)));
+    let grew = 0;
+    try {
+      const was = JSON.parse(localStorage.getItem('sarafan.dir') || 'null');
+      if (was && people.length > was.n) grew = people.length - was.n;
+      if (!was || Date.now() - was.at > 864e5) localStorage.setItem('sarafan.dir', JSON.stringify({ n: people.length, at: Date.now() }));
+    } catch (e) { /* приватный режим — без «+N» */ }
+    return `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? ` <span class="grew">+${grew} с прошлого раза</span>` : ''}</p>`;
+  }
+
   function Home() {
     const c1 = myContacts();
     const near = new Set(Object.keys(G.dist).filter((k) => G.dist[k] >= 1 && G.dist[k] <= 2));
@@ -849,7 +864,6 @@
       .slice(0, 6);
     const mine = S.requests.filter((q) => q.from === S.me && !q.closed).sort((a, b) => b.at - a.at).slice(0, 2);
     const op = orbitPeople(6, 8);
-    const small = op.total1 < 3;
     return `
       <div class="head-bar over">
         <div class="logo grow">${logoMark}сарафан</div>
@@ -861,7 +875,8 @@
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
         <a class="cloud-full" href="#/map" aria-label="Развернуть">${ic('net')}</a></div>
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
-      ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
+      <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
+      ${dirLine(c1)}
       ${proNudge()}
       ${proAsk()}
       ${myList()}
@@ -2972,9 +2987,9 @@
   const TOUR = [
     {
       key: 'write',
-      eyebrow: 'ваш круг',
-      title: 'Запишите своих проверенных',
-      gain: 'Имена, которые вы советуете в чатах по памяти, больше не теряются — и знакомые находят их сами, без вопроса',
+      eyebrow: 'ваш справочник',
+      title: 'Справочник, который растёт через знакомых',
+      gain: 'Вы записываете своих полезных людей, знакомые — своих. Вместе это справочник, куда чужому не попасть: у каждого видно, кто его знает',
       scene: `<div class="sc sc-write">
         <svg class="web" viewBox="0 0 330 268" preserveAspectRatio="none" aria-hidden="true">
           <path class="w1" d="M131 118Q115 105 95 100"/>
@@ -3123,12 +3138,13 @@
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
-      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Спросите своих —<br>получите имя</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен врач, юрист, риелтор или мастер? Знакомые посмотрят у себя и посоветуют того, кого рекомендуют сами. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
+      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Справочник, который<br>растёт через знакомых</h1>
+      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">У каждого есть полезные знакомые. Здесь они собираются в один справочник — ваши, ваших знакомых и их знакомых. Нужен совет — спросите своих: видно, кто человека знает и через кого до него дойти. Чужому сюда не попасть.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        <div class="field"><span>Вас можно советовать знакомым?</span><div class="chips">
+        <div class="field"><span>Вас можно советовать знакомым?</span>
+          <p class="hint" style="margin:-2px 0 8px">Вас тоже найдут: знакомые ваших знакомых — по вашей сфере</p><div class="chips">
           <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да, выбрать, чем занимаюсь</button>
           <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Нет, я пока просто ищу своих</button></div>
           ${F.pro === 'no' ? '<p class="hint">Хорошо. Передумаете — сферу можно добавить в профиле в любой момент</p>' : ''}</div>

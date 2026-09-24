@@ -722,3 +722,10 @@ body.viewing-as #app { padding-top: 48px; }
 .rename { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 0; background: none; border: 0;
   color: var(--ink-3); font: 500 var(--fs-xs)/1.2 var(--t); cursor: pointer; }
 .rename svg { width: 13px; height: 13px; }
+
+/* Главная: «Кто вам нужен?» под облаком и размер справочника */
+.home-find { position: relative; z-index: 2; margin-top: 6px; text-decoration: none; color: var(--ink-3); background: var(--paper); box-shadow: var(--sh-1, 0 4px 16px rgba(30, 60, 120, .08)); }
+.home-find span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dir-line { position: relative; z-index: 2; margin: 10px 4px 0; text-align: center; font-size: var(--fs-xs); color: var(--ink-3); }
+.dir-line b { color: var(--ink); font-weight: 700; }
+.dir-line .grew { color: var(--good); font-weight: 600; white-space: nowrap; }
