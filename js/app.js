@@ -877,6 +877,7 @@
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
       ${dirLine(c1)}
+      ${whoisMe()}
       ${proNudge()}
       ${proAsk()}
       ${myList()}
@@ -939,7 +940,7 @@
     const todo = c1.filter((id) => !mine.has(id));
     if (!todo.length) return '';
     return `<div class="todo-rail"><div class="small" style="font-weight:600">Вы знакомы, но ещё не рекомендовали · ${todo.length}</div>
-      <div class="face-rail">${todo.map((id) => `<button class="face" data-act="recommend" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : 'кто он?')}</i></button>`).join('')}</div></div>`;
+      <div class="face-rail">${todo.map((id) => `<button class="face" data-act="${G.catsOf(id).length ? 'recommend' : 'whoIs'}" data-id="${id}" data-cat="${G.catsOf(id)[0] || ''}">${av(id, 'l')}<span>${esc(first(id))}</span><i>${esc(G.catsOf(id).length ? cat(G.catsOf(id)[0]).who : (S.whoisAsked || []).includes(id) ? 'спросили' : 'кто он?')}</i></button>`).join('')}</div></div>`;
   }
 
   // Тестовая версия: честно предупреждаем и просим помочь. Закрыли — больше не показываем;
@@ -2517,6 +2518,58 @@
   }
 
   // ——— Профиль человека ———
+  // Знакомый, но непонятно, чем занимается: спросить у него самого — «кем тебя советовать?»
+  function whoisCard(id) {
+    if (!LIVE || id === S.me || !G.connected(S.me, id) || G.catsOf(id).length) return '';
+    const asked = (S.whoisAsked || []).includes(id);
+    return `<div class="card" style="margin-top:14px"><div class="eyebrow">кем советовать</div>
+      <p class="small" style="margin:6px 0 12px">${esc(first(id))} не написал, чем занимается. ${asked ? 'Вы уже спросили — ответ придёт в Telegram' : 'Спросите у него — вопрос придёт в Telegram, ответ — вам'}</p>
+      ${asked ? '' : `<button class="btn primary block" data-act="whoisAsk" data-id="${id}">${ic('send')}Спросить, кем его советовать</button>`}</div>`;
+  }
+  function sheetWhoIs(id) {
+    const asked = (S.whoisAsked || []).includes(id);
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(id, esc(U(id).name), 'Вы знакомы, но он не написал, чем занимается')}
+        <div class="stack" style="gap:8px">
+          ${asked ? `<div class="note">Вы уже спросили — ответ придёт в Telegram</div>` : `<button class="link-row wide" data-act="whoisAsk" data-id="${id}">${ic('send')}
+            <span class="grow"><b>Спросить у него</b><i>Ему придёт вопрос «кем вас советовать?», ответ — вам</i></span>${ic('arrow')}</button>`}
+          <button class="link-row wide" data-act="recommend" data-id="${id}">${ic('seal')}
+            <span class="grow"><b>Рекомендовать самому</b><i>Если знаете, чем он хорош, — выберите сферу сами</i></span>${ic('arrow')}</button>
+        </div>`,
+    });
+  }
+  // Меня спросили «кем тебя советовать?» — сферы и одна фраза о себе
+  function sheetWhoisAnswer() {
+    const by = (S.whoisAskedMe || []).filter((x) => U(x));
+    const me = U(S.me);
+    const f = { cats: [...(me.cats || [])], about: me.about || '' };
+    openSheet({
+      F: f,
+      valid: () => f.cats.length > 0,
+      render: () => `${sheetHead(by[0] || null, 'Кем вас советовать?', by.length ? `Спрашивает ${esc(by.map((x) => first(x)).join(', '))}` : 'Чтобы знакомые знали, как вас представить')}
+        ${catPick(f, 'cats', 'who', 'Чем занимаетесь — одна-две сферы')}
+        <label class="field"><span>Как вас представить — одной фразой</span><textarea class="textarea" data-bind="about" rows="2" maxlength="400" placeholder="Например: делаю сайты и логотипы для небольших компаний">${esc(f.about)}</textarea></label>
+        <p class="why">${ic('spark')}По сфере вас найдут знакомые ваших знакомых — с именем того, кто вас рекомендует</p>
+        <div class="s-foot"><button class="btn primary block" data-act="submitWhois" data-submit>Ответить</button></div>`,
+      submit: async () => {
+        try {
+          await window.API.post('/whois/answer', { cats: f.cats, about: f.about.trim() });
+          closeSheet(); await refresh(); render();
+          toast(by.length ? 'Ответ ушёл: ' + by.map((x) => first(x)).join(', ') : 'Сохранено');
+        } catch (e) { toast(e.message); }
+      },
+    });
+  }
+  // На главной — пока не ответили: кто-то хочет вас советовать
+  function whoisMe() {
+    const by = (S.whoisAskedMe || []).filter((x) => U(x));
+    if (!LIVE || !by.length) return '';
+    return `<div class="card accent" style="margin-top:18px"><div class="row" style="gap:12px">${av(by[0], 's')}
+      <div class="grow small"><b>${esc(by.map((x) => first(x)).join(', '))}</b> ${by.length > 1 ? 'хотят' : 'хочет'} советовать вас знакомым — расскажите, чем вы занимаетесь</div></div>
+      <button class="btn block" style="margin-top:12px" data-act="whoisAnswer">Ответить</button></div>`;
+  }
+
   function Profile(id, params) {
     const u = U(id);
     const cats = G.catsOf(id);
@@ -2562,6 +2615,7 @@
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
+      ${whoisCard(id)}
       ${partnerOfView('user', id)}
       ${workView(id)}
       ${howView(id)}
@@ -2848,6 +2902,7 @@
   // ——— Мой профиль ———
   function Me(params) {
     if (F.tab === undefined) F.tab = params.get('tab') || 'in';
+    if (params.get('whois') && !F.whoisOpened) { F.whoisOpened = true; setTimeout(() => sheetWhoisAnswer(), 350); }
     const me = U(S.me);
     const inRecs = G.recsTo(S.me).sort((a, b) => b.at - a.at);
     const outRecs = G.recsFrom(S.me).sort((a, b) => b.at - a.at);
@@ -4127,6 +4182,17 @@
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
     connMenu: (d) => sheetConn(d.id),
+    whoIs: (d) => sheetWhoIs(d.id),
+    whoisAnswer: () => sheetWhoisAnswer(),
+    submitWhois: () => SH && SH.submit(),
+    whoisAsk: async (d) => {
+      try {
+        const r = await window.API.post('/whois/ask', { user: d.id });
+        S.whoisAsked = [...new Set([...(S.whoisAsked || []), d.id])];
+        closeAllSheets(); render();
+        toast(r.already ? 'Уже спрашивали недавно — ждём ответа' : `Спросили — ответ ${first(d.id)} придёт вам в Telegram`);
+      } catch (e) { toast(e.message); }
+    },
     renameContact: (d) => sheetRename(d.id),
     saveRename: async (d) => {
       const name = d.v === 'clear' ? '' : ((SH && SH.F.name) || '').trim();
