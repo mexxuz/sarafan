@@ -582,7 +582,7 @@
 .node-ic.mini svg { width: 12px; height: 12px; }
 
 /* Сфера: одно поле, под ним подсказки — найденные и «Добавить» новую */
-.catpick .chip.on { display: inline-flex; align-items: center; gap: 6px; padding-right: 6px; }
+.catpick .chip.on { display: inline-flex; align-items: center; gap: 6px; padding-right: 9px; }
 .catpick .chip-x { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .25); color: inherit; }
 .catpick .chip-x svg { width: 12px; height: 12px; }
 .cat-sugg { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
@@ -615,7 +615,7 @@
 .fix-btn.round { padding: 8px 9px; }
 @media (min-width: 900px) { .dev-tools { bottom: 20px; } }
 /* крестик внутри метки — убрать (в «раньше работали», в выбранных сферах) */
-.chip .chip-x { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; margin-left: 6px; margin-right: -6px; background: rgba(30, 50, 90, .08); color: inherit; }
+.chip .chip-x { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; margin-left: 6px; margin-right: -7px; background: rgba(30, 50, 90, .08); color: inherit; }
 .chip .chip-x svg { width: 12px; height: 12px; }
 .chip.on .chip-x { background: rgba(255, 255, 255, .25); }
 
@@ -710,3 +710,6 @@ body.viewing-as #app { padding-top: 48px; }
 /* «Тестовая версия» на главной — тёплая, чтобы не путалась с делами */
 .beta-note { position: relative; z-index: 2; margin-bottom: 14px; background: linear-gradient(170deg, #fff8ec, #fff3e0); box-shadow: inset 0 0 0 1px rgba(232, 165, 40, .25); }
 .beta-note .eyebrow { color: #b57300; }
+
+/* Крестик на плашке — справа столько же воздуха, сколько сверху и снизу (9 из 38), а не впритык к краю */
+.catpick .chip.on .chip-x { margin: 0 0 0 2px; }
