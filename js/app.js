@@ -1619,10 +1619,11 @@
         <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
-        <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку, и вы станете знакомыми</p>
+        ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
+        <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку${w.rec ? ' и рекомендацию' : ''}, и вы станете знакомыми</p>
         <div class="s-foot"><button class="btn primary block" data-act="inviteWaiting" data-id="${w.id}">${ic('send')}${w.username ? 'Написать ему — приглашение готово' : 'Отправить приглашение'}</button>
           <div class="btn-row" style="margin-top:8px">
-            <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}Рекомендовать</button>
+            <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}${w.rec ? 'Изменить рекомендацию' : 'Рекомендовать'}</button>
             <button class="btn sm ghost" data-act="saveWaiting" data-id="${w.id}" data-submit>Сохранить</button></div>
           <button class="btn ghost block" style="margin-top:4px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}">Убрать из круга</button></div>`,
     });
@@ -3489,9 +3490,12 @@
   }
 
   // Рекомендовать человека, которого ещё нет в сети
-  function sheetOutsider(catId, draftId) {
-    const d = (S.drafts || []).find((x) => x.id === draftId);
-    const f = { name: d ? d.name : '', cat: (d && d.cat) || catId || '', rel: d && /посоветовал|прислал/.test(d.text || '') ? 'heard' : '', text: d ? d.text : '',
+  function sheetOutsider(catId, draftId, waitId, waitName) {
+    // из круга ожидающих: он уже в Telegram — имя, фото и ник знаем, рекомендация ляжет в его запись
+    const wt = waitId ? (S.waiting || []).find((x) => x.id === waitId) : null;
+    const d = (S.drafts || []).find((x) => x.id === draftId) || (wt ? { name: waitName || wt.name, cat: catId || wt.cat, text: wt.rec || '',
+      username: wt.username, photo: wt.photo, fromWait: true } : null);
+    const f = { name: d ? d.name : '', cat: (d && d.cat) || catId || '', rel: (wt && wt.rel) || (d && /посоветовал|прислал/.test(d.text || '') ? 'heard' : ''), text: d ? d.text : '',
       phone: d ? (d.phone || (d.username ? '@' + d.username : '')) : '', allCats: true, done: null };
     openSheet({
       F: f,
@@ -3507,9 +3511,10 @@
         }
         const heard = f.rel === 'heard';
         const more = (S.drafts || []).filter((x) => x.id !== draftId).length;
-        return `${sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? (more ? `Проверьте и сохраните — дальше ещё ${more}` : 'Проверьте и сохраните — через год найдёте за секунду') : 'Даже если про Сарафан он ещё не знает')}
+        return `${wt ? sheetHead(null, 'Рекомендовать', 'Ждёт в вашем круге — рекомендация появится у него, как только придёт') : sheetHead(null, d ? 'Из переписки' : 'Записать человека', d ? (more ? `Проверьте и сохраните — дальше ещё ${more}` : 'Проверьте и сохраните — через год найдёте за секунду') : 'Даже если про Сарафан он ещё не знает')}
           ${d ? '' : `<button class="link-row wide" data-act="pickContacts" style="margin-bottom:12px">${ic('send')}<span class="grow"><b>Выбрать из контактов Telegram</b><i>До 10 человек за раз — бот сохранит их в черновики</i></span>${ic('arrow')}</button>`}
           ${d ? '' : `<label class="field paste"><span>Скопировали совет в переписке? Вставьте — разберём сами</span><textarea class="textarea" rows="2" data-paste data-bind="paste" placeholder="Рустам, электрик, +998 90 123 45 67 — делал у нас проводку">${esc(f.paste || '')}</textarea></label>`}
+          ${wt && !wt.photo ? `<div class="row" style="gap:12px;margin-bottom:12px">${waitAv(wt, 'l')}<div class="grow small muted">Фото из Telegram не пришло — он скрыл его настройками. Появится, когда он войдёт</div></div>` : ''}
           ${d && d.photo ? `<div class="row" style="gap:12px;margin-bottom:12px"><span class="av l"><img src="${esc(srvUrl(d.photo))}" alt=""></span>
             <div class="grow small muted">Так он выглядит в Telegram${d.username ? ` · @${esc(d.username)}` : ''}. Имя взято из его профиля — впишите, как знаете его вы</div></div>` : ''}
           <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" placeholder="Например: Рустам" value="${esc(f.name)}"></label>
@@ -3519,11 +3524,20 @@
           ${heard ? '' : quickChips()}
           <p class="why">${ic('spark')}${heard ? 'Сами вы с ним не работали — поэтому запись останется только у вас и в чужую репутацию не пойдёт' : 'Знакомые найдут его, когда будут искать такого же — и не придётся отвечать в чате заново'}</p>
           <div class="s-foot"><button class="btn primary block" data-act="submitOutsider" data-submit>${heard ? 'Сохранить для себя' : 'Записать'}</button>
-            ${d ? `<button class="btn ghost block" data-act="skipDraft" data-id="${d.id}">Не сохранять${more ? ' — к следующему' : ''}</button>` : ''}</div>`;
+            ${d && !wt ? `<button class="btn ghost block" data-act="skipDraft" data-id="${d.id}">Не сохранять${more ? ' — к следующему' : ''}</button>` : ''}</div>`;
       },
       submit: async () => {
         const p = { id: 'p' + uid(), name: f.name.trim(), cat: f.cat, rel: f.rel, text: f.text.trim(), code: 'r-' + uid(), at: Date.now(),
           phone: (f.phone || '').trim(), private: f.rel === 'heard' };
+        if (wt) {   // ждёт в круге: рекомендация — в его запись, а следом — позвать его
+          try {
+            await window.API.post('/circle/waiting/rec', { id: wt.id, name: p.name, cat: p.cat, rel: p.rel, text: p.text });
+            Object.assign(wt, { name: p.name, cat: p.cat, rel: p.rel, rec: p.text });
+          } catch (e) { toast(e.message); return; }
+          closeSheet(); toast('Записали — рекомендация появится у него, как только придёт');
+          setTimeout(() => sheetWaiting(wt.id), 350);
+          return;
+        }
         if (LIVE) {
           try {
             const res = await window.API.post('/recommendations/outside', { name: p.name, cat: p.cat, rel: p.rel, text: p.text,
@@ -3855,13 +3869,9 @@
     },
     // Рекомендовать того, кто ещё не пришёл: обычная запись «человек вне Сарафана», уже с его именем и ником
     recWaiting: (d) => {
-      const w = (S.waiting || []).find((x) => x.id === d.id);
       const f = SH ? SH.F : {};
       closeSheet();
-      setTimeout(() => {
-        sheetOutsider(f.cat || (w && w.cat) || '');
-        if (SH && w) { SH.F.name = (f.name || w.name || '').trim(); SH.F.phone = w.username ? '@' + w.username : ''; drawSheet(); }
-      }, 320);
+      setTimeout(() => sheetOutsider(f.cat || '', null, d.id, (f.name || '').trim()), 320);
     },
     dropWaitJob: (d) => mutate(() => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) { w.node = null; w.job = ''; } },
       '/circle/waiting/job', { id: d.id, node: '' }, 'Убрали из фирмы'),
