@@ -112,7 +112,9 @@
   const full = (id) => (id === S.me ? 'Вы' : U(id).name);
   const cat = (id) => G.catById[id] || { name: 'Другое', who: '' };
   const focusOf = (id, c) => ((U(id) || {}).focus || {})[c] || '';
-  const who = (id) => { const c = G.catsOf(id); return c.length ? c.map((x) => cat(x).who + (focusOf(id, x) ? ` (${focusOf(id, x)})` : '')).slice(0, 3).join(' · ') : 'Участник сети'; };
+  // Подпись над именем — только сферы, которые человек указал сам: чужая рекомендация не вешает ярлык.
+  // Кто сам ничего не указал (позвали, профиль пустой) — тогда по рекомендациям, иначе не понять, кто он
+  const who = (id) => { const own = new Set((U(id) || {}).cats || []); const all = G.catsOf(id); const c = own.size ? all.filter((x) => own.has(x)) : all; return c.length ? c.map((x) => cat(x).who + (focusOf(id, x) ? ` (${focusOf(id, x)})` : '')).slice(0, 3).join(' · ') : 'Участник сети'; };
   // Узкая специальность: подсказки для частых сфер, остальное пишут своими словами
   const FOCUS_HINT = {
     dentist: ['терапевт', 'ортодонт', 'хирург', 'имплантолог', 'детский стоматолог', 'ортопед'],
