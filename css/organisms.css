@@ -713,3 +713,6 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* Крестик на плашке — справа столько же воздуха, сколько сверху и снизу (9 из 38), а не впритык к краю */
 .catpick .chip.on .chip-x { margin: 0 0 0 2px; }
+
+/* «позвать» под ожидающим — это действие, а не состояние */
+.face i.call { color: var(--blue); font-weight: 600; font-style: normal; }

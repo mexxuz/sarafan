@@ -1596,6 +1596,16 @@
   const waitAv = (w, size) => `<span class="av ${size} wait">${w.photo ? `<img src="${esc(srvUrl(w.photo))}" alt="" loading="lazy" onerror="this.remove()">` : esc((w.name || '?').slice(0, 1).toUpperCase())}</span>`;
 
   // Карточка того, кто ждёт в круге: подписать, как вы его знаете, рекомендовать, поторопить
+  const first2 = (name) => (name || '').split(' ')[0];
+  // Приглашение конкретному человеку: есть имя пользователя — сразу его чат с готовым текстом,
+  // нет — обычный выбор, кому отправить
+  function inviteWaiting(w) {
+    const url = `https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`;
+    const text = `${first2(w.name) ? first2(w.name) + ', з' : 'З'}ову тебя в Сарафан — здесь находят нужных людей через знакомых. Я уже добавил тебя в свой круг: ${url}`;
+    if (w.username && tg && tg.openTelegramLink) tg.openTelegramLink(`https://t.me/${w.username}?text=${encodeURIComponent(text)}`);
+    else tgShareLink(url, text.replace(': ' + url, ''));
+  }
+
   function sheetWaiting(id) {
     const w = (S.waiting || []).find((x) => x.id === id);
     if (!w) return;
@@ -1610,10 +1620,10 @@
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку, и вы станете знакомыми</p>
-        <div class="s-foot"><button class="btn primary block" data-act="saveWaiting" data-id="${w.id}" data-submit>Сохранить</button>
+        <div class="s-foot"><button class="btn primary block" data-act="inviteWaiting" data-id="${w.id}">${ic('send')}${w.username ? 'Написать ему — приглашение готово' : 'Отправить приглашение'}</button>
           <div class="btn-row" style="margin-top:8px">
             <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}Рекомендовать</button>
-            <button class="btn sm ghost" data-act="sendInvite">${ic('send')}Поторопить</button></div>
+            <button class="btn sm ghost" data-act="saveWaiting" data-id="${w.id}" data-submit>Сохранить</button></div>
           <button class="btn ghost block" style="margin-top:4px" data-act="dropWaiting" data-id="${w.id}" data-name="${esc(w.name)}">Убрать из круга</button></div>`,
     });
   }
@@ -2761,7 +2771,8 @@
         <button class="link-row wide" data-act="outsider">${ic('seal')}
           <span class="grow"><b>Позвать и сразу порекомендовать</b><i>Рекомендация будет ждать его в профиле, когда он войдёт</i></span>${ic('arrow')}</button>
         ${waiting.length ? `<div class="invite-wait"><div class="small" style="font-weight:600">Ждут в круге · ${waiting.length}</div>
-          <div class="face-rail" style="margin-top:6px">${waiting.map((w) => `<button class="face" data-act="openWaiting" data-id="${w.id}">${waitAv(w, 'l')}<span>${esc((w.name || 'Без имени').split(' ')[0])}</span><i>${esc(w.cat ? cat(w.cat).who : w.node && nodeById(w.node) ? nodeById(w.node).name : 'ждёт')}</i></button>`).join('')}</div></div>` : ''}
+          <div class="tiny muted" style="margin-top:2px">Их ещё нет в Сарафане. Нажмите на человека — отправьте ему приглашение</div>
+          <div class="face-rail" style="margin-top:6px">${waiting.map((w) => `<button class="face" data-act="openWaiting" data-id="${w.id}">${waitAv(w, 'l')}<span>${esc((w.name || 'Без имени').split(' ')[0])}</span><i class="${w.cat || w.node ? '' : 'call'}">${esc(w.cat ? cat(w.cat).who : w.node && nodeById(w.node) ? nodeById(w.node).name : 'позвать')}</i></button>`).join('')}</div></div>` : ''}
       </div>`;
 
     const howto = `<div class="card" style="margin-top:10px">
@@ -3835,6 +3846,7 @@
     dropPending: (d) => mutate(() => { S.pendingInvites = (S.pendingInvites || []).filter((x) => x.code !== d.code); },
       '/recommendations/outside/delete', { code: d.code }, 'Убрали: ' + d.name),
     openWaiting: (d) => sheetWaiting(d.id),
+    inviteWaiting: (d) => { const w = (S.waiting || []).find((x) => x.id === d.id); if (w) inviteWaiting(w); },
     saveWaiting: (d) => {
       const f = SH.F;
       closeSheet();
