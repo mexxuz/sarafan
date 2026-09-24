@@ -2985,13 +2985,6 @@
           <div class="msg in"><s>Дилноза</s>Спасибо, записываюсь!</div>
         </div></div>`,
     },
-    {
-      key: 'founder',
-      eyebrow: 'от создателя',
-      title: 'Сарафан делает Макс',
-      gain: 'Сделал его для себя и друзей — чтобы своих проверенных людей не теряли в чатах: врача, юриста, мастера, продавца. Что-то неудобно или не хватает — пишите мне, читаю всё сам',
-      scene: () => `<div class="sc sc-founder">${founderPortrait('xl')}</div>`,
-    },
   ];
 
 
@@ -3008,6 +3001,7 @@
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
         <button class="btn primary block" data-act="tourNext">Дальше</button>
+        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xs')}<span>Сарафан делает ${esc((S.founderCard.name || '').split(' ')[0])} — пишите, если что-то неудобно</span></button>` : ''}
       </div>
       <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
       <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
@@ -3030,6 +3024,8 @@
     const last = tourAt === TOUR.length - 1;
     const btn = root.querySelector('.tour-foot .btn');
     if (btn) btn.textContent = last ? 'Понятно, начнём' : 'Дальше';
+    const by = root.querySelector('.tour-by');   // кто делает — одной строкой под кнопкой на последнем шаге
+    if (by) by.hidden = !last;
     if (!last) tourT = setTimeout(() => { tourAt++; showScene(); }, 6400);
   }
   function tourStep(d) {
@@ -4112,6 +4108,7 @@
     tourNext: () => tourStep(1),
     tourPrev: () => tourStep(-1),
     tourEnd: () => endTour(),
+    founderOpen: () => sheetFounder(),
     tourOpen: () => go('#/tour'),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
       '/nodes/close', { id: d.id, closed: !!d.v }, d.v ? 'Отметили: закрылось' : 'Отметили: снова работает'),

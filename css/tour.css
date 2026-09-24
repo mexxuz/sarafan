@@ -304,3 +304,9 @@
 .sc-founder { display: flex; align-items: center; justify-content: center; }
 .sc-founder .founder-av { align-self: center; animation: rise 520ms var(--ease) 120ms backwards; }
 .sc-founder .av.xl { width: 132px; height: 132px; font-size: 40px; }
+
+/* Кто делает Сарафан — одна тихая строка под кнопкой на последнем шаге, без отдельного слайда */
+.tour-by { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 4px 0;
+  background: none; border: 0; color: var(--ink-3); font: 400 var(--fs-xs)/1.3 var(--t); cursor: pointer; }
+.tour-by[hidden] { display: none; }
+.tour-by .av, .tour-by .founder-av { flex: none; }
