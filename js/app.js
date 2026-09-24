@@ -157,7 +157,9 @@
   const founderAv = (id, size, ring = '') => (isFounder(id)
     ? `<span class="founder-av">${av(id, size, 'founder')}</span>`
     : av(id, size, ring));
-  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' : '');
+  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' + otherProject : '');
+  // Второй проект создателя — одной строкой у него в карточке: кто зашёл узнать, кто он, заодно узнает и это
+  const otherProject = '<button class="founder-link" data-act="openTg" data-u="vzaimnodatingbot">Ещё делаю «Взаимно» — знакомства в Ташкенте →</button>';
   // живая аватарка — только в крупных портретах: в списках десятки роликов разом тяжелы для телефона
   const video = (id) => (U(id) && U(id).video ? srvUrl(U(id).video) : '');
   const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${video(id) && (size === 'xl' || size === 'l') ? `<video src="${esc(video(id))}" autoplay muted loop playsinline preload="auto"></video>` : ''}</span>`;
@@ -1301,7 +1303,7 @@
       render: () => `<div class="s-head"><div class="grow"></div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         <div style="text-align:center;padding:4px 0 8px">${founderCardAv(fc, 'xl')}
           <h2 class="h2" style="margin-top:16px">${esc(fc.name)}</h2>
-          <div class="founder-tag" style="margin-top:6px">Создатель Сарафана</div>
+          <div class="founder-tag" style="margin-top:6px">Создатель Сарафана</div>${otherProject}
           <p class="small muted" style="margin:14px 8px 0">Сделал Сарафан, чтобы проверенных людей не теряли в чатах, а находили через своих. Пишите: что неудобно, чего не хватает — читаю всё сам</p></div>
         ${fc.username ? `<div class="s-foot"><button class="btn primary block" data-act="openTg" data-u="${esc(fc.username)}">${ic('send')}Написать создателю</button></div>` : ''}`,
     });
