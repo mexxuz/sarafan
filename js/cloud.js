@@ -314,7 +314,7 @@ window.Cloud = function (canvas, opts) {
 
       const saved = n.r;
       n.r = R;
-      if (n.founder && !n.self) drawFounder(n);
+      if (n.founder && !n.self && n.ring > 1) drawFounder(n);   // маячок — для тех, кто с создателем не знаком
       else if (n.star) drawStar(n, dim);
       else if (n.kind === 'node') drawPlace(n);
       else drawPerson(n);
@@ -389,7 +389,7 @@ window.Cloud = function (canvas, opts) {
     }
   }
 
-  // Создатель для других — золотая звезда. Навели или зажали — звезда поворачивается,
+  // Создатель для незнакомых — золотая звезда-маячок (знакомые видят его обычным портретом). Навели или зажали — звезда поворачивается,
   // растворяется и раскрывается в портрет; отпустили — сворачивается обратно
   function drawFounder(n) {
     const m = calm ? ((hover === n || held === n) ? 1 : 0) : Math.min(1, Math.max(0, n.glow));
