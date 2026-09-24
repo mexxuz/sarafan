@@ -144,3 +144,7 @@ p { text-wrap: pretty; }
 
 /* Кнопка перед необратимым шагом: второе касание — уже насовсем */
 .btn.warn { background: var(--warn-soft); color: var(--warn); box-shadow: none; }
+
+/* iPhone увеличивает страницу, если нажать на поле со шрифтом мельче 16, и не всегда возвращает масштаб:
+   страница оставалась крупной и «съезжала» вправо вместе с меню (правка 24.09). На телефонах — 16 */
+@media (hover: none) { input, textarea, select { font-size: 16px !important; } }
