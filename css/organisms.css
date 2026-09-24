@@ -669,7 +669,7 @@ body.viewing-as #app { padding-top: 48px; }
 .face-rail .face { flex: none; width: 66px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: var(--ink-2); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
 .face-rail .face i { font: 400 10px/1.2 var(--t); font-style: normal; color: var(--ink-4); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .face-rail .face .av { margin-bottom: 2px; }
-.face-rail .face span { font: 500 var(--fs-xxs)/1.2 var(--t); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.face-rail .face > span:not(.av) { font: 500 var(--fs-xxs)/1.2 var(--t); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* «Позвать знакомых» — один блок: ссылка, контакты Telegram, позвать с рекомендацией, кто ждёт */
 .invite-one .link-row.wide { margin-top: var(--s-2); }
@@ -716,3 +716,9 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* «позвать» под ожидающим — это действие, а не состояние */
 .face i.call { color: var(--blue); font-weight: 600; font-style: normal; }
+
+/* Своё имя для знакомого: имя из Telegram — рядом серым, кнопка «назвать по-своему» — тихая */
+.tg-name { font-weight: 500; color: var(--ink-4); font-size: .62em; letter-spacing: 0; white-space: nowrap; }
+.rename { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 0; background: none; border: 0;
+  color: var(--ink-3); font: 500 var(--fs-xs)/1.2 var(--t); cursor: pointer; }
+.rename svg { width: 13px; height: 13px; }

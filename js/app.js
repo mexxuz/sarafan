@@ -1855,7 +1855,7 @@
   }
 
   function sheetViewAs() {
-    const f = { data: null, err: '' };
+    const f = { data: null, err: '', q: '' };
     window.API.viewRoles().then((r) => { f.data = r; if (SH && SH.F === f) drawSheet(); })
       .catch((e) => { f.err = e.message; if (SH && SH.F === f) drawSheet(); });
     const distWord = (p) => (p.staff ? 'сотрудник вашей фирмы' : p.dist === 1 ? 'ваш знакомый' : p.dist === 2 ? 'знакомый знакомого' : 'не знаком с вами');
@@ -1866,9 +1866,18 @@
         <div class="stack" style="gap:8px">${f.data.roles.map((r) => `<button class="link-row wide" data-act="viewAsGo" data-id="${r.user}" data-label="${esc(r.label)}" data-name="${esc(r.name)}">${ic('eye')}
           <span class="grow"><b>${esc(r.label)}</b><i>${esc(r.hint)}</i></span>${ic('arrow')}</button>`).join('')}</div>
         ${f.data.people.length ? `<div class="sec-title"><h2 class="h2">Или конкретный человек</h2></div>
-        <div class="card">${f.data.people.map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(p.name)}">
-          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow" style="min-width:0"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div></button>`).join('')}</div>` : ''}`}`,
+        <input class="input" data-live="1" placeholder="Имя — начните печатать" autocomplete="off" value="${esc(f.q)}" style="margin-bottom:10px">
+        <div class="card va-people">${peopleHtml()}</div>` : ''}`}`,
+      onLive: (v) => { f.q = v; const b = $('#sheet .va-people'); if (b) b.innerHTML = peopleHtml(); },
     });
+    // до ввода — первые двадцать; дальше — все, у кого в имени есть набранное
+    function peopleHtml() {
+      const q = normCat(f.q || '');
+      const list = f.data.people.filter((p) => !q || normCat(p.name).includes(q) || normCat((U(p.id) || {}).tgName || '').includes(q));
+      return list.slice(0, q ? 50 : 20).map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(p.name)}">
+          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow" style="min-width:0"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div></button>`).join('')
+        || '<p class="small muted" style="margin:0">Никого с таким именем</p>';
+    }
   }
 
   // Инструменты основателя в углу: «глазами других» и «Правка». Остальным не видны
@@ -2533,7 +2542,7 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}</h1>${founderTag(id)}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.tgName ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
@@ -2557,6 +2566,21 @@
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, r.cat ? cat(r.cat).who : '')).join('')}</div>` : ''}
       ${direct && LIVE ? `<p style="text-align:center;margin-top:22px"><button class="btn ghost xs" data-act="connMenu" data-id="${id}">${connOf(id) && connOf(id).hidden ? 'Знакомство скрыто от других' : 'Скрыть знакомство или убрать из знакомых'}</button></p>` : ''}
       <div class="actions"><div class="inner">${actions}</div></div>`;
+  }
+
+  // В Telegram человек «ULTIMA», а для вас он Даниил: имя видите только вы, телеграмное остаётся рядом серым
+  function sheetRename(id) {
+    const u = U(id);
+    const f = { name: u.tgName ? u.name : '' };
+    openSheet({
+      F: f,
+      valid: () => true,
+      render: () => `${sheetHead(id, 'Как вы его зовёте', `В Telegram: ${esc(u.tgName || u.name)}`)}
+        <label class="field"><span>Имя для вас</span><input class="input" data-bind="name" maxlength="60" placeholder="Например: Даниил" value="${esc(f.name)}" autocomplete="off"></label>
+        <p class="why">${ic('eye')}Видите только вы. У вас везде будет это имя, а из Telegram — рядом серым</p>
+        <div class="s-foot"><button class="btn primary block" data-act="saveRename" data-id="${id}" data-submit>Сохранить</button>
+          ${u.tgName ? `<button class="btn ghost block" data-act="saveRename" data-id="${id}" data-v="clear">Вернуть имя из Telegram</button>` : ''}</div>`,
+    });
   }
 
   // Знакомство со своим человеком: скрыть от остальных или убрать совсем
@@ -4087,6 +4111,15 @@
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
     connMenu: (d) => sheetConn(d.id),
+    renameContact: (d) => sheetRename(d.id),
+    saveRename: async (d) => {
+      const name = d.v === 'clear' ? '' : ((SH && SH.F.name) || '').trim();
+      try {
+        await window.API.post('/contacts/name', { user: d.id, name });
+        closeSheet(); await refresh(); render();
+        toast(name ? 'Теперь у вас он ' + name : 'Вернули имя из Telegram');
+      } catch (e) { toast(e.message); }
+    },
     recUncat: async (d) => {
       try {
         await window.API.post('/recommendations/uncat', { id: d.id, off: !!d.v });

@@ -64,7 +64,11 @@ window.API = (function () {
     live: !!(tg && tg.initData) || !!session || qs.has('dev'),
     inTelegram: !!(tg && tg.initData),
     hasSession: () => !!session,
-    bootstrap: () => call('/bootstrap'),
+    // своё имя для знакомого: везде показываем его, а имя из Telegram держим рядом — для профиля и поиска
+    bootstrap: () => call('/bootstrap').then((d) => {
+      Object.values((d && d.users) || {}).forEach((u) => { if (u.alias) { u.tgName = u.name; u.name = u.alias; } });
+      return d;
+    }),
     // картинка работы уходит файлом, а не текстом
     upload: async (path, file, fields) => {
       if (viewAs) throw new Error(NO_CHANGES);
