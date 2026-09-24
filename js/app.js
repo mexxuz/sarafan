@@ -1617,7 +1617,7 @@
   // нет — обычный выбор, кому отправить
   function inviteWaiting(w) {
     const url = `https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`;
-    const text = `${first2(w.name) ? first2(w.name) + ', з' : 'З'}ову тебя в Сарафан — здесь находят нужных людей через знакомых. Я уже добавил тебя в свой круг: ${url}`;
+    const text = `${first2(w.name) ? first2(w.name) + ', з' : 'З'}ову тебя в Сарафан — это справочник контактов, который растёт через знакомых. Расскажи там, чем занимаешься, — буду советовать тебя своим. Я уже добавил тебя в свой круг: ${url}`;
     if (w.username && tg && tg.openTelegramLink) tg.openTelegramLink(`https://t.me/${w.username}?text=${encodeURIComponent(text)}`);
     else tgShareLink(url, text.replace(': ' + url, ''));
   }
@@ -1637,7 +1637,7 @@
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
-        <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку${w.rec ? ' и рекомендацию' : ''}, и вы станете знакомыми</p>
+        <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку${w.rec ? ' и рекомендацию' : ''}, и вы станете знакомыми. При входе его спросят, чем он занимается, — ответ придёт вам</p>
         <div class="s-foot"><button class="btn primary block" data-act="inviteWaiting" data-id="${w.id}">${ic('send')}${w.username ? 'Написать ему — приглашение готово' : 'Отправить приглашение'}</button>
           <div class="btn-row" style="margin-top:8px">
             <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}${w.rec ? 'Изменить рекомендацию' : 'Рекомендовать'}</button>
@@ -2548,7 +2548,7 @@
       F: f,
       valid: () => f.cats.length > 0,
       render: () => `${sheetHead(by[0] || null, 'Кем вас советовать?', by.length ? `Спрашивает ${esc(by.map((x) => first(x)).join(', '))}` : 'Чтобы знакомые знали, как вас представить')}
-        ${catPick(f, 'cats', 'who', 'Чем занимаетесь — одна-две сферы')}
+        ${catPick(f, 'cats', 'who', 'Чем занимаетесь — всё, с чем можете помочь')}
         <label class="field"><span>Как вас представить — одной фразой</span><textarea class="textarea" data-bind="about" rows="2" maxlength="400" placeholder="Например: делаю сайты и логотипы для небольших компаний">${esc(f.about)}</textarea></label>
         <p class="why">${ic('spark')}По сфере вас найдут знакомые ваших знакомых — с именем того, кто вас рекомендует</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitWhois" data-submit>Ответить</button></div>`,
@@ -3198,12 +3198,14 @@
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
+        ${(S.whoisAskedMe || []).filter((x) => U(x)).length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)"><b>${esc((S.whoisAskedMe || []).filter((x) => U(x)).map((x) => first(x)).join(', '))}</b> хочет советовать вас знакомым — расскажите, чем вы занимаетесь</div>` : ''}
         <div class="field"><span>Вас можно советовать знакомым?</span>
           <p class="hint" style="margin:-2px 0 8px">Вас тоже найдут: знакомые ваших знакомых — по вашей сфере</p><div class="chips">
           <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да, выбрать, чем занимаюсь</button>
           <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Нет, я пока просто ищу своих</button></div>
           ${F.pro === 'no' ? '<p class="hint">Хорошо. Передумаете — сферу можно добавить в профиле в любой момент</p>' : ''}</div>
-        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь — одна-две сферы').replace('</div></div>', '</div>') + '<p class="hint">По сфере вас найдут знакомые и их знакомые — с именем того, кто вас рекомендует</p></div>' : ''}
+        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь — одна-две сферы').replace('</div></div>', '</div>') + '<p class="hint">По сфере вас найдут знакомые и их знакомые — с именем того, кто вас рекомендует</p></div>'
+          + `<label class="field"><span>Как вас представить — одной фразой, если хотите</span><textarea class="textarea" data-bind="about" rows="2" maxlength="400" placeholder="Например: делаю сайты и логотипы для небольших компаний">${esc(F.about || '')}</textarea></label>` : ''}
         ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
     : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти в сеть</button>`}
         <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
@@ -4092,7 +4094,7 @@
       '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
     tab: (d) => { F.tab = d.v; render(); },
-    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — здесь находят нужных людей через знакомых.'),
+    sendInvite: () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в Сарафан — это справочник контактов, который растёт через знакомых. Расскажи там, чем занимаешься, — буду советовать тебя своим.'),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     pickCat: (d, el) => {
       const inSheet = !!el.closest('#sheet');
@@ -4360,11 +4362,15 @@
     finishOnb: () => {
       const me = U(S.me);
       const pro = F.pro === 'yes' && F.cats.length;
-      const body = { name: F.name.trim(), about: me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [] };
+      const body = { name: F.name.trim(), about: (pro && (F.about || '').trim()) || me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [] };
       try { localStorage.setItem('sarafan.onbAt', String(Date.now())); } catch (e) { /* приватный режим */ }
       const hello = me.invitedBy ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
       mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
-        .then(() => { if (!applyLanding()) go('#/'); });
+        .then(() => {
+          // кто позвал и хотел знать, кем советовать, — получит ответ
+          if (pro && LIVE && (S.whoisAskedMe || []).length) window.API.post('/whois/answer', { cats: body.cats, about: body.about }).catch(() => {});
+          if (!applyLanding()) go('#/');
+        });
     },
   };
 
