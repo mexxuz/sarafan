@@ -863,6 +863,7 @@
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       ${small ? '<p class="small muted" style="text-align:center;margin:10px auto 0;max-width:290px">Серые места ждут ваших знакомых: ближний круг — те, кого позвали вы, дальний — их знакомые</p>' : ''}
       ${proNudge()}
+      ${proAsk()}
       ${myList()}
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
@@ -937,6 +938,21 @@
         <p class="small" style="margin:6px 0 0">Сарафан только запускается: что-то может не работать или быть непонятным. Заметили — напишите. Каждое замечание делает его лучше для всех, кто придёт после вас 🙂</p></div>
       <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="betaHide" aria-label="Скрыть">${ic('x')}</button></div>
       <button class="btn sm" style="margin-top:12px" data-act="report">${ic('send')}Сообщить о проблеме</button></div>`;
+  }
+
+  // Кто при входе сказал «пока просто ищу», через пару дней — один вопрос: вас можно советовать?
+  // Одно касание — и открыт выбор сферы. «Просто ищу» — больше не спрашиваем
+  let proAskHidden = false;
+  try { proAskHidden = localStorage.getItem('sarafan.proAskHidden') === '1'; } catch (e) { /* приватный режим */ }
+  function proAsk() {
+    const me = U(S.me);
+    if (!LIVE || proAskHidden || (me.cats || []).length) return '';
+    let at = 0;
+    try { at = +localStorage.getItem('sarafan.onbAt') || 0; } catch (e) { /* нет — значит, давно */ }
+    if (at && Date.now() - at < 2 * 864e5) return '';
+    return `<div class="card" style="margin-top:18px"><div class="eyebrow">чем вы занимаетесь</div>
+      <p class="small" style="margin:6px 0 12px">Если вас можно советовать — выберите сферу. Знакомые и их знакомые найдут вас в поиске, с именем того, кто рекомендует</p>
+      <div class="btn-row"><button class="btn primary" data-act="proAskYes">Выбрать сферу</button><button class="btn ghost" data-act="proAskNo">Я просто ищу</button></div></div>`;
   }
 
   // Мастеру — первым делом: его ищут, а находят не всегда. Показываем, только когда есть что сказать
@@ -3062,7 +3078,7 @@
   // ——— Первый вход ———
   function Onboarding() {
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
-    if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = [...U(S.me).cats]; }
+    if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
     const ring = inviter ? [inviter, ...[...(G.adj[inviter] || [])].filter((x) => x !== S.me)] : [...(G.adj[S.me] || [])];
     const rule = (icon, t, d) => `<div class="rule"><span class="ic">${ic(icon)}</span><div><b>${t}</b>${d}</div></div>`;
     return `<div class="onb">
@@ -3071,22 +3087,23 @@
       <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Спросите своих —<br>получите имя</h1>
       <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">Нужен врач, юрист, риелтор или мастер? Знакомые посмотрят у себя и посоветуют того, кого рекомендуют сами. Не рейтинг, а живая цепочка: видно, кто человека знает и через кого до него дойти.</p>
       ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
-      <div class="card onb" style="margin-top:10px"><div class="rules">
-        ${rule('net', 'Вам уже открыт чужой круг', inviter
-      ? `${esc(first(inviter))} пригласил вас — значит, вам видно всех, кого ${esc(first(inviter))} проверил на себе, и тех, кого проверили его знакомые.`
-      : 'Каждый знакомый открывает вам свой список проверенных людей и мест — и списки его знакомых.')}
-        ${rule('seal', 'Ответили однажды — больше не спрашивают', 'Записали своего педиатра — знакомые найдут его сами, когда понадобится. А через год и вы найдёте его за секунду, а не в переписке.')}
-        ${rule('ask', 'Вопрос без спама в общем чате', 'Опишите задачу — её увидят ваши знакомые и их знакомые, а не весь чат. Ответ придёт с именем того, кто рекомендует.')}
-        ${rule('chat', 'Работает прямо в чатах', `В любой переписке наберите @${esc(S.bot || 'sarafanibot')} педиатр и отправьте карточку из своего круга. Ничего открывать не нужно.`)}
-      </div></div>
       <div class="card" style="margin-top:10px">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        ${catPick(F, 'cats', 'who', 'Чем занимаетесь').replace('</div></div>', '</div>')}
-          <p class="hint">Можно пропустить: в чём вы сильны, решат рекомендации знакомых</p></div>
-        <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${F.name.trim() ? '' : 'disabled'}>Войти в сеть</button>
+        <div class="field"><span>Вас можно советовать знакомым?</span><div class="chips">
+          <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да, выбрать, чем занимаюсь</button>
+          <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Нет, я пока просто ищу своих</button></div>
+          ${F.pro === 'no' ? '<p class="hint">Хорошо. Передумаете — сферу можно добавить в профиле в любой момент</p>' : ''}</div>
+        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь — одна-две сферы').replace('</div></div>', '</div>') + '<p class="hint">По сфере вас найдут знакомые и их знакомые — с именем того, кто вас рекомендует</p></div>' : ''}
+        <button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти в сеть</button>
         <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
-      </div></div>`;
+      </div>
+      <div class="card onb" style="margin-top:10px"><div class="rules">
+        ${rule('net', 'Вам открыт чужой круг', inviter ? `Все, кого проверил ${esc(first(inviter))}, и те, кого проверили его знакомые.` : 'Каждый знакомый открывает вам своих проверенных людей и места.')}
+        ${rule('ask', 'Спросите — ответят свои', 'Вопрос видят знакомые и их знакомые, а ответ приходит с именем того, кто рекомендует.')}
+      </div></div></div>`;
   }
+  // Войти можно, когда есть имя и понятно, советовать ли человека: «да» — со сферой, «пока нет» — без
+  const onbValid = () => !!(F.name || '').trim() && (F.pro === 'no' || (F.pro === 'yes' && (F.cats || []).length > 0));
 
   // ——— Шторка ———
   let SH = null;
@@ -3140,7 +3157,7 @@
       el.textContent = n < min ? `${min - n} до минимума · конкретика помогает другим` : 'Так понятно, за что вы его рекомендуете';
       el.classList.toggle('ok', n >= min);
     });
-    const valid = SH ? (SH.valid ? SH.valid() : true) : route().path[0] === 'ask' ? askValid() : !S.onboarded ? !!(F.name || '').trim() : true;
+    const valid = SH ? (SH.valid ? SH.valid() : true) : route().path[0] === 'ask' ? askValid() : !S.onboarded || route().path[0] === 'start' ? onbValid() : true;
     $$('[data-submit]', scope).forEach((b) => { b.disabled = !valid; });
   }
   const sheetHead = (id, title, sub) => `<div class="s-head">${id ? founderAv(id, 'l') : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
@@ -3536,7 +3553,7 @@
   }
 
   // Изменить свой профиль
-  function sheetEditMe() {
+  function sheetEditMe(init = {}) {
     const me = U(S.me);
     const how = me.how || {};
     const f = { name: me.name, about: me.about, cats: [...me.cats], role: me.role || 'both',
@@ -3544,6 +3561,7 @@
       area: how.area || '', visit: how.visit || '', hours: how.hours || '',
       langs: how.langs || '', pay: how.pay || '', reply: how.reply || '', busyDays: '', cardPhone: S.cardPhone || '' };
     Object.entries(me.focus || {}).forEach(([c, v]) => { f['focus_' + c] = v; });
+    Object.assign(f, init);   // «Выбрать сферу» с главной открывает редактор сразу на «помогаю сам»
     const hidden = S.blocked || [];
     openSheet({
       F: f,
@@ -4180,9 +4198,14 @@
     },
     // Первый вход
     toggleCat: (d) => { const i = F.cats.indexOf(d.v); i < 0 ? F.cats.push(d.v) : F.cats.splice(i, 1); render(); },
+    onbPro: (d) => { F.pro = d.v; render(); },
+    proAskYes: () => sheetEditMe({ role: 'both' }),
+    proAskNo: () => { proAskHidden = true; try { localStorage.setItem('sarafan.proAskHidden', '1'); } catch (e) { /* и так скрыто */ } render(); },
     finishOnb: () => {
       const me = U(S.me);
-      const body = { name: F.name.trim(), about: me.about || '', role: F.cats.length ? 'both' : 'client', cats: F.cats };
+      const pro = F.pro === 'yes' && F.cats.length;
+      const body = { name: F.name.trim(), about: me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [] };
+      try { localStorage.setItem('sarafan.onbAt', String(Date.now())); } catch (e) { /* приватный режим */ }
       const hello = me.invitedBy ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
       mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
         .then(() => { if (!applyLanding()) go('#/'); });
