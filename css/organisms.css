@@ -644,7 +644,7 @@
 
 /* Режим «Посмотреть глазами»: полоса сверху — кем смотрите, другой человек, выйти */
 .viewas-bar { position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 60;
-  width: min(calc(100% - 24px), 560px); display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px;
+  width: max-content; max-width: calc(100% - 24px); display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px;
   background: #1d2130; color: #fff; border-radius: 999px; box-shadow: 0 6px 20px rgba(10, 14, 24, .25); font-size: 13px; }
 .viewas-bar svg { width: 18px; height: 18px; flex: none; }
 .viewas-bar b { font-weight: 600; }
