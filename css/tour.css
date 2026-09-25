@@ -305,15 +305,14 @@
 .sc-founder .founder-av { align-self: center; animation: rise 520ms var(--ease) 120ms backwards; }
 .sc-founder .av.xl { width: 132px; height: 132px; font-size: 40px; }
 
-/* Кто делает Сарафан — на последнем шаге: аватарка и его слова облачком, как сообщение в чате (правка 26.09) */
-.tour-by { display: flex; align-items: flex-end; gap: 8px; width: 100%; margin: 0 0 12px; padding: 0; text-align: left;
-  border: 0; background: none; cursor: pointer; animation: rise 460ms var(--ease) backwards; }
+/* Кто делает Сарафан — на последнем шаге: облако с его словами, аватарка внутри, в левом верхнем углу (правка 26.09) */
+.tour-by { display: flex; align-items: flex-start; gap: 12px; width: 100%; margin: 0 0 12px; padding: 14px 16px 14px 14px; text-align: left;
+  border: 0; border-radius: 22px; background: #fff; box-shadow: 0 6px 18px rgba(20, 40, 80, .10);
+  cursor: pointer; animation: rise 460ms var(--ease) backwards; }
 .tour-by[hidden] { display: none; }
-.tour-by .av, .tour-by .founder-av { flex: none; align-self: flex-end; }
-.tour-by .av.xl { width: 40px; height: 40px; font-size: 13px; border-width: 1.5px; box-shadow: 0 0 0 1.5px #e8a528; }
-.tour-by q { position: relative; display: block; padding: 10px 14px; border-radius: 18px 18px 18px 6px; background: #fff;
-  box-shadow: 0 4px 14px rgba(20, 40, 80, .09), inset 0 0 0 1px rgba(20, 40, 80, .05);
-  quotes: none; color: var(--ink); font: 500 var(--fs-xs)/1.4 var(--t); }
+.tour-by .av, .tour-by .founder-av { flex: none; }
+.tour-by .av.xl { width: 44px; height: 44px; font-size: 14px; border-width: 1.5px; box-shadow: 0 0 0 1.5px #e8a528; }
+.tour-by q { display: block; quotes: none; color: var(--ink); font: 500 var(--fs-sm)/1.45 var(--t); }
 
 /* ——— Для тех, кто оказывает услуги: просьба клиенту → его фраза → рекомендация (правка 26.09) ——— */
 .sc-pro .card-msg { animation-delay: 200ms; }
