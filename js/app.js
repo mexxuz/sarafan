@@ -3629,7 +3629,7 @@
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
         ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}
-          <q class="grow">Рекомендации лучше любой рекламы — вот почему я это делаю. Поддержите: зовите своих и пишите, что улучшить</q></button>` : ''}
+          <span class="grow"><i>разработчик</i><q>Рекомендации лучше любой рекламы — вот почему я это делаю. Поддержите: зовите своих и пишите, что улучшить</q></span></button>` : ''}
         <button class="btn primary block" data-act="tourNext">Дальше</button>
       </div>
       <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
