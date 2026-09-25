@@ -412,7 +412,7 @@
     syncBackButton(active, nav);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
-    if (!S.onboarded && $('#onbcloud', app)) mountCloud('onbcloud', 2, false, 12);
+    if (!S.onboarded && $('#onbcloud', app)) { fitOnbCloud(); mountCloud('onbcloud', 2, false, 12); }
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
@@ -3316,6 +3316,17 @@
       </div></div>`;
   }
   // Войти можно, когда есть имя и понятно, советовать ли человека: «да» — со сферой, «пока нет» — без
+  // Сеть на регистрации берёт только оставшееся место: раскрылся выбор сферы — сеть ужимается,
+  // а плашка с кнопкой «Войти» остаётся на экране (правка 25.09)
+  function fitOnbCloud() {
+    const box = $('.onb-cloud');
+    if (!box) return;
+    box.style.height = '';
+    const rest = document.documentElement.scrollHeight - box.offsetHeight;
+    const vh = (tg && tg.viewportStableHeight) || window.innerHeight;
+    box.style.height = Math.max(90, Math.min(300, vh - rest)) + 'px';
+  }
+  window.addEventListener('resize', () => { if ($('.onb-cloud')) { fitOnbCloud(); if (cloud) cloud.resize(); } });
   // Кнопка сама говорит, чего не хватает: серая «Войти» без объяснений непонятна (правка 25.09)
   const onbLabel = () => (!(F.name || '').trim() ? 'Напишите, как вас зовут'
     : !F.pro ? 'Выберите: «Да» или «Пока нет»'
