@@ -915,3 +915,14 @@ body.viewing-as #app { padding-top: 48px; }
 .col-mark svg { position: absolute; inset: 0; width: 20px; height: 20px; transition: opacity var(--fast) var(--ease); }
 .col-mark svg + svg { opacity: 0; color: var(--bad, #e5484d); }
 @media (hover: hover) { .col-in:hover .col-mark svg:first-child { opacity: 0; } .col-in:hover .col-mark svg + svg { opacity: 1; } }
+
+/* Ссылка кнопкой соцсети: значок бренда, название, ник */
+.soc-list { display: flex; flex-direction: column; gap: 8px; }
+.soc-btn { display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--r-md); background: var(--card-2, #f1f5fa); color: var(--ink); text-decoration: none; margin-top: 8px; }
+.soc-list .soc-btn { margin-top: 0; }
+.soc-btn:active { transform: scale(.99); }
+.soc-btn .soc-ic, .soc-btn > svg:first-child { width: 24px; height: 24px; flex: none; }
+.soc-btn b { display: block; font-weight: 600; font-size: var(--fs-md); }
+.soc-btn i { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.soc-btn > svg:last-child { width: 18px; height: 18px; color: var(--ink-4); flex: none; }
+.soc-btn .grow { flex: 1 1 auto; min-width: 0; }   /* текст занимает всё место — стрелка уходит к правому краю, как у адреса */
