@@ -1827,7 +1827,7 @@
         ${best ? `<div class="note" style="color:var(--ink);margin-top:12px">«${esc(best.text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(best.from))}${G.dist[best.from] === 1 ? ' · ваш знакомый' : ''}${recs.length > 1 ? ` · и ещё ${pl(recs.length - 1, 'рекомендация', 'рекомендации', 'рекомендаций')}` : ''}</div></div>`
     : `<p class="small muted" style="margin:12px 0 0">Пока никто не рекомендовал. ${me ? 'Попросите довольных клиентов — одной ссылкой' : 'Были здесь — будьте первым'}</p>`}
         <div class="s-foot"><div class="btn-row">
-          <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Открыть</button>
+          <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Подробнее</button>
           ${canCard(n) ? `<button class="btn primary" data-act="nodeCard" data-id="${n.id}">${ic('edit')}Карточка ${n.kind === 'company' ? 'фирмы' : 'места'}</button>`
     : me ? `<button class="btn primary" data-act="addFact" data-id="${n.id}">${ic('plus')}Дописать сведения</button>`
     : `<button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mineRec ? 'Изменить запись' : 'Рекомендовать'}</button>`}
