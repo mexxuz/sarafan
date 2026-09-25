@@ -605,6 +605,21 @@
     [/(^|\.)youtube\.com$|^youtu\.be$/, 'youtube', 'YouTube', '#FF0000'], [/^wa\.me$|(^|\.)whatsapp\.com$/, 'whatsapp', 'WhatsApp', '#25D366'],
     [/(^|\.)behance\.net$/, 'behance', 'Behance', '#1769FF'],
   ];
+  // Разбор ссылки: соцсеть и ник или просто сайт; ссылка без меток «?igsh=…»
+  function linkInfo(raw) {
+    const href0 = String(raw || '').trim();
+    if (!href0) return null;
+    let url;
+    try { url = new URL(/^https?:\/\//i.test(href0) ? href0 : 'https://' + href0); } catch (e) { return null; }
+    const host = url.hostname.replace(/^www\./, '').toLowerCase();
+    const soc = SOC.find(([re]) => re.test(host));
+    const path = url.pathname.replace(/\/+$/, '');
+    if (!soc) return { href: url.href, label: host + (path && path !== '/' ? decodeURIComponent(path).slice(0, 30) : ''), icon: ic('link'), soc: '' };
+    const handle = path.split('/').filter(Boolean)[0] || '';
+    const label = soc[1] === 'youtube' ? (handle.startsWith('@') ? handle : soc[2]) : handle ? '@' + handle.replace(/^@/, '') : soc[2];
+    const icon = SOC_ICON[soc[1]] ? `<svg class="soc-ic" viewBox="0 0 24 24" style="color:${soc[3]}" aria-hidden="true"><path fill="currentColor" d="${SOC_ICON[soc[1]]}"/></svg>` : ic('link');
+    return { href: url.origin + path, label, icon, soc: soc[2] };
+  }
   function linkBtn(raw) {
     const href0 = String(raw || '').trim();
     if (!href0) return '';
@@ -1762,7 +1777,7 @@
       (n.address || mapLink(n)) && [ic('pin'), 'Где', n.address || 'На карте', mapLink(n)],
       fact('hours') && [ic('clock'), 'Когда работают', fact('hours').text],
       fact('price') && [ic('tag'), 'Сколько стоит', fact('price').text],
-      n.link && [ic('link'), 'Сайт', n.link.replace(/^https?:\/\//, ''), n.link.startsWith('http') ? n.link : 'https://' + n.link],
+      n.link && linkInfo(n.link) && ((L) => [L.icon, L.soc ? '' : 'Сайт', L.label, L.href])(linkInfo(n.link)),   // соцсеть видно по значку — без подписи
       fact('who') && [ic('user'), 'К кому подходить', fact('who').text],
     ].filter(Boolean);
     const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
@@ -1773,7 +1788,7 @@
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         ${relation ? `<div class="peek-rel">${ic('seal')}${relation}</div>` : ''}
-        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow"><i>${label}</i>${esc(text)}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
+        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow">${label ? `<i>${label}</i>` : ''}${esc(text)}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
     : `<p class="small muted" style="margin:12px 0 0">О ${n.kind === 'company' ? 'фирме' : 'месте'} пока ничего не дописали: что делают, часы, цены. Знаете — добавьте, это увидят ваши знакомые</p>`}
         ${total ? `<div class="peek-people"><span class="faces">${people.slice(0, 4).map((x) => face(x.user)).join('')}${waitHere.slice(0, Math.max(0, 4 - people.length)).map((w) => `<span class="stack-face">${waitAv(w, 'xs')}</span>`).join('')}</span>
           <span class="grow small">${pl(total, 'человек', 'человека', 'человек')} ${n.kind === 'company' ? 'в фирме' : 'здесь работают'}${friends.length ? ` · ${pl(friends.length, 'ваш знакомый', 'ваших знакомых', 'ваших знакомых')}` : ''}</span></div>` : ''}
