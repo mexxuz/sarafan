@@ -1617,20 +1617,21 @@
   // Приглашение конкретному человеку: есть имя пользователя — сразу его чат с готовым текстом,
   // нет — обычный выбор, кому отправить
   // Приглашение карточкой от вашего имени; где Telegram так не умеет — как раньше, ссылкой
-  async function inviteCard(name, fallback) {
+  async function inviteCard(name, fallback, greeting = '') {
     if (!(LIVE && tg && tg.shareMessage)) { fallback(); return; }
     try {
-      const res = await window.API.post('/invite/prepare', { name: name || '' });
+      const res = await window.API.post('/invite/prepare', { name: name || '', greeting });
       tg.shareMessage(res.id, (sent) => { if (sent) toast('Приглашение ушло'); });
     } catch (e) { fallback(); }
   }
+  // Всем — карточкой с вашим приветствием внутри; где Telegram так не умеет — текстом (есть ник — сразу в его чат)
   function inviteWaiting(w) {
-    if (!w.username) { inviteCard(w.name, () => inviteWaitingText(w)); return; }
-    inviteWaitingText(w);
+    inviteCard(w.name, () => inviteWaitingText(w), (w.greeting || '').trim());
   }
   function inviteWaitingText(w) {
     const url = `https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`;
-    const text = `${first2(w.name) ? first2(w.name) + ', д' : 'Д'}обавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим. Вот приглашение: ${url}`;
+    const g = (w.greeting || '').trim();
+    const text = `${g ? g + '\n\n' : ''}${first2(w.name) ? first2(w.name) + ', д' : 'Д'}обавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим. Вот приглашение: ${url}`;
     if (w.username && tg && tg.openTelegramLink) tg.openTelegramLink(`https://t.me/${w.username}?text=${encodeURIComponent(text)}`);
     else tgShareLink(url, text.replace(': ' + url, ''));
   }
@@ -1646,12 +1647,12 @@
           <div class="small muted" style="margin-top:4px">${w.username ? '@' + esc(w.username) + ' · ' : ''}ещё не в Сарафане</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
-        <label class="field"><span>Приветствие — бот покажет ему цитатой, когда он откроет приглашение</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
+        <label class="field"><span>Приветствие — встанет в само приглашение, вашими словами</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
         <p class="why">${ic('spark')}Придёт в Сарафан по любой ссылке — сразу получит вашу заявку${w.rec ? ' и рекомендацию' : ''}, и вы станете знакомыми. При входе его спросят, чем он занимается, — ответ придёт вам</p>
-        <div class="s-foot"><button class="btn primary block" data-act="inviteWaiting" data-id="${w.id}">${ic('send')}${w.username ? 'Написать ему — приглашение готово' : 'Отправить приглашение'}</button>
+        <div class="s-foot"><button class="btn primary block" data-act="inviteWaiting" data-id="${w.id}">${ic('send')}Отправить приглашение</button>
           <div class="btn-row" style="margin-top:8px">
             <button class="btn sm" data-act="recWaiting" data-id="${w.id}">${ic('seal')}${w.rec ? 'Изменить рекомендацию' : 'Рекомендовать'}</button>
             <button class="btn sm ghost" data-act="saveWaiting" data-id="${w.id}" data-submit>Сохранить</button></div>
