@@ -814,7 +814,7 @@
     ];
     const done = steps.filter((st) => st.done).length;
     if (done === 3 || starterOff()) return '';
-    return `<div class="card starter">
+    return `<div class="starter-top">
       <div class="row"><div class="eyebrow grow">Первые шаги · ${done} из 3</div>
         <button class="icon-btn" style="width:28px;height:28px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
       <div class="steps3">${steps.map((st) => `<button class="step3 ${st.done ? 'done' : ''} ${st.h ? '' : 'locked'}" ${st.h ? `data-act="goto" data-h="${st.h}"` : 'disabled'}>
@@ -857,6 +857,7 @@
         <div class="logo grow">${logoMark}сарафан</div>
         ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${betaNote()}
+      ${starter()}
       ${draftsCard()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
@@ -864,7 +865,6 @@
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
       ${dirLine(c1)}
-      ${starter()}
       ${whoisMe()}
       ${proNudge()}
       ${proAsk()}

@@ -851,3 +851,11 @@ body.viewing-as #app { padding-top: 48px; }
 .step3.done .mark { background: var(--good, #1faa6b); }
 .step3.done b { color: var(--ink-3); }
 .step3.locked { opacity: .5; cursor: default; }
+
+/* Первые шаги — на самом верху главной, без подложки; сеть идёт под ними, а не заезжает под шапку */
+.starter-top { position: relative; z-index: 1; margin: 2px 0 6px; }
+.starter-top .eyebrow { color: var(--ink-3); }
+.starter-top .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.starter-top .step3 { background: rgba(255, 255, 255, .78); box-shadow: 0 1px 0 rgba(23, 43, 77, .04), 0 6px 16px rgba(23, 43, 77, .06); }
+.starter-top .step3.done { background: rgba(255, 255, 255, .5); box-shadow: none; }
+.starter-top + .cloud-box, .starter-top + .card + .cloud-box { margin-top: 0; }
