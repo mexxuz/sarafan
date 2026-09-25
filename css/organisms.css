@@ -733,3 +733,22 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* Регистрация: та же живая сеть, что на главной, только пониже */
 .cloud-box.onb-cloud { height: 380px; margin-top: calc(-1 * var(--s-2)); }
+
+/* Регистрация: главный вопрос — две крупные карточки выбора */
+.pro-ask { margin-top: var(--s-5); }
+.pro-q { font: 700 var(--fs-lg)/1.25 var(--t); color: var(--ink); letter-spacing: -.01em; }
+.pro-sub { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 4px; line-height: 1.4; }
+.pro-sub b { color: var(--ink); font-weight: 600; }
+.pro-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pro-opt {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 14px 14px 13px; border-radius: var(--r-md); background: var(--card-2, #f1f5fa);
+  border: 1.5px solid transparent; color: var(--ink); cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.pro-opt:active { transform: scale(.98); }
+.pro-opt svg { width: 22px; height: 22px; color: var(--blue); margin-bottom: 8px; }
+.pro-opt b { font: 700 var(--fs-lg)/1.2 var(--t); }
+.pro-opt i { font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.3; }
+.pro-opt.on { background: var(--blue-soft); border-color: var(--blue); box-shadow: 0 6px 18px rgba(47, 123, 255, .16); }
+.pro-opt.on i { color: var(--blue-deep); }

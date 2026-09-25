@@ -3293,10 +3293,13 @@
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        ${asked.length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)">${asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет` : 'Вас хотят'} советовать знакомым — выберите, чем занимаетесь</div>` : ''}
-        <div class="field"><span>Вас можно советовать знакомым?</span><div class="chips">
-          <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да</button>
-          <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Пока нет</button></div></div>
+        <div class="pro-ask">
+          <div class="pro-q">Вас можно советовать знакомым?</div>
+          <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') + ' — выберите, чем занимаетесь' : 'Знакомые ваших знакомых найдут вас по вашей сфере'}</div>
+          <div class="pro-opts">
+            <button class="pro-opt ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">${ic('seal')}<b>Да</b><i>выберу, чем занимаюсь</i></button>
+            <button class="pro-opt ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">${ic('search')}<b>Пока нет</b><i>просто ищу своих</i></button>
+          </div></div>
         ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь') : ''}
         ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
     : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти</button>`}
