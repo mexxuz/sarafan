@@ -625,7 +625,7 @@
    и без обрезки сверху; совсем высокую картинку подрезаем только снизу (правка 25.09) */
 .peek-cover { position: relative; display: flex; align-items: center; margin: -8px -20px -28px; max-height: 320px; overflow: hidden;   /* углы скругляет само окно */
   /* весь низ обложки растворяется в фоне окна — надписи стоят уже на фоне */
-  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 70%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 70%, transparent 100%); }
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 50%, rgba(0,0,0,.6) 68%, rgba(0,0,0,.2) 80%, transparent 90%); mask-image: linear-gradient(to bottom, #000 0, #000 50%, rgba(0,0,0,.6) 68%, rgba(0,0,0,.2) 80%, transparent 90%); }
 /* картинка вписана по ширине и стоит по центру, пропорции не искажаются:
    высокая — поровну срезается сверху и снизу, невысокая — обложка становится ниже */
 .peek-cover img { width: 100%; height: auto; flex: none; display: block; }
@@ -634,7 +634,7 @@
 .peek-cover.tall::after { background-position: center top; }
 /* к низу картинка переходит в собственное размытие, а уже оно — в фон */
 .peek-cover::after { content: ''; position: absolute; inset: 0; background: var(--cover) center / cover no-repeat; filter: blur(16px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 45%, #000 85%); mask-image: linear-gradient(to bottom, transparent 45%, #000 85%); }
+  -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000 65%); mask-image: linear-gradient(to bottom, transparent 35%, #000 65%); }
 .peek-cover + * { position: relative; z-index: 1; }
 /* полоска для смахивания — поверх обложки, а не отдельной строкой над ней */
 .sheet .panel:has(.peek-cover) .grab { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); margin: 0; z-index: 2; background: rgba(255, 255, 255, .75); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
