@@ -515,7 +515,8 @@
     requestAnimationFrame(() => n.classList.remove('hide'));
     const incoming = S.requests.filter((q) => q.from !== S.me && G.connected(q.from, S.me) && !q.answers.some((a) => a.from === S.me) && !(q.skip || []).includes(S.me)).length;
     const pendingIn = S.conns.filter(askedMe).length;
-    const badges = { home: 0, search: 0, ask: incoming, net: pendingIn, new: todo() };
+    // вопросы знакомых считаются в «Новом» — там на них и отвечают; на «Спросить» (новый запрос) цифру не дублируем (правка 25.09)
+    const badges = { home: 0, search: 0, ask: 0, net: pendingIn, new: todo() };
     // Меню собираем один раз, дальше только переключаем выбранный раздел и числа.
     // Раньше оно пересобиралось при каждом обновлении — подложка рождалась у левого края
     // и тянулась к кнопке: это и была «анимация растяжения».
