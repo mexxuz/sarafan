@@ -1764,7 +1764,7 @@
     const tall = img.naturalHeight > img.naturalWidth * 1.2;
     wrap.classList.toggle('tall', tall);
     // широкая и низкая (баннер, логотип с надписью) — название ставим под ней, а не поверх текста картинки
-    if (img.naturalWidth > img.naturalHeight * 1.5) { wrap.classList.add('wide'); return; }
+    if (img.naturalWidth > img.naturalHeight * 1.5) { wrap.classList.add('wide', 'ready'); return; }
     wrap.classList.add('ready');   // картинка есть — только теперь название заходит на её низ
     // яркость читаем по отдельной копии картинки: показ самой обложки от этого не зависит
     const probe = new Image();
