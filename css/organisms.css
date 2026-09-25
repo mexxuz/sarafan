@@ -965,8 +965,10 @@ body.viewing-as #app { padding-top: 48px; }
 .peek-row .svc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .peek-row .svc-chips span { padding: 5px 10px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); font-size: var(--fs-xs); line-height: 1.25; }
 .peek-row .svc-chips .more { background: transparent; box-shadow: none; color: var(--ink-3); }
-.peek-row:has(.svc-chips) { align-items: flex-start; }
-.peek-row:has(.svc-chips) > svg:first-child { margin-top: 2px; }   /* стрелка — у правого края строки */
+/* значок — у первой строки, а не посередине многострочного текста; стрелка остаётся по центру */
+.peek-row { align-items: flex-start; }
+.peek-row > svg:first-child { margin-top: 1px; }
+.peek-row > svg:last-child:not(:first-child) { align-self: center; }   /* стрелка — у правого края строки */
 
 /* ——— Общее правило для всех строк-кнопок (правка 25.09) ———
    1) текст занимает всё место, стрелка всегда у правого края;
