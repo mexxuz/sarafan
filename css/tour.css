@@ -311,3 +311,13 @@
 .tour-by[hidden] { display: none; }
 .tour-by .av, .tour-by .founder-av { flex: none; }
 .tour-by .av.xl { width: 28px; height: 28px; font-size: 10px; border-width: 1.5px; box-shadow: 0 0 0 1.5px #e8a528; }
+
+/* ——— Для тех, кто оказывает услуги: просьба клиенту → его фраза → рекомендация (правка 26.09) ——— */
+.sc-pro .card-msg { animation-delay: 200ms; }
+.sc-pro .msg.in { animation-delay: 1300ms; }
+.sc-pro .pro-got {
+  align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
+  background: var(--good-soft); color: var(--good); font: 700 var(--fs-xxs)/1.2 var(--t);
+  animation: rise 460ms var(--ease) 2200ms backwards;
+}
+.sc-pro .pro-got svg { width: 14px; height: 14px; flex: none; }

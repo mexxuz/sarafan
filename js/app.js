@@ -3533,6 +3533,21 @@
         <div class="chain"><i>вы</i>${ic('arrow')}<i>Азиз</i>${ic('arrow')}<i class="last">Нигора</i></div></div>`,
     },
     {
+      // для тех, кто оказывает услуги или начинает своё дело — второй из трёх входов регистрации (правка 26.09)
+      key: 'pro',
+      eyebrow: 'если вы оказываете услуги',
+      title: 'Клиенты приведут следующих',
+      gain: 'Отправьте довольному клиенту ссылку — он напишет одну фразу, и её увидят его знакомые. Только начинаете своё дело? Первых клиентов так же приведут свои',
+      scene: `<div class="sc sc-chat sc-pro">
+        <div class="chat-win">
+          <div class="msg out card-msg"><b>Можно попрошу об одолжении?</b>
+            <em>Если понравилась моя работа — напиши пару слов. Одну фразу, займёт минуту</em>
+            <u>Написать о работе</u></div>
+          <div class="msg in"><s>Камила · ваш клиент</s>Лечит без слёз — дочь сама просится на осмотр</div>
+          <div class="pro-got">${ic('seal')}+1 рекомендация — её видят знакомые Камилы</div>
+        </div></div>`,
+    },
+    {
       key: 'write',
       eyebrow: 'ваш справочник',
       title: 'Справочник, который растёт через знакомых',
@@ -3674,7 +3689,7 @@
         <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
         <div class="pro-ask">
           <div class="pro-q">С чего начнёте?</div>
-          <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') : 'От этого зависят первые шаги'}</div>
+          <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> спрашивает, чем вы занимаетесь` : 'Знакомые спрашивают, чем вы занимаетесь') : 'От этого зависят первые шаги'}</div>
           <div class="pro-opts">
             ${[['pro', 'seal', 'Я оказываю услуги', 'есть клиенты — хочу больше заказов'],
       ['start', 'spark', 'Хочу начать своё дело', 'первые клиенты — через знакомых'],
