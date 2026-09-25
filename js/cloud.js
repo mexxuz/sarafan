@@ -457,27 +457,31 @@ window.Cloud = function (canvas, opts) {
     const c = n.company ? COLOR.company : COLOR.place;
     const r = n.r * 1.18;
 
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = c.fill;
-    ctx.fill();
-    ctx.strokeStyle = c.line;
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    const logoFirst = n.photo && imgs[n.photo];
+    if (!logoFirst) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = c.fill;
+      ctx.fill();
+      ctx.strokeStyle = c.line;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
 
-    // есть логотип — он в кружке вместо значка (правка 25.09)
+    // есть логотип — он в скруглённом квадрате, как значок приложения: люди — кружки, места и фирмы — квадраты,
+    // рамка цвета места или фирмы (правка 25.09: «с логотипом фирма не отличается от контактов»)
     const logo = n.photo ? imgs[n.photo] : null;
     if (logo) {
+      const h = r * 1.2, rr = h * 0.3;
+      const box = () => { ctx.beginPath(); ctx.roundRect(n.x - h, n.y - h, h * 2, h * 2, rr); };
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logo, n.x - r, n.y - r, r * 2, r * 2);
+      box(); ctx.fillStyle = '#fff'; ctx.fill();
+      box(); ctx.clip();
+      ctx.drawImage(logo, n.x - h, n.y - h, h * 2, h * 2);
       ctx.restore();
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.strokeStyle = c.line;
-      ctx.lineWidth = 1.5;
+      box();
+      ctx.strokeStyle = c.dot;
+      ctx.lineWidth = 2;
       ctx.stroke();
       return;
     }
