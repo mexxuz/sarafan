@@ -623,7 +623,7 @@
 /* Обложка места — от самого верхнего края окна, 16:9, прижата к верху картинки (правка 25.09) */
 /* Обложка места — на всю ширину окна, от самого верха, в своих пропорциях: без полей по бокам
    и без обрезки сверху; совсем высокую картинку подрезаем только снизу (правка 25.09) */
-.peek-cover { position: relative; display: flex; align-items: center; margin: -8px -20px -66px; max-height: 380px; overflow: hidden;   /* углы скругляет само окно */
+.peek-cover { position: relative; display: flex; align-items: center; margin: -8px -20px 12px; max-height: 380px; overflow: hidden;   /* углы скругляет само окно */
   /* весь низ обложки растворяется в фоне окна — надписи стоят уже на фоне */
   -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 64%, rgba(0,0,0,.6) 78%, rgba(0,0,0,.22) 90%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 64%, rgba(0,0,0,.6) 78%, rgba(0,0,0,.22) 90%, transparent 100%); }
 /* картинка вписана по ширине и стоит по центру, пропорции не искажаются:
@@ -964,3 +964,14 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 }
 :where(a.link-row, button.link-row, a.soc-btn, a.peek-row, button.p-fact, a.person, button.person):active { filter: brightness(.97); }
 .onb-card .pro-opt:not(.on):hover { background: rgba(255, 255, 255, .24); }
+
+/* Тёмная картинка под названием: картинка держится под всем названием, растворяется уже под ним,
+   снизу — лёгкое затемнение; название и подпись — белые с тенью */
+.peek-cover.dark { -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 93%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 93%, transparent 100%); }
+.peek-cover.dark::after { opacity: 0; }
+.peek-cover.dark::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to bottom, transparent 55%, rgba(0, 0, 0, .45) 88%); pointer-events: none; }
+.s-head.on-dark .h2 { color: #fff; text-shadow: 0 1px 10px rgba(0, 0, 0, .5); }
+.s-head.on-dark .small { color: rgba(255, 255, 255, .88) !important; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
+.s-head.on-dark .icon-btn { background: rgba(255, 255, 255, .22) !important; color: #fff; }
+
+.peek-cover.ready { margin-bottom: -66px; }   /* заходим под название, только когда картинка на месте */

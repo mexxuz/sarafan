@@ -1756,6 +1756,36 @@
   // Быстрая карточка места или фирмы
   // Карточка места или фирмы из облака: всё главное с одного взгляда —
   // чем занимаются, где и когда, кто там ваш, что говорят знакомые
+  // Обложка загрузилась: высокая — прижимаем к верху; тёмная под названием — название белое
+  // (правка 25.09: на тёмной картинке тёмный текст не читается)
+  window.sarafanCover = (img) => {
+    const wrap = img.parentNode;
+    if (!wrap) return;
+    const tall = img.naturalHeight > img.naturalWidth * 1.2;
+    wrap.classList.toggle('tall', tall);
+    wrap.classList.add('ready');   // картинка есть — только теперь название заходит на её низ
+    // яркость читаем по отдельной копии картинки: показ самой обложки от этого не зависит
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.onload = () => measure(probe);
+    probe.src = img.currentSrc || img.src;
+    function measure(im) {
+    try {
+      const k = img.naturalWidth / img.clientWidth;
+      const top = tall ? 0 : Math.max(0, (img.clientHeight - wrap.clientHeight) / 2);
+      const y0 = (top + wrap.clientHeight * 0.72) * k, h = wrap.clientHeight * 0.26 * k;   // полоса, где стоит название
+      const c = document.createElement('canvas'); c.width = 32; c.height = 12;
+      const x = c.getContext('2d');
+      x.drawImage(im, 0, y0, im.naturalWidth, Math.max(1, h), 0, 0, 32, 12);
+      const d = x.getImageData(0, 0, 32, 12).data;
+      let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { const a = d[i + 3] / 255; sum += ((0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255) * a + (1 - a); n++; }
+      const dark = sum / n < 0.5;
+      wrap.classList.toggle('dark', dark);
+      if (wrap.nextElementSibling) wrap.nextElementSibling.classList.toggle('on-dark', dark);
+    } catch (e) { /* картинку не прочитать (чужой сервер) — оставляем тёмный текст */ }
+    }
+  };
   function sheetNodePeek(id) {
     const n = nodeById(id);
     if (!n) return;
@@ -1783,7 +1813,7 @@
     const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
     openSheet({
       F: {},
-      render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt="" onload="if (this.naturalHeight > this.naturalWidth * 1.2) this.parentNode.classList.add('tall')"></div>` : ''}
+      render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt="" onload="sarafanCover(this)"></div>` : ''}
         <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
