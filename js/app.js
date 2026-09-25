@@ -270,7 +270,7 @@
     pin: '<path d="M12 22c0 0 8-7.2 8-12.4A8 8 0 1 0 4 9.6C4 14.8 12 22 12 22z"/><circle cx="12" cy="9.6" r="3"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
     work: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/>',
-    spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
+    spark: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>',   // лампочка: подсказка «зачем это»
     house: '<path d="M3 21h18"/><path d="M6 21V4.5a1 1 0 0 1 1-1h6.5a1 1 0 0 1 1 1V21"/><path d="M14.5 21V9.5H18a1 1 0 0 1 1 1V21"/><path d="M9 7.5h2.5M9 11h2.5M9 14.5h2.5"/>',
     swap: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
     cam: '<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.8l1.3-2h6.8l1.3 2h2.8A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/>',
@@ -4165,7 +4165,7 @@
         <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" value="${esc(f.name)}"></label>
         <div class="field"><span>Живая аватарка</span>
           <div class="row" style="gap:12px">${av(S.me, 'l')}<div class="grow">
-            <label class="btn sm">${ic('spark')}${U(S.me).video ? 'Заменить ролик' : 'Загрузить ролик'}<input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
+            <label class="btn sm">${ic('cam')}${U(S.me).video ? 'Заменить ролик' : 'Загрузить ролик'}<input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
             ${U(S.me).video ? '<button class="btn sm ghost" data-act="dropVideo" style="margin-left:6px">Убрать</button>' : ''}</div></div>
           <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
