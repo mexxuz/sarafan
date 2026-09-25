@@ -892,3 +892,12 @@ body.viewing-as #app { padding-top: 48px; }
 .my-rec + .my-rec { border-top: 1px solid var(--line, #e4eaf2); }
 .my-rec p { margin: 0; font-size: var(--fs-sm); line-height: 1.45; color: var(--ink); }
 .my-rec span { font-size: var(--fs-xs); color: var(--ink-3); }
+
+/* Быстрая карточка: о себе в три строки, как работает — плашками, что делает — метками */
+.peek-about { margin: 12px 0 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.peek-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.peek-chips span { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; background: var(--card-2, #f1f5fa); font-size: var(--fs-xs); color: var(--ink-2); }
+.peek-chips svg { width: 13px; height: 13px; color: var(--blue); }
+.peek-svc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.peek-svc b { font-size: var(--fs-xs); color: var(--ink-3); font-weight: 600; margin-right: 2px; }
+#sheet .p-facts { margin-top: 12px; }

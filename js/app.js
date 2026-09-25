@@ -629,6 +629,16 @@
       ${knows.length ? `<button class="p-fact" data-act="knowsList" data-id="${id}">${stack([...mutual, ...knows.filter((x) => !mutual.includes(x))], 4)}<span class="grow">${knowLine}</span>${ic('chev')}</button>` : ''}
     </div>`;
   }
+  // Быстрая карточка: о себе, как работает и что делает — чтобы решить, открывать ли профиль (правка 25.09)
+  function peekInfo(id) {
+    const u = U(id), h = u.how || {}, sc = (S.showcases || {})[id] || {};
+    const chips = [h.area && `${ic('pin')}${esc(h.area)}`, h.visit && (HOW.visit[h.visit] || esc(h.visit)), h.reply && (HOW.reply[h.reply] || esc(h.reply)),
+      u.busy && 'Сейчас не берёт работу'].filter(Boolean);
+    const svc = lines(sc.services).slice(0, 4);
+    return `${u.about ? `<p class="peek-about">${esc(u.about)}</p>` : ''}
+      ${chips.length ? `<div class="peek-chips">${chips.map((c) => `<span>${c}</span>`).join('')}</div>` : ''}
+      ${svc.length ? `<div class="peek-svc"><b>Что делает</b>${svc.map((x) => `<span class="tag">${esc(x)}</span>`).join('')}${lines(sc.services).length > 4 ? `<span class="tiny muted">и ещё ${lines(sc.services).length - 4}</span>` : ''}</div>` : ''}`;
+  }
   function sheetKnows(id) {
     const knows = [...(G.adj[id] || [])].filter((x) => U(x) && x !== id);
     const mutual = knows.filter((x) => x === S.me || G.connected(S.me, x));
@@ -3979,9 +3989,10 @@
       F: {},
       render: () => `${sheetHead(id, esc(U(id).name), esc(who(id)) + ' · ' + esc(U(id).city))}
         ${isFounder(id) ? `<div class="peek-founder">${founderTag(id)}</div>` : ''}
-        <div style="margin-top:14px">${chainLine(t.chain || [])}</div>
-        ${rep && rep.count ? `<div class="stat-grid" style="margin-top:14px"><div class="stat"><b>${rep.count}</b><span>${plural(rep.count, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${rep.independent}</b><span>${plural(rep.independent, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')}</span></div></div>` : '<div class="note">Рекомендаций пока нет — этот человек просто в вашей сети.</div>'}
-        ${rep && rep.recs.length ? `<div class="note" style="color:var(--ink)">«${esc(rep.recs[0].text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(rep.recs[0].from))} · ${esc(cat(rep.recs[0].cat).name)}</div></div>` : ''}
+        ${peekInfo(id)}
+        <div style="margin-top:12px">${chainLine(t.chain || [])}</div>
+        ${personFacts(id, G.recsTo(id), rep ? rep.independent : 0).replace('data-act="toRecs"', `data-act="closeSheet" data-go="#/p/${id}"`)}
+        ${rep && rep.recs.length ? `<div class="note" style="color:var(--ink);margin-top:12px">«${esc(rep.recs[0].text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(rep.recs[0].from))} · ${esc(cat(rep.recs[0].cat).name)}</div></div>` : ''}
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/p/${id}">Профиль</button>
           ${direct ? `<button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${c || ''}">${ic('seal')}${recLabel(id, c)}</button>`
