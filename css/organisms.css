@@ -865,3 +865,9 @@ body.viewing-as #app { padding-top: 48px; }
   mask-image: linear-gradient(to bottom, #000 0, #000 82%, transparent 100%);
 }
 .starter-top ~ .home-find { position: relative; z-index: 1; margin-top: -52px; }
+
+/* Анкета о себе: полоса из трёх шагов сверху окна, строка-приглашение на главной */
+.wiz-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 2px 0 14px; }
+.wiz-bar i { height: 4px; border-radius: 4px; background: var(--card-2, #e8eef7); transition: background var(--base, .25s) var(--ease); }
+.wiz-bar i.on { background: var(--blue); }
+.profile-ask { margin-top: 14px; }

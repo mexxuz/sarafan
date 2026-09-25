@@ -865,6 +865,7 @@
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
       ${dirLine(c1)}
+      ${profileCard()}
       ${whoisMe()}
       ${proNudge()}
       ${proAsk()}
@@ -964,6 +965,59 @@
     return `<div class="card" style="margin-top:18px"><div class="eyebrow">чем вы занимаетесь</div>
       <p class="small" style="margin:6px 0 12px">Если вас можно советовать — выберите сферу. Знакомые и их знакомые найдут вас в поиске, с именем того, кто рекомендует</p>
       <div class="btn-row"><button class="btn primary" data-act="proAskYes">Выбрать сферу</button><button class="btn ghost" data-act="proAskNo">Я просто ищу</button></div></div>`;
+  }
+
+  // ——— Анкета о себе: три шага, по вопросу на экран (отзыв тестировщика 25.09: «нужны анкеты») ———
+  // Поля те же, что в «Как с вами работать», — анкета только подводит к ним по очереди
+  const profileSteps = () => {
+    const me = U(S.me), how = me.how || {};
+    return [!!(me.about || '').trim(), !!(how.area || how.visit), !!(S.cardPhone || how.reply)];
+  };
+  const isPro = () => U(S.me).role !== 'client' && G.catsOf(S.me).length > 0;
+  function profileCard() {
+    if (!LIVE || !isPro()) return '';
+    const done = profileSteps().filter(Boolean).length;
+    if (done === 3) return '';
+    return `<button class="link-row wide profile-ask" data-act="wizOpen">${ic('edit')}
+      <span class="grow"><b>Анкета о себе · заполнено ${done} из 3</b><i>По ней вас выбирают: чем занимаетесь, где работаете, как связаться</i></span>${ic('arrow')}</button>`;
+  }
+  function sheetWizard(step) {
+    const me = U(S.me), how = me.how || {};
+    const first3 = profileSteps().findIndex((x) => !x);
+    const f = { step: step ?? (first3 < 0 ? 0 : first3), about: me.about || '', area: how.area || '', visit: how.visit || '',
+      hours: how.hours || '', reply: how.reply || '', cardPhone: S.cardPhone || '' };
+    const who = (cat(G.catsOf(S.me)[0] || '') || {}).who || '';
+    const TITLES = ['Чем именно вы занимаетесь?', 'Где и как работаете?', 'Как с вами связаться?'];
+    openSheet({
+      F: f,
+      render: () => `<div class="wiz-bar">${[0, 1, 2].map((i) => `<i class="${i <= f.step ? 'on' : ''}"></i>`).join('')}</div>
+        ${sheetHead(null, TITLES[f.step], `Шаг ${f.step + 1} из 3 · это увидят знакомые и их знакомые`)}
+        ${f.step === 0 ? `<label class="field"><span>Пара фраз о себе${who ? ' — ' + esc(who.toLowerCase()) : ''}</span>
+          <textarea class="textarea" data-bind="about" rows="3" maxlength="300" placeholder="Например: делаю маникюр и наращивание, работаю с 2018 года, есть свой кабинет">${esc(f.about)}</textarea>
+          <p class="hint">Конкретика помогает: что именно делаете, с какими задачами к вам идти, опыт</p></label>` : ''}
+        ${f.step === 1 ? `<label class="field"><span>Район</span><input class="input" data-bind="area" maxlength="80" placeholder="Мирабад, Юнусабад…" value="${esc(f.area)}"></label>
+          <div class="field"><span>Как работаете</span><div class="chips">${Object.entries(HOW.visit).map(([k, l]) => `<button class="chip ${f.visit === k ? 'on' : ''}" data-act="set" data-k="visit" data-v="${k}">${l}</button>`).join('')}</div></div>
+          <label class="field"><span>Когда удобно писать</span><input class="input" data-bind="hours" maxlength="80" placeholder="Будни до 20:00" value="${esc(f.hours)}"></label>` : ''}
+        ${f.step === 2 ? `<label class="field"><span>Телефон для карточки</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone)}">
+            ${tg && tg.requestContact ? `<button class="btn sm ghost" style="margin-top:8px" data-act="takePhone">${ic('user')}Взять номер из Telegram</button>` : ''}
+            <p class="hint">${me.username ? `Ваш Telegram @${esc(me.username)} в карточке уже есть. ` : ''}Номер — чтобы могли сразу позвонить. Не хотите — оставьте пустым</p></label>
+          <div class="field"><span>Как быстро отвечаете</span><div class="chips">${Object.entries(HOW.reply).map(([k, l]) => `<button class="chip ${f.reply === k ? 'on' : ''}" data-act="set" data-k="reply" data-v="${k}">${l}</button>`).join('')}</div></div>` : ''}
+        <div class="s-foot"><div class="btn-row">
+          ${f.step ? '<button class="btn ghost" data-act="wizStep" data-v="-1">Назад</button>' : '<button class="btn ghost" data-act="wizStep" data-v="skip">Пропустить</button>'}
+          <button class="btn primary" data-act="wizStep" data-v="1">${f.step === 2 ? 'Готово' : 'Дальше'}</button></div></div>`,
+    });
+  }
+  // Сохраняем на каждом шаге: бросил на середине — сделанное не пропало
+  function wizSave(f, last) {
+    const me = U(S.me), how = me.how || {};
+    const avail = S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open');
+    const body = { name: me.noName ? me.tgName : me.name, about: f.about.trim(), role: me.role === 'client' ? 'both' : (me.role || 'both'),
+      availability: avail, cats: me.cats, area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
+      langs: how.langs || '', pay: how.pay || '', reply: f.reply, cardPhone: (f.cardPhone || '').trim(), busyUntil: null, focus: me.focus || null };
+    if ((body.name || '').trim().length < 2) body.name = 'Участник';
+    return mutate(() => { S.cardPhone = body.cardPhone; Object.assign(me, { about: body.about,
+      how: { ...how, area: body.area, visit: body.visit, hours: body.hours, reply: body.reply } }); },
+    '/profile', body, last ? 'Анкета готова — теперь вас проще выбрать' : '');
   }
 
   // Мастеру — первым делом: его ищут, а находят не всегда. Показываем, только когда есть что сказать
@@ -4143,6 +4197,16 @@
       try { await window.API.post('/profile/video/delete', {}); await refresh(); if (SH) { drawSheet(); wireVideoInput(); } toast('Живая аватарка убрана'); } catch (e) { toast(e.message); }
     },
     // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
+    wizOpen: () => sheetWizard(),
+    wizStep: (d) => {
+      const f = SH.F;
+      if (d.v === 'skip') { closeSheet(); return; }
+      if (d.v === '-1') { f.step = Math.max(0, f.step - 1); drawSheet(); return; }
+      const last = f.step === 2;
+      wizSave(f, last);
+      if (last) { closeSheet(); return; }
+      f.step += 1; drawSheet();
+    },
     takePhone: () => {
       tg.requestContact((ok, res) => {
         const raw = ok && res && res.responseUnsafe && res.responseUnsafe.contact && res.responseUnsafe.contact.phone_number;
@@ -4528,6 +4592,7 @@
             S.whoisAskedMe = [];
           }
           if (!applyLanding()) go('#/');
+          if (pro) setTimeout(() => { if (!SH) sheetWizard(0); }, 700);   // сфера выбрана — сразу анкета о себе
         });
     },
   };
