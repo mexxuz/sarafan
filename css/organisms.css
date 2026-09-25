@@ -123,6 +123,13 @@
 .feed-item .mini { margin-top: var(--s-2); }
 
 /* Репутация по сферам */
+.rep-line { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rep-line:first-child { border-top: 0; padding-top: 0; }
+.rep-line b { display: block; font-weight: 700; font-size: var(--fs-sm); color: var(--ink); }
+.rep-line .grow > span { display: block; font-size: var(--fs-xxs); color: var(--ink-3); margin-top: 2px; }
+.rep-n { flex: none; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font: 800 var(--fs-sm)/1 var(--t); }
+.rep-rest { padding-top: 10px; border-top: 1px solid var(--line); font-size: var(--fs-xxs); color: var(--ink-3); }
+.rep-rest:first-child { border-top: 0; padding-top: 0; }
 .rep-row { display: flex; align-items: flex-start; gap: var(--s-4); padding: var(--s-4) 0; border-top: 1px solid var(--line); }
 .rep-row:first-child { border-top: 0; padding-top: 0; }
 .rep-row .num { font: 800 var(--fs-2xl)/1 var(--t); letter-spacing: -.03em; min-width: 38px; color: var(--ink-4); }

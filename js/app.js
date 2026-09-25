@@ -750,24 +750,25 @@
       ${mineToCheck.length ? '' : ''}`;
   }
 
+  // «За что рекомендуют» компактно: сфера и число строкой, пустые сферы — одной строкой внизу (правка 25.09)
   const repRows = (id, onlyCat) => {
     const cats = G.catsOf(id).filter((c) => !onlyCat || c === onlyCat);
     if (!cats.length) return '<p class="muted small" style="margin:0">Пока нет рекомендаций. Здесь репутация появляется только тогда, когда человека рекомендуют другие.</p>';
-    return cats.map((c) => {
+    const empty = [];
+    const rowsHtml = cats.map((c) => {
       const r = G.reputation(id, c);
+      if (!r.count) { empty.push(cat(c).name); return ''; }
       const nearOthers = r.near.filter((a) => a !== S.me);
-      const sub = r.count
-        ? [pl(r.independent, 'независимый источник', 'независимых источника', 'независимых источников'),
-          r.near.includes(S.me) ? 'в том числе вы' : nearOthers.length ? pl(nearOthers.length, 'из вашей сети', 'из вашей сети', 'из вашей сети') : '',
-          r.recent ? pl(r.recent, 'новая за месяц', 'новые за месяц', 'новых за месяц') : ''].filter(Boolean).join(' · ')
-        : 'Указано в профиле, рекомендаций пока нет';
-      const other = r.count - (r.suspicious ? r.bigGroup : 0);
-      const bar = r.count ? `<div class="bar-meter">${r.suspicious ? `<i class="grp" style="flex:${r.bigGroup}"></i>` : ''}<i style="flex:${other}"></i><span style="flex:${Math.max(0, 20 - r.count)}"></span></div>` : '';
+      const sub = [pl(r.independent, 'независимый источник', 'независимых источника', 'независимых источников'),
+        r.near.includes(S.me) ? 'в том числе вы' : nearOthers.length ? pl(nearOthers.length, 'из вашей сети', 'из вашей сети', 'из вашей сети') : '',
+        r.recent ? pl(r.recent, 'новая за месяц', 'новые за месяц', 'новых за месяц') : ''].filter(Boolean).join(' · ');
       const warn = r.suspicious ? `<div class="warn">${ic('alert')}<div>${r.bigGroup} из ${r.count} рекомендаций пришли от людей, которые знакомы между собой и появились в сети в одно время. Мы считаем их одним источником.</div></div>` : '';
       const goal = id === S.me && r.independent < 3
-        ? `<div class="tiny" style="margin-top:6px;color:var(--blue)">${r.independent ? `Ещё ${pl(3 - r.independent, 'независимая рекомендация', 'независимые рекомендации', 'независимых рекомендаций')} — и отметка «надёжно»: таких находят первыми` : 'Первая рекомендация — и вас начнут находить в поиске'}</div>` : '';
-      return `<div class="rep-row ${r.count ? 'on' : ''}"><div class="num">${r.count}</div><div class="grow"><div class="h3">${esc(cat(c).name)}</div><div class="small muted">${sub}</div>${bar}${goal}${warn}</div></div>`;
+        ? `<div class="tiny" style="margin-top:4px;color:var(--blue)">${r.independent ? `Ещё ${pl(3 - r.independent, 'независимая рекомендация', 'независимые рекомендации', 'независимых рекомендаций')} — и отметка «надёжно»: таких находят первыми` : 'Первая рекомендация — и вас начнут находить в поиске'}</div>` : '';
+      return `<div class="rep-line"><div class="grow"><b>${esc(cat(c).name)}</b><span>${sub}</span>${goal}${warn}</div><span class="rep-n">${r.count}</span></div>`;
     }).join('');
+    const rest = empty.length ? `<div class="rep-rest">${rowsHtml ? 'Ещё в профиле' : 'В профиле'}: ${empty.map(esc).join(', ')} — рекомендаций пока нет</div>` : '';
+    return rowsHtml + rest;
   };
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
