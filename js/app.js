@@ -801,47 +801,24 @@
   const starterOff = () => { try { return localStorage.getItem(STARTER_KEY) === '1'; } catch (e) { return false; } };
   const starter = () => {
     const c1 = myContacts();
+    const inv = U(S.me).invitedBy;
+    const mine = c1.filter((id) => id !== inv);          // позвал сам — тот, кто позвал вас, не в счёт
     const myRecs = G.recsFrom(S.me).length;
     const asked = S.requests.filter((q) => q.from === S.me).length;
+    const open = c1.length > 0;
+    // Три шага одной строкой: глагол крупно и строчка — что это даёт (правка 25.09: «компактно, но понятно»)
     const steps = [
-      {
-        done: c1.length > 0, num: 1,
-        title: 'Позовите тех, кому доверяете',
-        text: c1.length ? `В вашей сети ${pl(c1.length, 'человек', 'человека', 'человек')}. Чем больше знакомых, тем чаще сеть выручает.`
-          : 'Книжка открывается только через знакомых. Начните с трёх-пяти человек: коллеги, друзья, родственники.',
-        btn: c1.length ? 'Позвать ещё' : 'Позвать знакомых', act: 'goto', href: '#/net',
-      },
-      {
-        done: myRecs > 0, num: 2,
-        title: 'Запишите своих проверенных',
-        text: c1.length
-          ? (myRecs ? `Вы рекомендуете ${pl(myRecs, 'человека', 'человек', 'человек')}. Так вас находят через ваших знакомых.`
-            : 'Напишите, за что вы их советуете: «делал мне сайт», «лечил зуб». Так ваш круг становится полезным знакомым.')
-          : 'Станет доступно, когда в сети появится хотя бы один знакомый.',
-        btn: c1.length ? 'Кого рекомендовать' : '', act: 'goto', href: '#/net',
-      },
-      {
-        done: asked > 0, num: 3,
-        title: 'Спросите, если в кругах никого нет',
-        text: c1.length
-          ? 'Юрист, врач, бухгалтер, автосервис, репетитор — опишите задачу, и знакомые посмотрят у себя.'
-          : 'Запрос уходит вашему кругу. Пока круга нет, спрашивать некого.',
-        btn: c1.length ? 'Спросить свою сеть' : '', act: 'goto', href: '#/ask',
-      },
+      { done: mine.length > 0, ico: 'user', title: 'Позвать', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'своих знакомых', h: '#/net' },
+      { done: myRecs > 0, ico: 'seal', title: 'Записать', text: myRecs ? `советуете ${pl(myRecs, 'человека', 'человек', 'человек')}` : open ? 'кого советуете сами' : 'после первого знакомого', h: open ? '#/net' : '' },
+      { done: asked > 0, ico: 'ask', title: 'Спросить', text: asked ? 'вопрос у знакомых' : open ? 'совета у своих' : 'после первого знакомого', h: open ? '#/ask' : '' },
     ];
-    // Все шаги пройдены — подсказка уходит сама. И её можно убрать раньше
-    const left = steps.filter((st) => !st.done).length;
-    if (!left || starterOff()) return '';
+    const done = steps.filter((st) => st.done).length;
+    if (done === 3 || starterOff()) return '';
     return `<div class="card starter">
-      <div class="row"><div class="eyebrow grow">с чего начать · осталось ${left} из 3</div>
-        <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
-      <h2 class="h2" style="margin:6px 0 4px">Книжка наполняется людьми</h2>
-      <p class="small muted" style="margin:0 0 4px">Чем больше знакомых рядом, тем больше проверенных людей вам открыто. Видно, кто человека рекомендует и через кого вы на него вышли.</p>
-      ${steps.map((st) => `<div class="step-row ${st.done ? 'done' : ''} ${!st.btn ? 'locked' : ''}">
-        <span class="mark">${st.done ? ic('check') : st.num}</span>
-        <div class="grow"><div class="h3">${st.title}</div><div class="small muted" style="margin-top:2px">${st.text}</div>
-        ${st.btn ? `<button class="btn ${st.done ? 'soft' : 'primary'} sm" style="margin-top:10px" data-act="${st.act}" ${st.href ? `data-h="${st.href}"` : ''}>${st.btn}</button>` : ''}</div>
-      </div>`).join('')}
+      <div class="row"><div class="eyebrow grow">Первые шаги · ${done} из 3</div>
+        <button class="icon-btn" style="width:28px;height:28px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
+      <div class="steps3">${steps.map((st) => `<button class="step3 ${st.done ? 'done' : ''} ${st.h ? '' : 'locked'}" ${st.h ? `data-act="goto" data-h="${st.h}"` : 'disabled'}>
+        <span class="mark">${ic(st.done ? 'check' : st.ico)}</span><b>${st.title}</b><i>${st.text}</i></button>`).join('')}</div>
     </div>`;
   };
 
@@ -858,7 +835,7 @@
       if (was && people.length > was.n) grew = people.length - was.n;
       if (!was || Date.now() - was.at > 864e5) localStorage.setItem('sarafan.dir', JSON.stringify({ n: people.length, at: Date.now() }));
     } catch (e) { /* приватный режим — без «+N» */ }
-    const why = c1.length < 10 ? '<p class="dir-why">Чем больше ваших знакомых здесь, тем вероятнее, что на вопрос «кто знает хорошего…» кто-то ответит — и что найдут вас</p>' : '';
+    const why = c1.length < 10 && starterOff() ? '<p class="dir-why">Чем больше ваших знакомых здесь, тем вероятнее, что на вопрос «кто знает хорошего…» кто-то ответит — и что найдут вас</p>' : '';
     return why + `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? ` <span class="grew">+${grew} с прошлого раза</span>` : ''}</p>`;
   }
 
@@ -880,7 +857,6 @@
         <div class="logo grow">${logoMark}сарафан</div>
         ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
       ${betaNote()}
-      ${starter()}
       ${draftsCard()}
       <div class="cloud-box"><canvas id="homecloud" aria-label="Облако вашей сети"></canvas>
         <button class="cloud-home" data-act="cloudHome" aria-label="Вернуть в центр">${ic('pin')}</button>
@@ -888,6 +864,7 @@
       ${op.total1 ? '' : `<p class="cloud-gain"><a class="btn primary sm" href="#/net" style="text-decoration:none">${ic('plus')}Позвать первого знакомого</a><br>его круг откроется вам целиком</p>`}
       <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
       ${dirLine(c1)}
+      ${starter()}
       ${whoisMe()}
       ${proNudge()}
       ${proAsk()}

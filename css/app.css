@@ -1,13 +1,13 @@
 ﻿/* Сарафан — дизайн-система по слоям.
    Порядок важен: каждый следующий слой опирается на предыдущий.
    1 Основа (значения + сброс) → 2 Атомы → 3 Молекулы → 4 Организмы → 5 Шаблоны */
-@import url('tokens.css?v=202609251803');
-@import url('atoms.css?v=202609251803');
-@import url('molecules.css?v=202609251803');
-@import url('organisms.css?v=202609251803');
-@import url('templates.css?v=202609251803');
-@import url('tour.css?v=202609251803');
-@import url('desktop.css?v=202609251803');
+@import url('tokens.css?v=202609251817');
+@import url('atoms.css?v=202609251817');
+@import url('molecules.css?v=202609251817');
+@import url('organisms.css?v=202609251817');
+@import url('templates.css?v=202609251817');
+@import url('tour.css?v=202609251817');
+@import url('desktop.css?v=202609251817');
 
 /* ——— СЛОЙ 1. ОСНОВА: сброс и холст ——— */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }

@@ -834,3 +834,20 @@ body.viewing-as #app { padding-top: 48px; }
 .beta-where svg { width: 22px; height: 22px; flex: none; color: var(--blue); margin-top: 1px; }
 .beta-where b { display: block; font-weight: 700; color: var(--ink); }
 .beta-where span { font-size: var(--fs-sm); color: var(--ink-2); }
+
+/* Три шага одной строкой: значок, глагол, строчка — что это даёт */
+.starter .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.step3 {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; min-width: 0;
+  padding: 12px 10px 11px; border-radius: var(--r-md); background: var(--blue-soft); color: var(--ink); cursor: pointer;
+  transition: transform var(--fast) var(--ease), opacity var(--fast) var(--ease);
+}
+.step3:active { transform: scale(.97); }
+.step3 .mark { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; margin-bottom: 6px; }
+.step3 .mark svg { width: 17px; height: 17px; }
+.step3 b { font: 700 var(--fs-md)/1.2 var(--t); }
+.step3 i { font-style: normal; font-size: var(--fs-xxs); line-height: 1.3; color: var(--ink-3); }
+.step3.done { background: var(--card-2, #f1f5fa); }
+.step3.done .mark { background: var(--good, #1faa6b); }
+.step3.done b { color: var(--ink-3); }
+.step3.locked { opacity: .5; cursor: default; }
