@@ -1247,7 +1247,7 @@
     const me = U(S.me), how = me.how || {};
     const avail = S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open');
     const body = { name: me.noName ? me.tgName : me.name, about: f.about.trim(), role: me.role === 'client' ? 'both' : (me.role || 'both'),
-      availability: avail, cats: me.cats, area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
+      availability: avail, area: f.area.trim(),   // сферы анкета не трогает: старая копия в приложении их стирала (правка 26.09) visit: f.visit, hours: f.hours.trim(),
       langs: f.langs || '', pay: f.pay || '', reply: f.reply, cardPhone: (f.cardPhone || '').trim(), busyUntil: null, focus: me.focus || null };
     // услуги, цены и ссылки живут в витрине — сохраняем туда же, заголовок и рассказ витрины не трогаем
     const sc = myShow();
