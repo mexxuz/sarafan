@@ -828,3 +828,9 @@ body.viewing-as #app { padding-top: 48px; }
 .onb-card .catpick .chip.on { animation: sugg-in .32s var(--ease) both; }
 .onb-card .field.catpick, .onb-card .pro-opt.on { animation: none; }
 @media (prefers-reduced-motion: reduce) { .cloud-box.onb-cloud { transition: none; } .onb-card .cat-sugg .sugg, .onb-card .catpick .chip.on { animation: none; } }
+
+/* Окно «тестовая версия»: где потом написать о проблеме */
+.beta-where { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-md); background: var(--blue-soft); }
+.beta-where svg { width: 22px; height: 22px; flex: none; color: var(--blue); margin-top: 1px; }
+.beta-where b { display: block; font-weight: 700; color: var(--ink); }
+.beta-where span { font-size: var(--fs-sm); color: var(--ink-2); }

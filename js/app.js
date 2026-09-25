@@ -420,6 +420,7 @@
     const kept = keepOnb && $('#onbcloud', app) === keepOnb;
     if (cloud && !kept) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
+    if (active === 'home' && S.onboarded && LIVE && !betaHidden && !document.body.classList.contains('viewing-as')) setTimeout(() => { if (!SH && !betaHidden && route().path[0] !== 'start') sheetBeta(); }, 900);
     if (!S.onboarded && $('#onbcloud', app)) { fitOnbCloud(); if (!kept) mountCloud('onbcloud', 2, false, 12); }
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
@@ -957,13 +958,20 @@
   // сообщить о проблеме можно и потом, из профиля
   let betaHidden = false;
   try { betaHidden = localStorage.getItem('sarafan.betaHidden') === '1'; } catch (e) { /* приватный режим */ }
-  function betaNote() {
-    if (!LIVE || betaHidden) return '';
-    return `<div class="card beta-note"><div class="row" style="align-items:flex-start;gap:10px">
-      <div class="grow"><div class="eyebrow">тестовая версия</div>
-        <p class="small" style="margin:6px 0 0">Сарафан только запускается: что-то может не работать или быть непонятным. Заметили — напишите. Каждое замечание делает его лучше для всех, кто придёт после вас 🙂</p></div>
-      <button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2)" data-act="betaHide" aria-label="Скрыть">${ic('x')}</button></div>
-      <button class="btn sm" style="margin-top:12px" data-act="report">${ic('send')}Сообщить о проблеме</button></div>`;
+  function betaNote() { return ''; }   // вместо плашки на главной — окно один раз (правка 25.09)
+  // Один раз при первом заходе на главную: это тестовая версия, и где потом написать о проблеме
+  function sheetBeta() {
+    betaHidden = true;
+    try { localStorage.setItem('sarafan.betaHidden', '1'); } catch (e) { /* покажется ещё раз — не страшно */ }
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'Это тестовая версия', 'Сарафан только запускается — что-то может не работать или быть непонятным')}
+        <p style="margin:14px 0 0">Заметили ошибку или чего-то не хватает — напишите. Каждое замечание делает Сарафан лучше для всех, кто придёт после вас 🙂</p>
+        <div class="beta-where">${ic('user')}<div><b>Где написать потом</b><span>Профиль → внизу «Сообщить о проблеме»</span></div></div>
+        <div class="s-foot"><div class="btn-row">
+          <button class="btn ghost" data-act="report">${ic('send')}Написать сейчас</button>
+          <button class="btn primary" data-act="closeSheet">Понятно</button></div></div>`,
+    });
   }
 
   // Кто при входе сказал «пока просто ищу», через пару дней — один вопрос: вас можно советовать?
@@ -4472,7 +4480,7 @@
     tourPrev: () => tourStep(-1),
     tourEnd: () => endTour(),
     founderOpen: () => sheetFounder(),
-    report: () => sheetFix(),
+    report: () => { const was = !!SH; if (was) closeAllSheets(); setTimeout(() => sheetFix(), was ? 340 : 0); },
     betaHide: () => { betaHidden = true; try { localStorage.setItem('sarafan.betaHidden', '1'); } catch (e) { /* и так скрыто до перезапуска */ } render(); },
     tourOpen: () => go('#/tour'),
     closeNode: (d) => mutate(() => { const n = nodeById(d.id); if (n) { n.closed = !!d.v; n.closedBy = d.v ? S.me : null; } },
