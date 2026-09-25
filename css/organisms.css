@@ -876,3 +876,13 @@ body.viewing-as #app { padding-top: 48px; }
 .my-contact { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .my-contact span { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--blue-soft); font-size: var(--fs-sm); }
 .my-contact svg { width: 16px; height: 16px; color: var(--blue); }
+
+/* Профиль человека: вместо голых цифр — строки с лицами, ведут к рекомендациям и знакомым */
+.p-facts { margin-top: 16px; border-top: 1px solid var(--line, #e4eaf2); border-bottom: 1px solid var(--line, #e4eaf2); }
+.p-fact { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 2px; border: 0; background: none; color: var(--ink); font: 500 var(--fs-md)/1.3 var(--t); text-align: left; cursor: pointer; }
+.p-fact + .p-fact { border-top: 1px solid var(--line, #e4eaf2); }
+.p-fact:disabled { cursor: default; color: var(--ink-3); }
+.p-fact > svg { width: 18px; height: 18px; color: var(--ink-4); flex: none; }
+.p-fact .av-stack { flex: none; }
+.p-fact-ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2, #f1f5fa); color: var(--ink-4); flex: none; }
+.p-fact-ic svg { width: 16px; height: 16px; }

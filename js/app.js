@@ -615,6 +615,33 @@
       </div>`;
   }
 
+  // Вместо голых цифр — две строки с лицами, которые ведут дальше (правка 25.09: «цифры никуда не ведут»)
+  function personFacts(id, allRecs, indep) {
+    const from = [...new Set(allRecs.map((r) => r.from))].filter((x) => U(x));
+    const knows = [...(G.adj[id] || [])].filter((x) => U(x) && x !== id);
+    const mutual = knows.filter((x) => x === S.me || G.connected(S.me, x));
+    const recLine = from.length
+      ? `Советуют ${pl(from.length, 'человек', 'человека', 'человек')}${indep >= 2 && indep >= from.length ? ' — из разных кругов' : indep >= 2 ? `, из них ${indep} независимо друг от друга` : ''}`
+      : 'Пока никто не рекомендовал';
+    const knowLine = `Знает ${pl(knows.length, 'человека', 'человек', 'человек')}${mutual.filter((x) => x !== S.me).length ? ` · ${pl(mutual.filter((x) => x !== S.me).length, 'общий знакомый', 'общих знакомых', 'общих знакомых')}` : ''}`;
+    return `<div class="p-facts">
+      <button class="p-fact" ${from.length ? 'data-act="toRecs"' : 'disabled'}>${from.length ? stack(from, 4) : `<span class="p-fact-ic">${ic('seal')}</span>`}<span class="grow">${recLine}</span>${from.length ? ic('chev') : ''}</button>
+      ${knows.length ? `<button class="p-fact" data-act="knowsList" data-id="${id}">${stack([...mutual, ...knows.filter((x) => !mutual.includes(x))], 4)}<span class="grow">${knowLine}</span>${ic('chev')}</button>` : ''}
+    </div>`;
+  }
+  function sheetKnows(id) {
+    const knows = [...(G.adj[id] || [])].filter((x) => U(x) && x !== id);
+    const mutual = knows.filter((x) => x === S.me || G.connected(S.me, x));
+    const rest = knows.filter((x) => !mutual.includes(x));
+    const row = (x) => personMini(x, x === S.me ? 'это вы' : who(x));
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, `Кого знает ${esc(first(id))}`, pl(knows.length, 'человек', 'человека', 'человек'))}
+        ${mutual.length ? `<div class="sec-title" style="margin-top:14px"><h2 class="h3">Ваши общие</h2></div><div class="card" style="padding:6px 10px">${mutual.map(row).join('')}</div>` : ''}
+        ${rest.length ? `<div class="sec-title" style="margin-top:14px"><h2 class="h3">${mutual.length ? 'Остальные' : 'Знакомые'}</h2></div><div class="card" style="padding:6px 10px">${rest.map(row).join('')}</div>` : ''}`,
+    });
+  }
+
   // Как с человеком иметь дело — короткой таблицей, только заполненное
   function howView(id) {
     const h = U(id).how || {};
@@ -2787,7 +2814,7 @@
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
       <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.tgName ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
-      <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${allRecs.length}</b><span>${plural(allRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${(G.adj[id] || new Set()).size}</b><span>${plural((G.adj[id] || new Set()).size, 'связь', 'связи', 'связей')} в сети</span></div></div>
+      ${personFacts(id, allRecs, indep)}
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
       ${direct ? '' : `<div style="text-align:center;margin-top:10px"><button class="btn ghost xs" data-act="hideFrom" data-id="${id}">Не показывать меня этому человеку</button></div>`}
@@ -2802,7 +2829,7 @@
       ${voicesView(id)}
       <div class="sec-title"><h2 class="h2">За что рекомендуют</h2></div>
       <div class="card">${repRows(id)}</div>
-      ${allRecs.length ? `<div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
+      ${allRecs.length ? `<div class="sec-title" id="recs"><h2 class="h2">Рекомендации</h2></div>
       ${cats.length > 1 ? `<div class="chips scroll" style="margin-bottom:10px"><button class="chip ${F.rc === 'all' ? 'on' : ''}" data-act="rc" data-v="all">Все<span class="n">${allRecs.length}</span></button>${cats.filter((c) => G.recsTo(id, c).length).map((c) => `<button class="chip ${F.rc === c ? 'on' : ''}" data-act="rc" data-v="${c}">${esc(cat(c).name)}<span class="n">${G.recsTo(id, c).length}</span></button>`).join('')}</div>` : ''}
       <div class="card">${shown.map((r) => recItem(r)).join('')}${recs.length > shown.length ? `<button class="btn ghost block" style="margin-top:12px" data-act="more">Показать все ${recs.length}</button>` : ''}</div>` : ''}
       ${nodesOf(id).length ? `<div class="sec-title"><h2 class="h2">Какие места советует</h2><span class="small muted">${nodesOf(id).length}</span></div>
@@ -4242,6 +4269,8 @@
     wizOpen: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); const full = profileSteps().every(Boolean); const was = !!SH; if (was) closeAllSheets(); setTimeout(() => sheetWizard(full ? 0 : undefined), was ? 340 : 0); },
     meMenu: (d, el) => { const m = (el || document.querySelector('.me-dot')).closest('.me-menu'); if (m) m.classList.toggle('open'); },
     myCard: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); sheetMyCard(); },
+    toRecs: () => { const el = $('#recs'); if (el) el.scrollIntoView({ behavior: calmMotion() ? 'auto' : 'smooth', block: 'start' }); },
+    knowsList: (d) => sheetKnows(d.id),
     meGo: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); go('#/me'); },
     wizStep: (d) => {
       const f = SH.F;
