@@ -3676,7 +3676,7 @@
           <div class="pro-q">С чего начнёте?</div>
           <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') : 'От этого зависят первые шаги'}</div>
           <div class="pro-opts">
-            ${[['pro', 'seal', 'Я специалист', 'есть клиенты, хочу больше'],
+            ${[['pro', 'seal', 'Я оказываю услуги', 'есть клиенты, хочу больше'],
       ['start', 'spark', 'Хочу начать своё дело', 'найду первых клиентов'],
       ['seek', 'search', 'Мне нужен специалист', 'ищу через своих']]
     .map(([v, icon, t, sub]) => `<button class="pro-opt ${F.pro === v ? 'on' : ''}" data-act="onbPro" data-v="${v}">${ic(icon)}<span><b>${t}</b><i>${sub}</i></span></button>`).join('')}
