@@ -3628,8 +3628,11 @@
           <h2 class="h1">${t.title}</h2>
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
+        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}
+          <span class="grow"><b>${esc(S.founderCard.name || '')}</b><i>делает Сарафан</i>
+            <q>Хочу, чтобы хороших людей находили через своих, а не по рекламе. Поддержите: зовите своих и пишите, что улучшить</q>
+            <u>Написать Максу ${ic('arrow')}</u></span></button>` : ''}
         <button class="btn primary block" data-act="tourNext">Дальше</button>
-        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}<span>Сарафан делает ${esc((S.founderCard.name || '').split(' ')[0])} — чтобы хороших людей находили через своих, а не по рекламе. Это ранняя версия: поддержите — зовите своих и пишите, что улучшить 🙌</span></button>` : ''}
       </div>
       <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
       <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
