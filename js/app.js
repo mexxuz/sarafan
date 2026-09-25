@@ -1209,28 +1209,49 @@
   // вокруг — люди разных занятий, их знакомые, места и фирмы. Имён нет — только занятия
   function demoCloudData() {
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
-    const JOBS1 = ['Юрист', 'Педиатр', 'Бухгалтер', 'Электрик', 'Репетитор', 'Дизайнер', 'Риелтор'];
+    const fid = (S.founderCard || {}).id || (S.founders || [])[0];
+    const isF = (id) => id === fid || (S.founders || []).includes(id);
+    const JOBS1 = ['Юрист', 'Педиатр', 'Бухгалтер', 'Электрик', 'Репетитор'];
     const JOBS2 = ['Стоматолог', 'Фотограф', 'Автомеханик', 'Психолог', 'Кондитер', 'Маркетолог', 'Сантехник', 'Кардиолог',
-      'Программист', 'Нотариус', 'Мебельщик', 'Визажист', 'Тренер', 'Переводчик', 'Садовник', 'Ветеринар', 'Логопед', 'Швея'];
+      'Программист', 'Нотариус', 'Мебельщик', 'Визажист', 'Тренер', 'Переводчик'];
     const PLACES = [['Стоматология', false], ['Автосервис', true], ['Кофейня', false], ['Детский сад', false], ['Типография', true],
-      ['Юридическая фирма', true], ['Барбершоп', false], ['Строительная фирма', true], ['Пекарня', false], ['Клиника', false]];
-    const ini = (t) => t.slice(0, 2).toUpperCase();
+      ['Юридическая фирма', true], ['Барбершоп', false], ['Строительная фирма', true]];
+    const ini = (t) => (t || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
     const nodes = [{ id: 'me', ring: 0, self: true, kind: 'person', r: 21, photo: U(S.me).photo || null, initials: ini(U(S.me).name || 'Вы'), label: 'вы' }];
     const edges = [];
+    const real = (id, ring, r) => ({ id: 'u' + id, ring, kind: 'person', r, photo: U(id).photo || null, founder: isF(id),
+      initials: named(id) ? ini(U(id).name) : '', label: isF(id) ? 'создатель Сарафана' : named(id) ? first(id) : '' });
+    // настоящая часть: кто позвал, его знакомые и создатель — у кого они есть
+    const anchors = [];
+    if (inviter) {
+      nodes.push({ ...real(inviter, 1, 15), label: isF(inviter) ? first(inviter) : named(inviter) ? first(inviter) : 'позвал вас' });
+      edges.push({ a: 'me', b: 'u' + inviter, kind: 'know' });
+      const theirs = [...(G.adj[inviter] || [])].filter((x) => x !== S.me && U(x))
+        .sort((a, b) => (isF(b) - isF(a)) || ((U(b).photo ? 1 : 0) - (U(a).photo ? 1 : 0))).slice(0, 12);
+      theirs.forEach((x) => { nodes.push(real(x, 2, isF(x) ? 12 : 10)); edges.push({ a: 'u' + inviter, b: 'u' + x, kind: 'know', len: 58 }); anchors.push('u' + x); });
+      // знакомые знакомого знают и друг друга — пара нитей между ними, как в жизни
+      theirs.forEach((x, i) => theirs.slice(i + 1).forEach((y) => { if (G.connected(x, y)) edges.push({ a: 'u' + x, b: 'u' + y, kind: 'know' }); }));
+      if (fid && fid !== inviter && !theirs.includes(fid) && U(fid)) {
+        nodes.push(real(fid, 2, 12));
+        const via = theirs.find((x) => G.connected(x, fid));
+        edges.push({ a: via ? 'u' + via : 'u' + inviter, b: 'u' + fid, kind: 'wait', len: 60 });
+      }
+      anchors.push('u' + inviter);
+    }
+    // показательная часть: будущие знакомые, их знакомые, места и фирмы — чтобы ощущался размах
     const ring1 = [];
-    if (inviter) { nodes.push({ id: 'inv', ring: 1, kind: 'person', r: 15, photo: U(inviter).photo || null, initials: named(inviter) ? ini(U(inviter).name) : '', label: named(inviter) ? first(inviter) : 'позвал вас' }); ring1.push('inv'); }
-    JOBS1.forEach((j, i) => { nodes.push({ id: 'a' + i, ring: 1, kind: 'person', r: 15, photo: null, initials: j[0], label: j }); ring1.push('a' + i); });
-    ring1.forEach((id) => edges.push({ a: 'me', b: id, kind: 'know' }));
+    JOBS1.forEach((j, i) => { nodes.push({ id: 'a' + i, ring: 1, kind: 'person', r: 13, photo: null, initials: j[0], label: j, ghost: true }); ring1.push('a' + i); edges.push({ a: 'me', b: 'a' + i, kind: 'wait' }); });
+    const hubs = anchors.length ? anchors : ring1;
     JOBS2.forEach((j, i) => {
-      const id = 'b' + i, via = ring1[i % ring1.length];
-      nodes.push({ id, ring: 2, kind: 'person', r: 10, photo: null, initials: j[0], label: j });
-      edges.push({ a: via, b: id, kind: i % 3 ? 'know' : 'vouch', len: 64 });
-      if (i % 4 === 0) edges.push({ a: ring1[(i + 3) % ring1.length], b: id, kind: 'know' });
+      const id = 'b' + i;
+      nodes.push({ id, ring: 3, kind: 'person', r: 8, photo: null, initials: j[0], label: j });
+      edges.push({ a: hubs[i % hubs.length], b: id, kind: i % 3 ? 'know' : 'vouch', len: 60 });
+      if (i % 4 === 0) edges.push({ a: ring1[i % ring1.length], b: id, kind: 'know' });
     });
     PLACES.forEach(([name, company], i) => {
       const id = 'o' + i;
-      nodes.push({ id, ring: 2, kind: 'node', company, r: company ? 8 : 8.5, label: name });
-      edges.push({ a: i % 2 ? ring1[i % ring1.length] : 'b' + ((i * 2) % JOBS2.length), b: id, kind: 'vouch', len: 44 });
+      nodes.push({ id, ring: 3, kind: 'node', company, r: 8, label: name });
+      edges.push({ a: i % 2 ? hubs[i % hubs.length] : 'b' + ((i * 2) % JOBS2.length), b: id, kind: 'vouch', len: 44 });
     });
     return { nodes, edges };
   }
