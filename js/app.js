@@ -412,6 +412,7 @@
     syncBackButton(active, nav);
     if (cloud) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
+    if (!S.onboarded && $('#onbcloud', app)) mountCloud('onbcloud', 2, false, 12);
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
@@ -1202,6 +1203,36 @@
     return { nodes, edges };
   }
 
+  // Показательная сеть для регистрации: вы в центре, тот, кто позвал, — со своим фото,
+  // вокруг — люди разных занятий, их знакомые, места и фирмы. Имён нет — только занятия
+  function demoCloudData() {
+    const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
+    const JOBS1 = ['Юрист', 'Педиатр', 'Бухгалтер', 'Электрик', 'Репетитор', 'Дизайнер', 'Риелтор'];
+    const JOBS2 = ['Стоматолог', 'Фотограф', 'Автомеханик', 'Психолог', 'Кондитер', 'Маркетолог', 'Сантехник', 'Кардиолог',
+      'Программист', 'Нотариус', 'Мебельщик', 'Визажист', 'Тренер', 'Переводчик', 'Садовник', 'Ветеринар', 'Логопед', 'Швея'];
+    const PLACES = [['Стоматология', false], ['Автосервис', true], ['Кофейня', false], ['Детский сад', false], ['Типография', true],
+      ['Юридическая фирма', true], ['Барбершоп', false], ['Строительная фирма', true], ['Пекарня', false], ['Клиника', false]];
+    const ini = (t) => t.slice(0, 2).toUpperCase();
+    const nodes = [{ id: 'me', ring: 0, self: true, kind: 'person', r: 21, photo: U(S.me).photo || null, initials: ini(U(S.me).name || 'Вы'), label: 'вы' }];
+    const edges = [];
+    const ring1 = [];
+    if (inviter) { nodes.push({ id: 'inv', ring: 1, kind: 'person', r: 15, photo: U(inviter).photo || null, initials: ini(U(inviter).name || '?'), label: first(inviter) }); ring1.push('inv'); }
+    JOBS1.forEach((j, i) => { nodes.push({ id: 'a' + i, ring: 1, kind: 'person', r: 15, photo: null, initials: j[0], label: j }); ring1.push('a' + i); });
+    ring1.forEach((id) => edges.push({ a: 'me', b: id, kind: 'know' }));
+    JOBS2.forEach((j, i) => {
+      const id = 'b' + i, via = ring1[i % ring1.length];
+      nodes.push({ id, ring: 2, kind: 'person', r: 10, photo: null, initials: j[0], label: j });
+      edges.push({ a: via, b: id, kind: i % 3 ? 'know' : 'vouch', len: 64 });
+      if (i % 4 === 0) edges.push({ a: ring1[(i + 3) % ring1.length], b: id, kind: 'know' });
+    });
+    PLACES.forEach(([name, company], i) => {
+      const id = 'o' + i;
+      nodes.push({ id, ring: 2, kind: 'node', company, r: company ? 8 : 8.5, label: name });
+      edges.push({ a: i % 2 ? ring1[i % ring1.length] : 'b' + ((i * 2) % JOBS2.length), b: id, kind: 'vouch', len: 44 });
+    });
+    return { nodes, edges };
+  }
+
   // Нажатие в облаке: своя карточка — на экран профиля, чужая — быстрым окном,
   // чтобы человек не терял из виду всю сеть
   function pickInCloud(n) {
@@ -1500,6 +1531,12 @@
       const el = $('#' + id);
       if (!el) return;
       if (cloud) cloud.stop();
+      if (id === 'onbcloud') {   // регистрация: показательная сеть — ощутить размах, трогать нечего
+        cloud = window.Cloud(el, { onPick: () => {}, centerY: 0.55, safeTop: 60, sky: true });
+        cloud.setData(demoCloudData());
+        cloud.start();
+        return;
+      }
       cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5, wheelZoom: id === 'bigcloud',
         safeTop: id === 'homecloud' ? 92 : 0, sky: true });   // и на главной, и на экране облака — звёздное небо
       cloud.setData(cloudData(limitRing, withPlaces, maxFar, onlyPlaces, true));
@@ -3221,32 +3258,24 @@
     // Уже в сети и открыли регистрацию — это просмотр глазами новичка: поля пустые, сохранять нечего
     const preview = S.onboarded;
     if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
-    const ring = inviter ? [inviter, ...[...(G.adj[inviter] || [])].filter((x) => x !== S.me)] : [...(G.adj[S.me] || [])];
-    const rule = (icon, t, d) => `<div class="rule"><span class="ic">${ic(icon)}</span><div><b>${t}</b>${d}</div></div>`;
+    const asked = (S.whoisAskedMe || []).filter((x) => U(x));
+    // Регистрация — одна короткая страница (правка 25.09 «максимально простой»): живая сеть, как на главной,
+    // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
-      ${orbit({ inner: ring.slice(0, 6), outer: ring.slice(6, 14), cap: 'вы', size: 300, labels: false })}
-      <h1 class="h1" style="text-align:center;font-size:29px;line-height:1.1;margin-top:6px">Справочник, который<br>растёт через знакомых</h1>
-      <p class="muted" style="text-align:center;margin:12px auto 20px;max-width:315px">У каждого есть полезные знакомые. Здесь они собираются в один справочник — ваши, ваших знакомых и их знакомых. Нужен совет — спросите своих: видно, кто человека знает и через кого до него дойти. Чужому сюда не попасть.</p>
-      ${inviter ? `<div class="inviter">${av(inviter, '', 'r1')}<div class="grow"><div class="small muted">Вас пригласили</div><div class="h3">${esc(U(inviter).name)}</div></div><span class="tag brand">ваш контакт</span></div>` : '<div class="inviter"><div class="grow"><div class="small muted">Вы первый в сети</div><div class="h3">Пригласите тех, кому доверяете</div></div></div>'}
-      <div class="card" style="margin-top:10px">
+      <div class="cloud-box onb-cloud"><canvas id="onbcloud" aria-label="Ваша сеть"></canvas></div>
+      <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : 'Добро пожаловать<br>в Сарафан'}</h1>
+      <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
+      <div class="card">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        ${(S.whoisAskedMe || []).filter((x) => U(x)).length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)"><b>${esc((S.whoisAskedMe || []).filter((x) => U(x)).map((x) => first(x)).join(', '))}</b> хочет советовать вас знакомым — расскажите, чем вы занимаетесь</div>` : ''}
-        <div class="field"><span>Вас можно советовать знакомым?</span>
-          <p class="hint" style="margin:-2px 0 8px">Вас тоже найдут: знакомые ваших знакомых — по вашей сфере</p><div class="chips">
-          <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да, выбрать, чем занимаюсь</button>
-          <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Нет, я пока просто ищу своих</button></div>
-          ${F.pro === 'no' ? '<p class="hint">Хорошо. Передумаете — сферу можно добавить в профиле в любой момент</p>' : ''}</div>
-        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь — одна-две сферы').replace('</div></div>', '</div>') + '<p class="hint">По сфере вас найдут знакомые и их знакомые — с именем того, кто вас рекомендует</p></div>'
-          + `<label class="field"><span>Как вас представить — одной фразой, если хотите</span><textarea class="textarea" data-bind="about" rows="2" maxlength="400" placeholder="Например: делаю сайты и логотипы для небольших компаний">${esc(F.about || '')}</textarea></label>` : ''}
+        ${asked.length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)"><b>${esc(asked.map((x) => first(x)).join(', '))}</b> хочет советовать вас знакомым — выберите, чем занимаетесь</div>` : ''}
+        <div class="field"><span>Вас можно советовать знакомым?</span><div class="chips">
+          <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да</button>
+          <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Пока нет</button></div></div>
+        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь') : ''}
         ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
-    : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти в сеть</button>`}
-        <p style="text-align:center;margin-top:12px"><button class="btn ghost sm" data-act="tourOpen">Ещё раз показать, как это работает</button></p>
-      </div>
-      <div class="card onb" style="margin-top:10px"><div class="rules">
-        ${rule('net', 'Вам открыт чужой круг', inviter ? `Все, кого проверил ${esc(first(inviter))}, и те, кого проверили его знакомые.` : 'Каждый знакомый открывает вам своих проверенных людей и места.')}
-        ${rule('ask', 'Спросите — ответят свои', 'Вопрос видят знакомые и их знакомые, а ответ приходит с именем того, кто рекомендует.')}
-      </div></div></div>`;
+    : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти</button>`}
+      </div></div>`;
   }
   // Войти можно, когда есть имя и понятно, советовать ли человека: «да» — со сферой, «пока нет» — без
   const onbValid = () => !!(F.name || '').trim() && (F.pro === 'no' || (F.pro === 'yes' && (F.cats || []).length > 0));
