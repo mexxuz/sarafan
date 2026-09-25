@@ -741,7 +741,10 @@ body.viewing-as #app { padding-top: 48px; }
   mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 78%, transparent 100%),
               linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
 }
-.onb-logo { justify-content: center; margin: -8px auto 12px; position: relative; z-index: 1; }
+/* «Вас позвали в [знак] сарафан» — логотип прямо в заголовке */
+.onb-h1 { text-align: center; font-size: 28px; line-height: 1.18; margin-top: -6px; position: relative; z-index: 1; }
+.h1-logo { display: inline-flex; align-items: center; gap: 6px; vertical-align: baseline; color: var(--blue); }
+.h1-logo .logo-mark { width: 1.05em; height: 1.05em; flex: none; transform: translateY(.06em); }
 
 /* Регистрация: главный вопрос — две крупные карточки выбора */
 .pro-ask { margin-top: var(--s-5); }
