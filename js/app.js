@@ -1212,7 +1212,7 @@
   }
 
   // Имя, которое можно показать: в Telegram бывает «….» или одни значки — такое вместо имени не пишем
-  const named = (id) => /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/.test((U(id) || {}).name || '');
+  const named = (id) => !!U(id) && !U(id).noName && /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/.test(U(id).name || '');
   // Показательная сеть для регистрации: вы в центре, тот, кто позвал, — со своим фото,
   // вокруг — люди разных занятий, их знакомые, места и фирмы. Имён нет — только занятия
   function demoCloudData() {
@@ -4533,11 +4533,15 @@
       const pro = F.pro === 'yes' && F.cats.length;
       const body = { name: F.name.trim(), about: (pro && (F.about || '').trim()) || me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [] };
       try { localStorage.setItem('sarafan.onbAt', String(Date.now())); } catch (e) { /* приватный режим */ }
-      const hello = me.invitedBy ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
+      const hello = me.invitedBy && U(me.invitedBy) ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
       mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
         .then(() => {
           // кто позвал и хотел знать, кем советовать, — получит ответ
-          if (pro && LIVE && (S.whoisAskedMe || []).length) window.API.post('/whois/answer', { cats: body.cats, about: body.about }).catch(() => {});
+          // сферу выбрал при входе — вопрос «чем занимаетесь» на главной уже не нужен
+          if (pro && LIVE && (S.whoisAskedMe || []).length) {
+            window.API.post('/whois/answer', { cats: body.cats, about: body.about }).catch(() => {});
+            S.whoisAskedMe = [];
+          }
           if (!applyLanding()) go('#/');
         });
     },

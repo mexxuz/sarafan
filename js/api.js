@@ -66,7 +66,12 @@ window.API = (function () {
     hasSession: () => !!session,
     // своё имя для знакомого: везде показываем его, а имя из Telegram держим рядом — для профиля и поиска
     bootstrap: () => call('/bootstrap').then((d) => {
-      Object.values((d && d.users) || {}).forEach((u) => { if (u.alias) { u.tgName = u.name; u.name = u.alias; } });
+      // имя без единой буквы («….», одни значки) показываем ником из Telegram — иначе человека не узнать
+      const letters = /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/;
+      Object.values((d && d.users) || {}).forEach((u) => {
+        if (u.alias) { u.tgName = u.name; u.name = u.alias; return; }
+        if (!letters.test(u.name || '')) { u.tgName = u.name; u.noName = true; u.name = u.username ? '@' + u.username : 'Без имени'; }
+      });
       return d;
     }),
     // картинка работы уходит файлом, а не текстом
