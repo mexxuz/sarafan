@@ -561,7 +561,7 @@
     : '');
   const screenHead = (title, sub, tools) => `<div class="top screen">
       <div class="grow"><h1 class="h1 one">${title}</h1>${sub ? `<div class="sub ellip">${sub}</div>` : ''}</div>
-      ${tools || ''}${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>`;
+      ${tools || ''}${fullBtn()}${meMenu()}</div>`;
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
 
   // Витрина: то, что человек рассказывает о себе сам. Рекомендации — то, что о нём
@@ -855,7 +855,7 @@
     return `
       <div class="head-bar over">
         <div class="logo grow">${logoMark}сарафан</div>
-        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}${meMenu()}</div>
       ${betaNote()}
       ${starter()}
       ${draftsCard()}
@@ -966,6 +966,23 @@
       <p class="small" style="margin:6px 0 12px">Если вас можно советовать — выберите сферу. Знакомые и их знакомые найдут вас в поиске, с именем того, кто рекомендует</p>
       <div class="btn-row"><button class="btn primary" data-act="proAskYes">Выбрать сферу</button><button class="btn ghost" data-act="proAskNo">Я просто ищу</button></div></div>`;
   }
+
+  // Меню у аватарки: наведение на компьютере, нажатие на телефоне (правка 25.09)
+  function meMenu() {
+    const done = LIVE && isPro() ? profileSteps().filter(Boolean).length : 3;
+    const item = (ico, t, act, extra = '') => `<button class="me-item" data-act="${act}">${ic(ico)}<span class="grow">${t}</span>${extra}</button>`;
+    return `<div class="me-menu"><button class="me-dot" data-act="meMenu" aria-label="Меню профиля" aria-haspopup="true">${av(S.me, 'xs')}${done < 3 ? '<i class="me-badge"></i>' : ''}</button>
+      <div class="me-pop" role="menu">
+        ${item('user', 'Профиль', 'meGo')}
+        ${isPro() ? item('edit', 'Анкета о себе', 'wizOpen', done < 3 ? `<em>${done} из 3</em>` : '') : ''}
+        ${item('spark', 'Изменить профиль', 'editMe')}
+        ${item('net', 'Как это работает', 'tourOpen')}
+        ${LIVE ? item('send', 'Сообщить о проблеме', 'report') : ''}
+      </div></div>`;
+  }
+  document.addEventListener('click', (e) => {   // нажали мимо — меню закрывается
+    if (!e.target.closest('.me-menu') || e.target.closest('.me-item')) setTimeout(() => $$('.me-menu.open').forEach((m) => m.classList.remove('open')), 0);
+  });
 
   // ——— Анкета о себе: три шага, по вопросу на экран (отзыв тестировщика 25.09: «нужны анкеты») ———
   // Поля те же, что в «Как с вами работать», — анкета только подводит к ним по очереди
@@ -1634,7 +1651,7 @@
     const ring2 = Object.keys(G.dist).filter((k) => G.dist[k] === 2);
     return `<div class="map-screen"><div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button>
         <h1 class="h2 grow">Облако сети</h1>
-        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}${meMenu()}</div>
       <div class="chips" style="margin-bottom:10px">
         ${[['all', 'Всё'], ['people', 'Только люди'], ['places', 'Только места']].map(([k, l]) => `<button class="chip ${F.show === k ? 'on' : ''}" data-act="mapShow" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
@@ -2569,7 +2586,7 @@
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
     return `<div class="top">
         <label class="search grow">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
-        ${fullBtn()}<a class="me-dot" href="#/me" aria-label="Профиль">${av(S.me, 'xs')}</a></div>
+        ${fullBtn()}${meMenu()}</div>
       <div id="results">${searchResults()}</div>`;
   }
   // Места и фирмы, подходящие под запрос: по названию и по сфере
@@ -4197,7 +4214,9 @@
       try { await window.API.post('/profile/video/delete', {}); await refresh(); if (SH) { drawSheet(); wireVideoInput(); } toast('Живая аватарка убрана'); } catch (e) { toast(e.message); }
     },
     // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
-    wizOpen: () => sheetWizard(),
+    wizOpen: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); sheetWizard(); },
+    meMenu: (d, el) => { const m = (el || document.querySelector('.me-dot')).closest('.me-menu'); if (m) m.classList.toggle('open'); },
+    meGo: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); go('#/me'); },
     wizStep: (d) => {
       const f = SH.F;
       if (d.v === 'skip') { closeSheet(); return; }

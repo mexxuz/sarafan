@@ -128,3 +128,21 @@
 .me-dot { flex: none; display: block; line-height: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--blue); transition: transform var(--fast) var(--ease); }
 .me-dot:active { transform: scale(.94); }
 .me-dot .av { width: 34px; height: 34px; font-size: 12px; }
+
+/* Меню у аватарки: на компьютере — при наведении, на телефоне — по нажатию */
+.me-menu { position: relative; flex: none; }
+.me-dot { border: 0; padding: 0; background: none; cursor: pointer; position: relative; }
+.me-badge { position: absolute; top: -1px; right: -1px; width: 10px; height: 10px; border-radius: 50%; background: var(--warn, #ff9f1a); box-shadow: 0 0 0 2px var(--paper); }
+.me-pop {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 40; min-width: 232px; padding: 6px;
+  border-radius: var(--r-md); background: var(--paper); box-shadow: var(--sh-2);
+  opacity: 0; visibility: hidden; transform: translateY(-6px) scale(.98); transform-origin: top right;
+  transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease), visibility 0s linear var(--fast);
+}
+.me-pop::before { content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }   /* мостик: мышь доходит до меню, не теряя его */
+.me-menu.open .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+@media (hover: hover) and (pointer: fine) { .me-menu:hover .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; } }
+.me-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink); font: 500 var(--fs-md)/1.2 var(--t); text-align: left; cursor: pointer; }
+.me-item:hover { background: var(--card-2, #f1f5fa); }
+.me-item svg { width: 18px; height: 18px; color: var(--blue); flex: none; }
+.me-item em { font-style: normal; font-size: var(--fs-xs); font-weight: 600; color: var(--warn-ink, #b86a00); background: #fff3e0; padding: 2px 8px; border-radius: 999px; }
