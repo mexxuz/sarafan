@@ -805,3 +805,26 @@ body.viewing-as #app { padding-top: 48px; }
 .onb-card .btn.primary:disabled { background: rgba(255, 255, 255, .28); color: rgba(255, 255, 255, .8); box-shadow: none; }
 /* регистрация помещается в экран целиком: нижний запас под меню здесь не нужен — он и давал прокрутку */
 #app.no-nav:has(.onb) { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+
+/* Регистрация: подсказки сфер — компактные плашки в несколько рядов, не больше шести, чтобы кнопка «Войти» оставалась на экране */
+.onb-card .cat-sugg { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.onb-card .cat-sugg .sugg { padding: 8px 12px; border-radius: 999px; background: rgba(255, 255, 255, .18); }
+.onb-card .cat-sugg .sugg b { color: #fff; font-weight: 600; font-size: var(--fs-sm); }
+.onb-card .cat-sugg .sugg i { display: none; }
+.onb-card .cat-sugg .sugg:nth-child(n+6):not(.new) { display: none; }
+.onb-card .cat-sugg .sugg.new { background: #fff; color: var(--blue-deep); }
+.onb-card .cat-sugg p { color: rgba(255, 255, 255, .75) !important; }
+.onb-card .catpick .chip.on { background: #fff; color: var(--blue-deep); }
+
+/* Плавность регистрации: сеть уступает место и возвращается, подсказки выплывают по очереди */
+.cloud-box.onb-cloud { transition: height .4s var(--ease); }
+@keyframes sugg-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+.onb-card .cat-sugg .sugg { animation: sugg-in .32s var(--ease) both; }
+.onb-card .cat-sugg .sugg:nth-child(2) { animation-delay: 30ms; }
+.onb-card .cat-sugg .sugg:nth-child(3) { animation-delay: 60ms; }
+.onb-card .cat-sugg .sugg:nth-child(4) { animation-delay: 90ms; }
+.onb-card .cat-sugg .sugg:nth-child(5) { animation-delay: 120ms; }
+.onb-card .cat-sugg .sugg:nth-child(6) { animation-delay: 150ms; }
+.onb-card .catpick .chip.on { animation: sugg-in .32s var(--ease) both; }
+.onb-card .field.catpick, .onb-card .pro-opt.on { animation: none; }
+@media (prefers-reduced-motion: reduce) { .cloud-box.onb-cloud { transition: none; } .onb-card .cat-sugg .sugg, .onb-card .catpick .chip.on { animation: none; } }

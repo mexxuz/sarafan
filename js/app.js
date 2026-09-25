@@ -387,7 +387,14 @@
     // Вперёд экран приходит снизу, назад — уходит вправо: видно, куда двигаешься
     const enter = hashChanged ? (navBack ? 'fade-back' : 'fade-in') : '';
     navBack = false;
+    // регистрация перерисовывается при каждом выборе — сеть сверху не перезапускаем, а переносим как есть
+    const keepOnb = !hashChanged && cloud && cloud.onb ? $('#onbcloud', app) : null;
+    const keepH = keepOnb ? keepOnb.parentElement.style.height : '';
     app.innerHTML = `<div class="${enter}">${html}</div>`;
+    if (keepOnb) {
+      const fresh = $('#onbcloud', app);
+      if (fresh) { fresh.parentElement.style.height = keepH; fresh.replaceWith(keepOnb); }
+    }
     app.classList.toggle('no-nav', !nav);
     // Нижняя полоса живёт в каркасе, а не внутри экрана: внутри она цеплялась
     // за анимацию появления и уезжала вместе с ней
@@ -410,9 +417,10 @@
     if (np) np.onchange = () => uploadPlacePhoto(np.files && np.files[0], np.dataset.node);
     wireRails(app);
     syncBackButton(active, nav);
-    if (cloud) { cloud.stop(); cloud = null; }
+    const kept = keepOnb && $('#onbcloud', app) === keepOnb;
+    if (cloud && !kept) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
-    if (!S.onboarded && $('#onbcloud', app)) { fitOnbCloud(); mountCloud('onbcloud', 2, false, 12); }
+    if (!S.onboarded && $('#onbcloud', app)) { fitOnbCloud(); if (!kept) mountCloud('onbcloud', 2, false, 12); }
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
     if ($('.tour', app)) mountTour(0); else clearTimeout(tourT);
   }
@@ -1566,6 +1574,7 @@
         cloud = window.Cloud(el, { onPick: () => {}, centerY: 0.5, sky: true });
         cloud.setData(demoCloudData());
         cloud.start();
+        cloud.onb = true;
         const c0 = cloud;   // на широком экране ширина устанавливается чуть позже — пересчитываем, чтобы сеть встала по центру
         setTimeout(() => { if (cloud === c0) cloud.resize(); }, 350);
         return;
@@ -3321,10 +3330,23 @@
   function fitOnbCloud() {
     const box = $('.onb-cloud');
     if (!box) return;
-    box.style.height = '';
-    const rest = document.documentElement.scrollHeight - box.offsetHeight;
+    const app = $('#app');
+    // всё, кроме самой сети: высота содержимого регистрации и отступ снизу (не высота страницы — та не меньше экрана)
+    const onb = box.closest('.onb');
+    const top = onb.getBoundingClientRect().top + window.scrollY;
+    const rest = top + onb.getBoundingClientRect().height - box.getBoundingClientRect().height + parseFloat(getComputedStyle(app).paddingBottom);
     const vh = (tg && tg.viewportStableHeight) || window.innerHeight;
-    box.style.height = Math.max(90, Math.min(300, vh - rest)) + 'px';
+    const want = Math.max(90, Math.min(300, vh - rest));
+    const now = box.getBoundingClientRect().height;
+    if (Math.abs(want - now) < 1) return;
+    box.style.height = now + 'px';
+    void box.offsetHeight;                                          // запомнили, откуда плыть
+    box.style.height = want + 'px';
+    // пока высота плавно меняется — перерисовываем сеть под новый размер, чтобы она не растягивалась
+    const t0 = performance.now();
+    const tick = () => { if (cloud) cloud.resize(); if (performance.now() - t0 < 420 && box.isConnected) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    return app;
   }
   window.addEventListener('resize', () => { if ($('.onb-cloud')) { fitOnbCloud(); if (cloud) cloud.resize(); } });
   // Кнопка сама говорит, чего не хватает: серая «Войти» без объяснений непонятна (правка 25.09)
@@ -3474,6 +3496,7 @@
         <b>${esc(c[label] || c.name)}</b>${label === 'who' && c.name !== c.who ? `<i>${esc(c.name)}</i>` : label === 'name' && c.who !== c.name ? `<i>${esc(c.who)}</i>` : ''}</button>`).join('')
       + (q.length >= 3 && !exact ? `<button class="sugg new" data-act="newCat" data-k="${key}" data-name="${esc(capFirst(q))}">${ic('plus')}Добавить «${esc(capFirst(q))}»</button>` : '')
       + (q && !list.length && q.length < 3 ? '<p class="tiny muted" style="margin:6px 2px">Ещё пару букв…</p>' : '');
+    if (box.closest('.onb-card')) { fitOnbCloud(); if (cloud) cloud.resize(); }   // регистрация: подсказки выросли — сеть уступает место
   }
 
   const catChips = (F) => catPick(F, 'cat');
