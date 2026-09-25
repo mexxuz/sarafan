@@ -1071,3 +1071,13 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .rep-why { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 0; border: 0; background: none;
   color: var(--blue); font: 600 var(--fs-xxs)/1.3 var(--t); cursor: pointer; }
 .rep-why svg { width: 14px; height: 14px; }
+
+/* Охват: большая цифра слева — сколько людей могут найти (правка 26.09) */
+.reach-card { display: flex; align-items: center; gap: 14px; width: 100%; margin: var(--s-4) 0 0; padding: 14px 16px; text-align: left;
+  border: 0; border-radius: var(--r-lg); background: linear-gradient(135deg, #eef5ff, #e3eeff); box-shadow: inset 0 0 0 1px rgba(47, 123, 255, .14);
+  color: var(--ink); cursor: pointer; }
+.reach-card .reach-n { flex: none; min-width: 52px; font: 800 34px/1 var(--t); letter-spacing: -.03em; color: var(--blue); }
+.reach-card b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); }
+.reach-card i { display: block; margin-top: 3px; font-style: normal; font-size: var(--fs-xxs); line-height: 1.35; color: var(--ink-3); }
+.reach-card > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--blue); }
+.reach-card.in-me { margin-top: var(--s-3); }

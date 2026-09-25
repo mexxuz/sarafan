@@ -1001,6 +1001,7 @@
       <a class="search home-find" href="#/search">${ic('search')}<span>Кто вам нужен? Юрист, врач, дизайнер…</span></a>
       ${dirLine(c1)}
       ${profileCard()}
+      ${reachCard()}
       ${whoisMe()}
       ${proNudge()}
       ${proAsk()}
@@ -1130,6 +1131,22 @@
   };
   const STEPS_N = 5;
   const isPro = () => U(S.me).role !== 'client' && G.catsOf(S.me).length > 0;
+  // Охват (правка 26.09): сколько людей могут найти вас через тех, кто вас советует, — или сколько откроет первая
+  // рекомендация. Для тех, кто оказывает услуги или начинает своё дело; ищущему не показываем
+  function reachCard(where) {
+    const me = U(S.me);
+    const r = S.reach;
+    if (!r || !r.soon) return '';
+    const provider = (me.cats || []).length || me.stage === 'pro' || me.stage === 'start';
+    if (!provider) return '';
+    const big = r.now || r.soon;
+    return `<button class="reach-card ${where || ''}" data-act="${r.now ? 'askLink' : 'askLink'}">
+      <span class="reach-n">${big}</span>
+      <span class="grow">${r.now
+    ? `<b>${plural(big, 'человек может', 'человека могут', 'человек могут')} найти вас</b><i>знакомые тех, кто вас советует, и их знакомые. Ещё рекомендация — круг станет шире</i>`
+    : `<b>${plural(big, 'человеку', 'людям', 'людям')} откроет вас первая рекомендация</b><i>знакомые того, кто вас посоветует, и их знакомые. Попросите довольного клиента</i>`}</span>
+      ${ic('arrow')}</button>`;
+  }
   function profileCard() {
     if (!LIVE || !isPro()) return '';
     const done = profileSteps().filter(Boolean).length;
@@ -3395,6 +3412,7 @@
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="icon-btn" data-act="shareMe" aria-label="Поделиться своей карточкой">${ic('share')}</button><button class="btn sm primary" data-act="editMe">${ic('edit')}Изменить</button></div>
       <div class="p-head"><button class="av-edit" data-act="avatarMenu" aria-label="Сменить фото">${founderAv(S.me, 'xl')}<span class="av-cam">${ic('cam')}</span></button><div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       ${personFacts(S.me, inRecs, indep)}
+      ${reachCard('in-me')}
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
         <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
