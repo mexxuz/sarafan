@@ -886,3 +886,9 @@ body.viewing-as #app { padding-top: 48px; }
 .p-fact .av-stack { flex: none; }
 .p-fact-ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2, #f1f5fa); color: var(--ink-4); flex: none; }
 .p-fact-ic svg { width: 16px; height: 16px; }
+
+/* «Моя анкета»: рекомендации — лицо, цитата, кто и в какой сфере */
+.my-rec { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+.my-rec + .my-rec { border-top: 1px solid var(--line, #e4eaf2); }
+.my-rec p { margin: 0; font-size: var(--fs-sm); line-height: 1.45; color: var(--ink); }
+.my-rec span { font-size: var(--fs-xs); color: var(--ink-3); }

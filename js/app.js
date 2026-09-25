@@ -996,12 +996,12 @@
 
   // Меню у аватарки: наведение на компьютере, нажатие на телефоне (правка 25.09)
   function meMenu() {
-    const done = LIVE && isPro() ? profileSteps().filter(Boolean).length : 3;
+    const done = LIVE && isPro() ? profileSteps().filter(Boolean).length : STEPS_N;
     const item = (ico, t, act, extra = '') => `<button class="me-item" data-act="${act}">${ic(ico)}<span class="grow">${t}</span>${extra}</button>`;
-    return `<div class="me-menu"><button class="me-dot" data-act="meMenu" aria-label="Меню профиля" aria-haspopup="true">${av(S.me, 'xs')}${done < 3 ? '<i class="me-badge"></i>' : ''}</button>
+    return `<div class="me-menu"><button class="me-dot" data-act="meMenu" aria-label="Меню профиля" aria-haspopup="true">${av(S.me, 'xs')}${done < STEPS_N ? '<i class="me-badge"></i>' : ''}</button>
       <div class="me-pop" role="menu">
         ${item('user', 'Профиль', 'meGo')}
-        ${isPro() ? (done < 3 ? item('edit', 'Анкета о себе', 'wizOpen', `<em>${done} из 3</em>`) : item('edit', 'Моя анкета', 'myCard')) : ''}
+        ${isPro() ? (done < STEPS_N ? item('edit', 'Анкета о себе', 'wizOpen', `<em>${done} из ${STEPS_N}</em>`) : item('edit', 'Моя анкета', 'myCard')) : ''}
         ${item('net', 'Как это работает', 'tourOpen')}
         ${LIVE ? item('send', 'Сообщить о проблеме', 'report') : ''}
       </div></div>`;
@@ -1012,66 +1012,105 @@
 
   // ——— Анкета о себе: три шага, по вопросу на экран (отзыв тестировщика 25.09: «нужны анкеты») ———
   // Поля те же, что в «Как с вами работать», — анкета только подводит к ним по очереди
+  const myShow = () => (S.showcases || {})[S.me] || { headline: '', story: '', services: '', prices: '', links: '', works: [], dirs: [] };
   const profileSteps = () => {
-    const me = U(S.me), how = me.how || {};
-    return [!!(me.about || '').trim(), !!(how.area || how.visit), !!(S.cardPhone || how.reply)];
+    const me = U(S.me), how = me.how || {}, sc = myShow();
+    return [!!(me.about || '').trim(), !!(how.area || how.visit), !!((sc.services || '').trim() || (sc.prices || '').trim()),
+      !!((sc.links || '').trim() || (sc.works || []).length), !!(S.cardPhone || how.reply)];
   };
+  const STEPS_N = 5;
   const isPro = () => U(S.me).role !== 'client' && G.catsOf(S.me).length > 0;
   function profileCard() {
     if (!LIVE || !isPro()) return '';
     const done = profileSteps().filter(Boolean).length;
-    if (done === 3) return '';
+    if (done === STEPS_N) return '';
     return `<button class="link-row wide profile-ask" data-act="wizOpen">${ic('edit')}
-      <span class="grow"><b>Анкета о себе · заполнено ${done} из 3</b><i>По ней вас выбирают: чем занимаетесь, где работаете, как связаться</i></span>${ic('arrow')}</button>`;
+      <span class="grow"><b>Анкета о себе · заполнено ${done} из ${STEPS_N}</b><i>По ней вас выбирают: чем занимаетесь, что умеете, где посмотреть работы</i></span>${ic('arrow')}</button>`;
   }
   function sheetWizard(step) {
-    const me = U(S.me), how = me.how || {};
-    const first3 = profileSteps().findIndex((x) => !x);
-    const f = { step: step ?? (first3 < 0 ? 0 : first3), about: me.about || '', area: how.area || '', visit: how.visit || '',
-      hours: how.hours || '', reply: how.reply || '', cardPhone: S.cardPhone || '' };
+    const me = U(S.me), how = me.how || {}, sc = myShow();
+    const firstGap = profileSteps().findIndex((x) => !x);
+    const f = { step: step ?? (firstGap < 0 ? 0 : firstGap), about: me.about || '', area: how.area || '', visit: how.visit || '',
+      hours: how.hours || '', reply: how.reply || '', cardPhone: S.cardPhone || '', langs: how.langs || '', pay: how.pay || '',
+      services: sc.services || '', prices: sc.prices || '', links: sc.links || '' };
     const who = (cat(G.catsOf(S.me)[0] || '') || {}).who || '';
-    const TITLES = ['Чем именно вы занимаетесь?', 'Где и как работаете?', 'Как с вами связаться?'];
+    const TITLES = ['Чем именно вы занимаетесь?', 'Где и как работаете?', 'Что делаете и сколько стоит?', 'Где посмотреть ваши работы?', 'Как с вами связаться?'];
+    const chipsOf = (key, dict, multi) => `<div class="chips">${Object.entries(dict).map(([k, l]) => multi
+      ? `<button class="chip ${howList(f[key]).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="${key}" data-v="${k}">${l}</button>`
+      : `<button class="chip ${f[key] === k ? 'on' : ''}" data-act="set" data-k="${key}" data-v="${k}">${l}</button>`).join('')}</div>`;
     openSheet({
       F: f,
-      render: () => `<div class="wiz-bar">${[0, 1, 2].map((i) => `<i class="${i <= f.step ? 'on' : ''}"></i>`).join('')}</div>
-        ${sheetHead(null, TITLES[f.step], `Шаг ${f.step + 1} из 3 · это увидят знакомые и их знакомые`)}
+      render: () => {
+        const works = (myShow().works || []);
+        return `<div class="wiz-bar" style="grid-template-columns:repeat(${STEPS_N},1fr)">${[0, 1, 2, 3, 4].map((i) => `<i class="${i <= f.step ? 'on' : ''}"></i>`).join('')}</div>
+        ${sheetHead(null, TITLES[f.step], `Шаг ${f.step + 1} из ${STEPS_N} · это увидят знакомые и их знакомые`)}
         ${f.step === 0 ? `<label class="field"><span>Пара фраз о себе${who ? ' — ' + esc(who.toLowerCase()) : ''}</span>
           <textarea class="textarea" data-bind="about" rows="3" maxlength="300" placeholder="Например: делаю маникюр и наращивание, работаю с 2018 года, есть свой кабинет">${esc(f.about)}</textarea>
           <p class="hint">Конкретика помогает: что именно делаете, с какими задачами к вам идти, опыт</p></label>` : ''}
         ${f.step === 1 ? `<label class="field"><span>Район</span><input class="input" data-bind="area" maxlength="80" placeholder="Мирабад, Юнусабад…" value="${esc(f.area)}"></label>
-          <div class="field"><span>Как работаете</span><div class="chips">${Object.entries(HOW.visit).map(([k, l]) => `<button class="chip ${f.visit === k ? 'on' : ''}" data-act="set" data-k="visit" data-v="${k}">${l}</button>`).join('')}</div></div>
+          <div class="field"><span>Как работаете</span>${chipsOf('visit', HOW.visit)}</div>
           <label class="field"><span>Когда удобно писать</span><input class="input" data-bind="hours" maxlength="80" placeholder="Будни до 20:00" value="${esc(f.hours)}"></label>` : ''}
-        ${f.step === 2 ? `<label class="field"><span>Телефон для карточки</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone)}">
+        ${f.step === 2 ? `<label class="field"><span>Что делаете — по строке на услугу</span>
+            <textarea class="textarea" data-bind="services" rows="4" maxlength="1200" placeholder="Свадебный макияж&#10;Вечерний образ&#10;Причёска">${esc(f.services)}</textarea></label>
+          <label class="field"><span>Сколько примерно стоит</span>
+            <textarea class="textarea" data-bind="prices" rows="2" maxlength="600" placeholder="Например: свадебный образ от 800 тыс, выезд — плюс 100 тыс">${esc(f.prices)}</textarea>
+            <p class="hint">Хотя бы порядок цен — так к вам приходят те, кому это подходит</p></label>` : ''}
+        ${f.step === 3 ? `<div class="field"><span>Фото работ ${works.length ? `· ${works.length}` : ''}</span>
+            ${works.length ? `<div class="works small-works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
+              <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
+            <label class="btn block" style="margin-top:8px;cursor:pointer">${ic('cam')}Добавить фото работы
+              <input type="file" accept="image/*" class="workfile" data-dir="" hidden></label>
+            <p class="hint">Лучше всего продают готовые работы. JPG, PNG или WebP до 6 МБ</p></div>
+          <label class="field"><span>Ссылки — по одной на строку</span>
+            <textarea class="textarea" data-bind="links" rows="2" maxlength="600" placeholder="instagram.com/вы&#10;t.me/ваш_канал">${esc(f.links)}</textarea></label>` : ''}
+        ${f.step === 4 ? `<label class="field"><span>Телефон для карточки</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone)}">
             ${tg && tg.requestContact ? `<button class="btn sm ghost" style="margin-top:8px" data-act="takePhone">${ic('user')}Взять номер из Telegram</button>` : ''}
             <p class="hint">${me.username ? `Ваш Telegram @${esc(me.username)} в карточке уже есть. ` : ''}Номер — чтобы могли сразу позвонить. Не хотите — оставьте пустым</p></label>
-          <div class="field"><span>Как быстро отвечаете</span><div class="chips">${Object.entries(HOW.reply).map(([k, l]) => `<button class="chip ${f.reply === k ? 'on' : ''}" data-act="set" data-k="reply" data-v="${k}">${l}</button>`).join('')}</div></div>` : ''}
+          <div class="field"><span>Как быстро отвечаете</span>${chipsOf('reply', HOW.reply)}</div>
+          <div class="field"><span>Языки</span>${chipsOf('langs', HOW.langs, true)}</div>
+          <div class="field"><span>Как принимаете оплату</span>${chipsOf('pay', HOW.pay, true)}</div>` : ''}
         <div class="s-foot"><div class="btn-row">
           ${f.step ? '<button class="btn ghost" data-act="wizStep" data-v="-1">Назад</button>' : '<button class="btn ghost" data-act="wizStep" data-v="skip">Пропустить</button>'}
-          <button class="btn primary" data-act="wizStep" data-v="1">${f.step === 2 ? 'Готово' : 'Дальше'}</button></div></div>`,
+          <button class="btn primary" data-act="wizStep" data-v="1">${f.step === STEPS_N - 1 ? 'Готово' : 'Дальше'}</button></div></div>`;
+      },
     });
+    wireWorkInputs();
   }
   // Своя анкета глазами других: то, что увидят знакомые в карточке, — и кнопка «Изменить»
   function sheetMyCard() {
     const me = U(S.me);
-    const main = G.catsOf(S.me)[0];
-    const rep = main ? G.reputation(S.me, main) : null;
     const h = me.how || {};
+    const cats = G.catsOf(S.me);
+    const recs = G.recsTo(S.me).filter((r) => U(r.from)).sort((a, b) => (b.text || '').length - (a.text || '').length);
+    const from = [...new Set(recs.map((r) => r.from))];
     const rows = [
       h.area && ['Район', esc(h.area)],
       h.visit && ['Как работает', HOW.visit[h.visit] || esc(h.visit)],
       h.hours && ['Когда писать', esc(h.hours)],
+      h.langs && ['Языки', howList(h.langs).map((x) => HOW.langs[x] || esc(x)).join(' · ')],
+      h.pay && ['Оплата', howList(h.pay).map((x) => HOW.pay[x] || esc(x)).join(' · ')],
       h.reply && ['Ответ', HOW.reply[h.reply] || esc(h.reply)],
     ].filter(Boolean);
+    const focus = cats.filter((c) => (me.focus || {})[c]).map((c) => `${esc(cat(c).who)} — ${esc(me.focus[c])}`);
     const contact = [S.cardPhone && `${ic('phone')}<b>${esc(S.cardPhone)}</b>`, me.username && `${ic('chat')}<b>@${esc(me.username)}</b>`].filter(Boolean);
+    const facts = factsAbout(S.me).filter((x) => x.status === 'ok');
     openSheet({
       F: {},
       render: () => `<div class="eyebrow">так вас видят знакомые</div>
         <div class="s-head" style="margin-top:8px">${av(S.me, 'l')}<div class="grow"><h2 class="h2">${esc(me.name)}</h2>
           <div class="small muted" style="margin-top:4px">${esc(who(S.me))}${me.city ? ' · ' + esc(me.city) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
-        ${me.about ? `<p style="margin:14px 0 0">${esc(me.about)}</p>` : ''}
-        ${rep ? `<p class="small muted" style="margin:10px 0 0">${rep.count ? `${pl(rep.count, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl(rep.independent, 'независимый источник', 'независимых источника', 'независимых источников')}` : 'Рекомендаций пока нет — попросите довольных клиентов'}</p>` : ''}
-        ${rows.length ? `<div class="card how" style="margin-top:14px">${rows.map(([k, v]) => `<div class="how-row"><span>${k}</span><b>${v}</b></div>`).join('')}</div>` : ''}
+        ${founderTag(S.me)}
+        ${jobLine(S.me)}
+        ${focus.length ? `<p class="small" style="margin:10px 0 0;color:var(--ink-2)">${focus.join(' · ')}</p>` : ''}
+        ${me.about ? `<p style="margin:12px 0 0">${esc(me.about)}</p>` : ''}
+        <div class="sec-title" style="margin-top:18px"><h2 class="h3">${from.length ? `Советуют ${pl(from.length, 'человек', 'человека', 'человек')}` : 'Рекомендации'}</h2></div>
+        ${recs.length ? `<div class="card" style="padding:8px 12px">${recs.slice(0, 3).map((r) => `<div class="my-rec">${av(r.from, 's')}<div class="grow"><p>«${esc(r.text)}»</p><span>${esc(r.from === S.me ? 'вы' : first(r.from))} · ${esc(cat(r.cat).who)}</span></div></div>`).join('')}
+          ${recs.length > 3 ? `<p class="tiny muted" style="margin:6px 0 2px">и ещё ${pl(recs.length - 3, 'рекомендация', 'рекомендации', 'рекомендаций')} — в профиле</p>` : ''}</div>`
+    : '<p class="small muted" style="margin:0">Пока никто не рекомендовал — попросите довольных клиентов</p>'}
+        ${rows.length ? `<div class="sec-title" style="margin-top:18px"><h2 class="h3">Как с вами работать</h2></div><div class="card how">${rows.map(([k, v]) => `<div class="how-row"><span>${k}</span><b>${v}</b></div>`).join('')}</div>` : ''}
+        ${showcaseView(S.me)}
+        ${facts.length ? `<div class="sec-title" style="margin-top:18px"><h2 class="h3">Что о вас дописали знакомые</h2></div><div class="card">${facts.map((x) => `<p class="small" style="margin:4px 0">${esc(x.text)} <span class="tiny muted">— ${esc(first(x.from))}</span></p>`).join('')}</div>` : ''}
         ${contact.length ? `<div class="my-contact">${contact.map((c) => `<span>${c}</span>`).join('')}</div>` : ''}
         <div class="s-foot"><button class="btn primary block" data-act="wizOpen">${ic('edit')}Изменить анкету</button></div>`,
     });
@@ -1082,10 +1121,17 @@
     const avail = S.availability || (me.hidden ? 'hidden' : me.busy ? 'busy' : 'open');
     const body = { name: me.noName ? me.tgName : me.name, about: f.about.trim(), role: me.role === 'client' ? 'both' : (me.role || 'both'),
       availability: avail, cats: me.cats, area: f.area.trim(), visit: f.visit, hours: f.hours.trim(),
-      langs: how.langs || '', pay: how.pay || '', reply: f.reply, cardPhone: (f.cardPhone || '').trim(), busyUntil: null, focus: me.focus || null };
+      langs: f.langs || '', pay: f.pay || '', reply: f.reply, cardPhone: (f.cardPhone || '').trim(), busyUntil: null, focus: me.focus || null };
+    // услуги, цены и ссылки живут в витрине — сохраняем туда же, заголовок и рассказ витрины не трогаем
+    const sc = myShow();
+    if (LIVE && (f.services !== (sc.services || '') || f.prices !== (sc.prices || '') || f.links !== (sc.links || ''))) {
+      window.API.post('/showcase', { headline: sc.headline || '', story: sc.story || '', services: f.services.trim(), prices: f.prices.trim(), links: f.links.trim() })
+        .then(() => { S.showcases = S.showcases || {}; S.showcases[S.me] = Object.assign({ works: [], dirs: [] }, S.showcases[S.me], { services: f.services.trim(), prices: f.prices.trim(), links: f.links.trim() }); })
+        .catch((e) => toast(e.message));
+    }
     if ((body.name || '').trim().length < 2) body.name = 'Участник';
     return mutate(() => { S.cardPhone = body.cardPhone; Object.assign(me, { about: body.about,
-      how: { ...how, area: body.area, visit: body.visit, hours: body.hours, reply: body.reply } }); },
+      how: { ...how, area: body.area, visit: body.visit, hours: body.hours, reply: body.reply, langs: body.langs, pay: body.pay } }); },
     '/profile', body, last ? 'Анкета готова — теперь вас проще выбрать' : '');
   }
 
@@ -4275,11 +4321,11 @@
     wizStep: (d) => {
       const f = SH.F;
       if (d.v === 'skip') { closeSheet(); return; }
-      if (d.v === '-1') { f.step = Math.max(0, f.step - 1); drawSheet(); return; }
-      const last = f.step === 2;
+      if (d.v === '-1') { f.step = Math.max(0, f.step - 1); drawSheet(); wireWorkInputs(); return; }
+      const last = f.step === STEPS_N - 1;
       wizSave(f, last);
       if (last) { closeSheet(); return; }
-      f.step += 1; drawSheet();
+      f.step += 1; drawSheet(); wireWorkInputs();
     },
     takePhone: () => {
       tg.requestContact((ok, res) => {
