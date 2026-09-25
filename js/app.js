@@ -2143,6 +2143,10 @@
         ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
     : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
         ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div>`; };
+    // чужой профиль: нынешние места уже стоят в шапке — здесь не повторяем, остаётся только «раньше» (правка 25.09)
+    if (!mine && cur.length) {
+      return past.length ? `<div class="sec-title"><h2 class="h2">Раньше работал</h2></div><div class="card">${past.map(row).join('')}</div>` : '';
+    }
     return `<div class="sec-title"><h2 class="h2">${mine ? 'Где вы работаете' : 'Где работает'}</h2></div>
       <div class="card">${cur.map(row).join('') || '<p class="small muted" style="margin:0">Сейчас нигде не отмечен</p>'}
       ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше</div>${past.map(row).join('')}` : ''}${addBtn}</div>`;
