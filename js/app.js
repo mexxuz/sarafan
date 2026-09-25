@@ -3312,10 +3312,14 @@
           </div></div>
         ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь') : ''}
         ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
-    : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>Войти</button>`}
+    : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>${onbLabel()}</button>`}
       </div></div>`;
   }
   // Войти можно, когда есть имя и понятно, советовать ли человека: «да» — со сферой, «пока нет» — без
+  // Кнопка сама говорит, чего не хватает: серая «Войти» без объяснений непонятна (правка 25.09)
+  const onbLabel = () => (!(F.name || '').trim() ? 'Напишите, как вас зовут'
+    : !F.pro ? 'Выберите: «Да» или «Пока нет»'
+      : F.pro === 'yes' && !(F.cats || []).length ? 'Выберите, чем занимаетесь' : 'Войти');
   const onbValid = () => !!(F.name || '').trim() && (F.pro === 'no' || (F.pro === 'yes' && (F.cats || []).length > 0));
 
   // ——— Шторка ———
@@ -3381,6 +3385,7 @@
     });
     const valid = SH ? (SH.valid ? SH.valid() : true) : route().path[0] === 'ask' ? askValid() : !S.onboarded || route().path[0] === 'start' ? onbValid() : true;
     $$('[data-submit]', scope).forEach((b) => { b.disabled = !valid; });
+    $$('[data-act=finishOnb]', scope).forEach((b) => { b.textContent = onbLabel(); });
   }
   const sheetHead = (id, title, sub) => `<div class="s-head">${id ? founderAv(id, 'l') : ''}<div class="grow"><h2 class="h2">${title}</h2>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ''}</div><button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>`;
   const relChips = (F, heard) => `<div class="field"><span>Откуда знаете</span><div class="chips">${Object.entries(heard ? { heard: 'Мне посоветовали', ...REL } : REL).map(([k, v]) => `<button class="chip ${F.rel === k ? 'on' : ''}" data-act="set" data-k="rel" data-v="${k}">${v}</button>`).join('')}</div></div>`;
