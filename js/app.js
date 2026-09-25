@@ -3629,7 +3629,7 @@
           <p class="gain">${t.gain}</p></div></section>`).join('')}</div>
       <div class="tour-foot">
         <button class="btn primary block" data-act="tourNext">Дальше</button>
-        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}<span>Это тестовая версия, её делает ${esc((S.founderCard.name || '').split(' ')[0])}. Что-то не работает или непонятно — напишите</span></button>` : ''}
+        ${S.founderCard ? `<button class="tour-by" data-act="founderOpen" hidden>${founderPortrait('xl')}<span>Сарафан делает ${esc((S.founderCard.name || '').split(' ')[0])} — чтобы хороших людей находили через своих, а не по рекламе. Это ранняя версия: поддержите — зовите своих и пишите, что улучшить 🙌</span></button>` : ''}
       </div>
       <button class="tour-tap prev" data-act="tourPrev" aria-label="Назад"></button>
       <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
