@@ -3646,7 +3646,7 @@
     if (F.name === undefined) {
       // имя — из профиля Telegram; если там «….» или одни значки — поле пустое, пусть напишет сам
       F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name;
-      if (!/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(F.name || '')) F.name = ''; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
+      if (!/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(F.name || '')) F.name = ''; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = U(S.me).stage || (F.cats.length ? 'pro' : undefined); }
     const asked = (S.whoisAskedMe || []).filter((x) => U(x));
     // Регистрация — одна короткая страница (правка 25.09 «максимально простой»): живая сеть, как на главной,
     // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
@@ -3657,13 +3657,15 @@
       <div class="card onb-card">
         <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
         <div class="pro-ask">
-          <div class="pro-q">Вас можно советовать знакомым?</div>
+          <div class="pro-q">С чего начнёте?</div>
           <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') + ' — выберите, чем занимаетесь' : 'Знакомые ваших знакомых найдут вас по вашей сфере'}</div>
           <div class="pro-opts">
-            <button class="pro-opt ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">${ic('seal')}<b>Да</b><i>выберу, чем занимаюсь</i></button>
-            <button class="pro-opt ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">${ic('search')}<b>Пока нет</b><i>просто ищу своих</i></button>
+            ${[['pro', 'seal', 'Я специалист', 'есть клиенты — хочу, чтобы меня советовали дальше'],
+      ['start', 'spark', 'Хочу начать своё дело', 'умею что-то — найду первых клиентов через знакомых'],
+      ['seek', 'search', 'Мне нужен специалист', 'ищу проверенных людей через своих']]
+    .map(([v, icon, t, sub]) => `<button class="pro-opt ${F.pro === v ? 'on' : ''}" data-act="onbPro" data-v="${v}">${ic(icon)}<span><b>${t}</b><i>${sub}</i></span></button>`).join('')}
           </div></div>
-        ${F.pro === 'yes' ? catPick(F, 'cats', 'who', 'Чем занимаетесь') : ''}
+        ${F.pro === 'pro' || F.pro === 'start' ? catPick(F, 'cats', 'who', F.pro === 'start' ? 'Что умеете' : 'Чем занимаетесь') : ''}
         ${preview ? '<div class="note" style="margin-top:18px">Так регистрацию видит новичок. Вы уже в сети — здесь ничего не сохраняется</div><button class="btn block" style="margin-top:10px" data-act="goHome">На главную</button>'
     : `<button class="btn primary block" style="margin-top:18px" data-act="finishOnb" data-submit ${onbValid() ? '' : 'disabled'}>${onbLabel()}</button>`}
       </div></div>`;
@@ -3695,9 +3697,9 @@
   window.addEventListener('resize', () => { if ($('.onb-cloud')) { fitOnbCloud(); if (cloud) cloud.resize(); } });
   // Кнопка сама говорит, чего не хватает: серая «Войти» без объяснений непонятна (правка 25.09)
   const onbLabel = () => (!(F.name || '').trim() ? 'Напишите, как вас зовут'
-    : !F.pro ? 'Выберите: «Да» или «Пока нет»'
-      : F.pro === 'yes' && !(F.cats || []).length ? 'Выберите, чем занимаетесь' : 'Войти');
-  const onbValid = () => !!(F.name || '').trim() && (F.pro === 'no' || (F.pro === 'yes' && (F.cats || []).length > 0));
+    : !F.pro ? 'Выберите, с чего начнёте'
+      : F.pro !== 'seek' && !(F.cats || []).length ? (F.pro === 'start' ? 'Выберите, что умеете' : 'Выберите, чем занимаетесь') : 'Войти');
+  const onbValid = () => !!(F.name || '').trim() && (F.pro === 'seek' || ((F.pro === 'pro' || F.pro === 'start') && (F.cats || []).length > 0));
 
   // ——— Шторка ———
   let SH = null;
@@ -4937,11 +4939,12 @@
     proAskNo: () => { proAskHidden = true; try { localStorage.setItem('sarafan.proAskHidden', '1'); } catch (e) { /* и так скрыто */ } render(); },
     finishOnb: () => {
       const me = U(S.me);
-      const pro = F.pro === 'yes' && F.cats.length;
-      const body = { name: F.name.trim(), about: (pro && (F.about || '').trim()) || me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [] };
+      const pro = F.pro !== 'seek' && F.cats.length;
+      // три входа (правка 26.09): специалист и тот, кто начинает своё дело, — со сферой; ищущий — без
+      const body = { name: F.name.trim(), about: (pro && (F.about || '').trim()) || me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [], stage: F.pro };
       try { localStorage.setItem('sarafan.onbAt', String(Date.now())); } catch (e) { /* приватный режим */ }
       const hello = me.invitedBy && U(me.invitedBy) ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
-      mutate(() => { me.name = body.name; me.cats = F.cats; S.onboarded = true; }, '/profile', body, hello)
+      mutate(() => { me.name = body.name; me.cats = F.cats; me.stage = F.pro; S.onboarded = true; }, '/profile', body, hello)
         .then(() => {
           // кто позвал и хотел знать, кем советовать, — получит ответ
           // сферу выбрал при входе — вопрос «чем занимаетесь» на главной уже не нужен

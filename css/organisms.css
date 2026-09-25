@@ -801,6 +801,12 @@ body.viewing-as #app { padding-top: 48px; }
 .pro-sub { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 4px; line-height: 1.4; }
 .pro-sub b { color: var(--ink); font-weight: 600; }
 .pro-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+/* три входа — строками: значок слева, крупно что выбрать, под ним мелко зачем (правка 26.09) */
+.pro-opts:has(> .pro-opt:nth-child(3)) { grid-template-columns: 1fr; gap: 8px; }
+.pro-opts:has(> .pro-opt:nth-child(3)) .pro-opt { flex-direction: row; align-items: center; text-align: left; gap: 12px; padding: 12px 14px; }
+.pro-opts:has(> .pro-opt:nth-child(3)) .pro-opt svg { margin: 0; flex: none; }
+.pro-opts:has(> .pro-opt:nth-child(3)) .pro-opt span { display: grid; gap: 2px; }
+.pro-opts:has(> .pro-opt:nth-child(3)) .pro-opt b { font-size: var(--fs-md); }
 .pro-opt {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
   padding: 14px 14px 13px; border-radius: var(--r-md); background: var(--card-2, #f1f5fa);
