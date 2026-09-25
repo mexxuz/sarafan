@@ -974,7 +974,7 @@
     return `<div class="me-menu"><button class="me-dot" data-act="meMenu" aria-label="Меню профиля" aria-haspopup="true">${av(S.me, 'xs')}${done < 3 ? '<i class="me-badge"></i>' : ''}</button>
       <div class="me-pop" role="menu">
         ${item('user', 'Профиль', 'meGo')}
-        ${isPro() ? item('edit', 'Анкета о себе', 'wizOpen', done < 3 ? `<em>${done} из 3</em>` : '') : ''}
+        ${isPro() ? (done < 3 ? item('edit', 'Анкета о себе', 'wizOpen', `<em>${done} из 3</em>`) : item('edit', 'Моя анкета', 'myCard')) : ''}
         ${item('net', 'Как это работает', 'tourOpen')}
         ${LIVE ? item('send', 'Сообщить о проблеме', 'report') : ''}
       </div></div>`;
@@ -1021,6 +1021,32 @@
         <div class="s-foot"><div class="btn-row">
           ${f.step ? '<button class="btn ghost" data-act="wizStep" data-v="-1">Назад</button>' : '<button class="btn ghost" data-act="wizStep" data-v="skip">Пропустить</button>'}
           <button class="btn primary" data-act="wizStep" data-v="1">${f.step === 2 ? 'Готово' : 'Дальше'}</button></div></div>`,
+    });
+  }
+  // Своя анкета глазами других: то, что увидят знакомые в карточке, — и кнопка «Изменить»
+  function sheetMyCard() {
+    const me = U(S.me);
+    const main = G.catsOf(S.me)[0];
+    const rep = main ? G.reputation(S.me, main) : null;
+    const h = me.how || {};
+    const rows = [
+      h.area && ['Район', esc(h.area)],
+      h.visit && ['Как работает', HOW.visit[h.visit] || esc(h.visit)],
+      h.hours && ['Когда писать', esc(h.hours)],
+      h.reply && ['Ответ', HOW.reply[h.reply] || esc(h.reply)],
+    ].filter(Boolean);
+    const contact = [S.cardPhone && `${ic('phone')}<b>${esc(S.cardPhone)}</b>`, me.username && `${ic('chat')}<b>@${esc(me.username)}</b>`].filter(Boolean);
+    openSheet({
+      F: {},
+      render: () => `<div class="eyebrow">так вас видят знакомые</div>
+        <div class="s-head" style="margin-top:8px">${av(S.me, 'l')}<div class="grow"><h2 class="h2">${esc(me.name)}</h2>
+          <div class="small muted" style="margin-top:4px">${esc(who(S.me))}${me.city ? ' · ' + esc(me.city) : ''}</div></div>
+          <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
+        ${me.about ? `<p style="margin:14px 0 0">${esc(me.about)}</p>` : ''}
+        ${rep ? `<p class="small muted" style="margin:10px 0 0">${rep.count ? `${pl(rep.count, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl(rep.independent, 'независимый источник', 'независимых источника', 'независимых источников')}` : 'Рекомендаций пока нет — попросите довольных клиентов'}</p>` : ''}
+        ${rows.length ? `<div class="card how" style="margin-top:14px">${rows.map(([k, v]) => `<div class="how-row"><span>${k}</span><b>${v}</b></div>`).join('')}</div>` : ''}
+        ${contact.length ? `<div class="my-contact">${contact.map((c) => `<span>${c}</span>`).join('')}</div>` : ''}
+        <div class="s-foot"><button class="btn primary block" data-act="wizOpen">${ic('edit')}Изменить анкету</button></div>`,
     });
   }
   // Сохраняем на каждом шаге: бросил на середине — сделанное не пропало
@@ -4213,8 +4239,9 @@
       try { await window.API.post('/profile/video/delete', {}); await refresh(); if (SH) { drawSheet(); wireVideoInput(); } toast('Живая аватарка убрана'); } catch (e) { toast(e.message); }
     },
     // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
-    wizOpen: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); sheetWizard(); },
+    wizOpen: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); const full = profileSteps().every(Boolean); const was = !!SH; if (was) closeAllSheets(); setTimeout(() => sheetWizard(full ? 0 : undefined), was ? 340 : 0); },
     meMenu: (d, el) => { const m = (el || document.querySelector('.me-dot')).closest('.me-menu'); if (m) m.classList.toggle('open'); },
+    myCard: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); sheetMyCard(); },
     meGo: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); go('#/me'); },
     wizStep: (d) => {
       const f = SH.F;

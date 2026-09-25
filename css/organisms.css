@@ -871,3 +871,8 @@ body.viewing-as #app { padding-top: 48px; }
 .wiz-bar i { height: 4px; border-radius: 4px; background: var(--card-2, #e8eef7); transition: background var(--base, .25s) var(--ease); }
 .wiz-bar i.on { background: var(--blue); }
 .profile-ask { margin-top: 14px; }
+
+/* Своя анкета глазами других: контакты строкой */
+.my-contact { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.my-contact span { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--blue-soft); font-size: var(--fs-sm); }
+.my-contact svg { width: 16px; height: 16px; color: var(--blue); }
