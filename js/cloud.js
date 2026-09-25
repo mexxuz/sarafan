@@ -300,7 +300,8 @@ window.Cloud = function (canvas, opts) {
       ctx.globalAlpha = (dim ? 0.24 : 1) * ease * (lit && near.has(n.id) ? 1 : depth(n));
 
       // ореол: свои светятся чуть заметнее — иерархия без лишних обводок
-      if (!dim && (n.self || n.founder || n.ring <= 1 || n.glow > 0.02)) {
+      // создатель за вашими кругами — без ореола: маячок, а не главный герой (правка 25.09)
+      if (!dim && (n.self || (n.founder && n.ring <= 1) || n.ring <= 1 || n.glow > 0.02)) {
         const halo = ctx.createRadialGradient(n.x, n.y, R * 0.6, n.x, n.y, R * (2.4 + n.glow));
         const power = (n.self ? 0.2 : n.ring === 1 ? 0.12 : 0.06) + n.glow * 0.18;
         const tone = n.founder ? '232,165,40' : '47,123,255';   // основатель светится тёплым золотом
@@ -402,8 +403,8 @@ window.Cloud = function (canvas, opts) {
       n.r = r0;
     }
     if (m < 0.98) {
-      const R = n.r * (1.15 + 0.3 * m), r = R * 0.46, rot = -Math.PI / 2 + m * 1.2;
-      ctx.globalAlpha = a * (1 - m);
+      const R = n.r * (0.78 + 0.3 * m), r = R * 0.46, rot = -Math.PI / 2 + m * 1.2;   // звёздочка — скромная
+      ctx.globalAlpha = a * (1 - m) * 0.8;
       ctx.beginPath();
       for (let i = 0; i < 10; i++) {
         const rad = i % 2 ? r : R, ang = rot + (i * Math.PI) / 5;

@@ -1228,11 +1228,11 @@
       edges.push({ a: 'me', b: 'u' + inviter, kind: 'know' });
       const theirs = [...(G.adj[inviter] || [])].filter((x) => x !== S.me && U(x))
         .sort((a, b) => (isF(b) - isF(a)) || ((U(b).photo ? 1 : 0) - (U(a).photo ? 1 : 0))).slice(0, 12);
-      theirs.forEach((x) => { nodes.push(real(x, 2, isF(x) ? 12 : 10)); edges.push({ a: 'u' + inviter, b: 'u' + x, kind: 'know', len: 58 }); anchors.push('u' + x); });
+      theirs.forEach((x) => { nodes.push(real(x, 2, 10)); edges.push({ a: 'u' + inviter, b: 'u' + x, kind: 'know', len: 58 }); anchors.push('u' + x); });
       // знакомые знакомого знают и друг друга — пара нитей между ними, как в жизни
       theirs.forEach((x, i) => theirs.slice(i + 1).forEach((y) => { if (G.connected(x, y)) edges.push({ a: 'u' + x, b: 'u' + y, kind: 'know' }); }));
       if (fid && fid !== inviter && !theirs.includes(fid) && U(fid)) {
-        nodes.push(real(fid, 2, 12));
+        nodes.push(real(fid, 2, 10));
         const via = theirs.find((x) => G.connected(x, fid));
         edges.push({ a: via ? 'u' + via : 'u' + inviter, b: 'u' + fid, kind: 'wait', len: 60 });
       }
