@@ -732,7 +732,16 @@ body.viewing-as #app { padding-top: 48px; }
 .dir-why { position: relative; z-index: 2; margin: 10px 8px 0; text-align: center; font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.4; }
 
 /* Регистрация: та же живая сеть, что на главной, только пониже */
-.cloud-box.onb-cloud { height: 380px; margin-top: calc(-1 * var(--s-2)); }
+.cloud-box.onb-cloud {
+  height: 440px; margin-top: -62px;   /* уходит под логотип до верха экрана, как сеть на главной */
+  /* края растворяются в фоне — без ровного обрыва линий */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 78%, transparent 100%),
+                      linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 78%, transparent 100%),
+              linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+.onb > .top { position: relative; z-index: 1; }
 
 /* Регистрация: главный вопрос — две крупные карточки выбора */
 .pro-ask { margin-top: var(--s-5); }
