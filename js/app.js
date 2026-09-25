@@ -1788,6 +1788,28 @@
     } catch (e) { /* картинку не прочитать (чужой сервер) — оставляем тёмный текст */ }
     }
   };
+  // «Что делают» коротко: главное одной строкой и направления плашками, а не простынёй (правка 25.09).
+  // Уточнения в скобках уходят — они на полной странице; если разложить не выходит — три строки текста
+  function svcView(text) {
+    const t = String(text || '').trim();
+    const cut = t.indexOf(':');
+    const head = cut > 0 && cut < 70 ? t.slice(0, cut).trim() : '';
+    const rest = head ? t.slice(cut + 1) : t;
+    const parts = [];
+    let depth = 0, cur = '';
+    for (const ch of rest) {
+      if (ch === '(') depth++;
+      if (depth === 0 && /[,;.]/.test(ch)) { parts.push(cur); cur = ''; } else if (depth === 0) cur += ch;
+      if (ch === ')') depth = Math.max(0, depth - 1);
+    }
+    parts.push(cur);
+    const items = parts.map((x) => x.replace(/^\s*(плюс|а также|ещё|и)\s+/i, '').replace(/\s+/g, ' ').trim())
+      .map((x) => (x.length > 26 ? x.replace(/\s+(с|со|для|под|по)\s.*$/i, '') : x))   // «наружная реклама с монтажом» → «наружная реклама»
+      .filter((x) => x.length > 1 && x.length <= 40).map(cap1);
+    if (items.length < 3) return `<span class="clamp3">${esc(t)}</span>`;
+    const show = items.slice(0, 6);
+    return `${head ? `<b class="svc-head">${esc(head)}</b>` : ''}<span class="svc-chips">${show.map((x) => `<span>${esc(x)}</span>`).join('')}${items.length > show.length ? `<span class="more">ещё ${items.length - show.length}</span>` : ''}</span>`;
+  }
   function sheetNodePeek(id) {
     const n = nodeById(id);
     if (!n) return;
@@ -1820,7 +1842,7 @@
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         ${relation ? `<div class="peek-rel">${ic('seal')}${relation}</div>` : ''}
-        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow">${label ? `<i>${label}</i>` : ''}${esc(text)}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
+        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow">${label ? `<i>${label}</i>` : ''}${label === 'Что делают' ? svcView(text) : `<span class="clamp3">${esc(text)}</span>`}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
     : `<p class="small muted" style="margin:12px 0 0">О ${n.kind === 'company' ? 'фирме' : 'месте'} пока ничего не дописали: что делают, часы, цены. Знаете — добавьте, это увидят ваши знакомые</p>`}
         ${total ? `<div class="peek-people"><span class="faces">${people.slice(0, 4).map((x) => face(x.user)).join('')}${waitHere.slice(0, Math.max(0, 4 - people.length)).map((w) => `<span class="stack-face">${waitAv(w, 'xs')}</span>`).join('')}</span>
           <span class="grow small">${pl(total, 'человек', 'человека', 'человек')} ${n.kind === 'company' ? 'в фирме' : 'здесь работают'}${friends.length ? ` · ${pl(friends.length, 'ваш знакомый', 'ваших знакомых', 'ваших знакомых')}` : ''}</span></div>` : ''}
