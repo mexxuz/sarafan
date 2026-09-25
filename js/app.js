@@ -3275,6 +3275,7 @@
     catchUp();
     if (typeof drawFixBtn === 'function') drawFixBtn();
   }
+  let peekQuietUntil = 0;   // после перехода из окна — короткая пауза, пока не отзвучат запоздалые касания
   function closeAllSheets() { SHSTACK.length = 0; if (SH) closeSheet(); }
   function syncForm() {
     const scope = SH ? $('#sheet') : $('#app');
@@ -3676,6 +3677,10 @@
 
   // Быстрая карточка человека с орбиты
   function sheetPeek(id) {
+    // уже на его странице или только что ушли на неё кнопкой «Профиль» — окно поверх не открываем:
+    // на телефоне запоздалое касание облака открывало карточку поверх профиля (правка 25.09)
+    if (route().path[0] === 'p' && route().path[1] === String(id)) return;
+    if (Date.now() < peekQuietUntil) return;
     const cats = G.catsOf(id);
     const c = cats[0];
     const t = G.trust(id, c);
@@ -3940,7 +3945,12 @@
     back: () => goBack(),
     // С глубокого экрана — сразу на главную, не щёлкая «назад» по цепочке
     goHome: () => { closeAllSheets(); navBack = true; go('#/'); },
-    closeSheet: (d) => { const s = SH; if (d && d.go) closeAllSheets(); else closeSheet(); if (s && s.onClose) s.onClose(); if (d && d.go) go(d.go); },
+    closeSheet: (d) => {
+      const s = SH;
+      if (d && d.go) { peekQuietUntil = Date.now() + 800; closeAllSheets(); } else closeSheet();
+      if (s && s.onClose) s.onClose();
+      if (d && d.go) go(d.go);
+    },
     peek: (d) => sheetPeek(d.id),
     set: (d) => {
       const v = d.v === '1' ? true : d.v === '' ? false : d.v;
