@@ -269,6 +269,7 @@
     link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>',
     pin: '<path d="M12 22c0 0 8-7.2 8-12.4A8 8 0 1 0 4 9.6C4 14.8 12 22 12 22z"/><circle cx="12" cy="9.6" r="3"/>',
     bell: '<path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2c-.3.4 0 .9.5.9h14.2c.5 0 .8-.5.5-.9z"/><path d="M10 21h4"/>',
+    work: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/>',
     spark: '<path d="M12 3v4M12 17v4M4.9 7.5l2.8 2.8M16.3 13.7l2.8 2.8M3 12h4M17 12h4M4.9 16.5l2.8-2.8M16.3 10.3l2.8-2.8"/>',
     house: '<path d="M3 21h18"/><path d="M6 21V4.5a1 1 0 0 1 1-1h6.5a1 1 0 0 1 1 1V21"/><path d="M14.5 21V9.5H18a1 1 0 0 1 1 1V21"/><path d="M9 7.5h2.5M9 11h2.5M9 14.5h2.5"/>',
     swap: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
@@ -1827,7 +1828,7 @@
       : friends.length ? `Здесь работает ваш знакомый — ${esc(first(friends[0].user))}${friends[0].title ? ', ' + esc(friends[0].title) : ''}`
         : '';
     const info = [
-      fact('service') && [ic('spark'), 'Что делают', fact('service').text],
+      fact('service') && [ic('work'), 'Что делают', fact('service').text],
       (n.address || mapLink(n)) && [ic('pin'), 'Где', n.address || 'На карте', mapLink(n)],
       fact('hours') && [ic('clock'), 'Когда работают', fact('hours').text],
       fact('price') && [ic('tag'), 'Сколько стоит', fact('price').text],
