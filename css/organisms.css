@@ -230,6 +230,10 @@
 
 /* Шторка снизу */
 .sheet { position: fixed; inset: 0; z-index: 50; }
+/* пока открыта шторка, экран под ней стоит на месте; прокрутка шторки не передаётся ему, дойдя до края */
+html.sheet-lock, html.sheet-lock body { overflow: hidden; }
+.sheet .panel { overscroll-behavior: contain; }
+.sheet .shade { touch-action: none; }
 .sheet .shade { position: absolute; inset: 0; background: rgba(18, 20, 26, .38); opacity: 0; transition: opacity var(--base) var(--ease); backdrop-filter: blur(2px); }
 .sheet .panel {
   position: absolute; left: 50%; bottom: 0; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;

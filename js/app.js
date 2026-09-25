@@ -3656,6 +3656,7 @@
     // проявляем через кадр — только если за это время шторку не закрыли: иначе она всплывала
     // поверх нового экрана уже ничьей, и закрыть её было нечем (правка 25.09, «профиль под шторкой»)
     requestAnimationFrame(() => requestAnimationFrame(() => { if (SH === obj) el.classList.add('open'); }));
+    document.documentElement.classList.add('sheet-lock');   // экран под шторкой не прокручивается (правка 25.09)
   }
   function drawSheet() {
     const p = $('#sheet .panel'); const st = p.scrollTop;
@@ -3679,6 +3680,7 @@
     SHSTACK.length = 0;
     const el = $('#sheet'); el.classList.remove('open');
     setTimeout(() => { if (!el.classList.contains('open')) { el.hidden = true; el.innerHTML = ''; } }, 300);
+    document.documentElement.classList.remove('sheet-lock');
     SH = null;
     catchUp();
     if (typeof drawFixBtn === 'function') drawFixBtn();
@@ -3689,6 +3691,7 @@
     if (SH) { closeSheet(); return; }
     // на всякий случай: шторка видна, а за ней уже никого — убираем и её
     const el = $('#sheet');
+    document.documentElement.classList.remove('sheet-lock');
     if (el && el.classList.contains('open')) { el.classList.remove('open'); setTimeout(() => { if (!SH) { el.hidden = true; el.innerHTML = ''; } }, 300); }
   }
   function syncForm() {
