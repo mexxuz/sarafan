@@ -700,8 +700,9 @@
     const mutual = knows.filter((x) => x === S.me || G.connected(S.me, x));
     const recLine = from.length
       ? `Советуют ${pl(from.length, 'человек', 'человека', 'человек')}${indep >= 2 && indep >= from.length ? ' — из разных кругов' : indep >= 2 ? `, из них ${indep} независимо друг от друга` : ''}`
-      : 'Пока никто не рекомендовал';
-    const knowLine = `Знает ${pl(knows.length, 'человека', 'человек', 'человек')}${mutual.filter((x) => x !== S.me).length ? ` · ${pl(mutual.filter((x) => x !== S.me).length, 'общий знакомый', 'общих знакомых', 'общих знакомых')}` : ''}`;
+      : id === S.me ? 'Вас пока никто не рекомендовал' : 'Пока никто не рекомендовал';
+    const knowLine = id === S.me ? `Вы знаете ${pl(knows.length, 'человека', 'человек', 'человек')}`   // «общие знакомые» с самим собой — бессмыслица
+      : `Знает ${pl(knows.length, 'человека', 'человек', 'человек')}${mutual.filter((x) => x !== S.me).length ? ` · ${pl(mutual.filter((x) => x !== S.me).length, 'общий знакомый', 'общих знакомых', 'общих знакомых')}` : ''}`;
     return `<div class="p-facts">
       <button class="p-fact" ${from.length ? 'data-act="toRecs"' : 'disabled'}>${from.length ? stack(from, 4) : `<span class="p-fact-ic">${ic('seal')}</span>`}<span class="grow">${recLine}</span>${from.length ? ic('chev') : ''}</button>
       ${knows.length ? `<button class="p-fact" data-act="knowsList" data-id="${id}">${stack([...mutual, ...knows.filter((x) => !mutual.includes(x))], 4)}<span class="grow">${knowLine}</span>${ic('chev')}</button>` : ''}
@@ -783,7 +784,9 @@
       return `<div class="rep-line"><div class="grow"><b>${esc(cat(c).name)}</b><span>${sub}</span>${goal}${warn}</div><span class="rep-n">${r.count}</span></div>`;
     }).join('');
     const rest = empty.length ? `<div class="rep-rest">${rowsHtml ? 'Ещё в профиле' : 'В профиле'}: ${empty.map(esc).join(', ')} — рекомендаций пока нет</div>` : '';
-    return rowsHtml + rest;
+    // слово «независимый» стоит везде — по нажатию объясняем, что оно значит (правка 26.09)
+    const why = rowsHtml ? `<button class="rep-why" data-act="aboutIndep">${ic('alert')}Что значит «независимый источник»</button>` : '';
+    return rowsHtml + rest + why;
   };
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
@@ -1005,9 +1008,11 @@
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
       <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
-      ${nodesNear().length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
-      <p class="sec-note">Места и фирмы, проверенные знакомыми</p>
-      <div class="rail-x">${nodesNear().slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''}
+      ${((vouched) => (vouched.length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
+      <p class="sec-note">Места и фирмы, которые советуют знакомые</p>
+      <div class="rail-x">${vouched.slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''))(
+        // «проверенные» — значит, кто-то рекомендовал; просто записанные места сюда не попадают (правка 26.09)
+        nodesNear().filter((n) => nodeRecs(n).length))}
       ${savedList()}
       <div class="chat-tip"><span class="ic">${ic('chat')}</span><div class="grow"><b>Советуйте прямо в чате</b>
         <p>Спросили в переписке — наберите <code>@${esc(S.bot || 'sarafanibot')} педиатр</code> и отправьте карточку. Под ней «Сохранить себе» — любой в чате сохранит человека одним нажатием. Контакт прислали в личке — перешлите боту</p>
@@ -2002,7 +2007,7 @@
     const best = recs.slice().sort((a, b) => (G.dist[a.from] ?? 9) - (G.dist[b.from] ?? 9))[0];
     const who1 = recs.some((r) => r.from === S.me) ? 'Вы рекомендуете'
       : best ? esc(first(best.from)) + (recs.length > 1 ? ` и ещё ${recs.length - 1}` : ' рекомендует')
-        : n.by === S.me ? 'Вы записали' : esc(first(n.by)) + ' записал(а)';
+        : n.by === S.me ? 'Вы записали' : 'Запись: ' + esc(first(n.by));
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
       <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${nodeGlyph(n)}</span>`}
@@ -2932,9 +2937,13 @@
         const all = byCat[c.id] || [];
         const close = all.filter((id) => { const t = G.trust(id, c.id); return t.circle <= 2; });
         return { c, all, close };
-      }).filter((x) => x.all.length).sort((a, b) => b.close.length - a.close.length || b.all.length - a.all.length);
+      });
       const placeBy = {};
       nodesAll().forEach((n) => { if (n.cat) (placeBy[n.cat] = placeBy[n.cat] || []).push(n); });
+      // только сферы, где есть кто-то через ваших знакомых или место; «1 человек, но не через вашу сеть» и заведённые
+      // кем-то сферы вроде «Модель,ugc креатор,…» без людей рядом — не показываем, их всё равно не найти (правка 26.09)
+      tiles.splice(0, tiles.length, ...tiles.filter((x) => x.close.length || (placeBy[x.c.id] || []).length)
+        .sort((a, b) => b.close.length - a.close.length || b.all.length - a.all.length));
       return `<div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
         <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>`}</a>`; }).join('')}</div>`;
     }
@@ -3162,7 +3171,7 @@
       ? `<div class="chips" style="margin-top:8px">${c1.map((id) => `<button class="chip ${picked.includes(id) ? 'on' : ''}" data-act="askTo" data-v="${id}">${esc(first(id))}</button>`).join('')}</div>
          <button class="pick ${F.anon ? 'on' : ''}" style="margin-top:10px" data-act="askAnon"><span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span><span class="small muted">Имя увидит только тот, кто ответит</span></span>
            <span class="radio"></span></button>`
-      : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">Получат ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
+      : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">${c1.length === 1 || (c1.length % 10 === 1 && c1.length % 100 !== 11) ? 'Получит' : 'Получат'} ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
     return `<div class="field" id="askto"><span>Кому уйдёт</span>
       <div class="chips"><button class="chip ${quiet ? '' : 'on'}" data-act="askQuiet" data-v="">Всем знакомым</button><button class="chip ${quiet ? 'on' : ''}" data-act="askQuiet" data-v="1">Выбрать, кому</button></div>
       ${rows}
@@ -3381,19 +3390,23 @@
     const rs = G.recommenderStats(S.me);
     const thanks = S.requests.flatMap((q) => q.answers).filter((a) => a.from === S.me && a.thanked).length;
     const indep = G.groupsOf([...new Set(inRecs.map((r) => r.from))]).length;
+    // пришёл искать людей и сфер не указал — без блоков мастера (работа, занятые дни, витрина, «вас рекомендуют»);
+    // вместо них одна строка: «оказываете услуги?» (правка 26.09)
+    const seeker = me.stage === 'seek' && !(me.cats || []).length && !inRecs.length && !jobsOf(S.me).length;
     return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="icon-btn" data-act="shareMe" aria-label="Поделиться своей карточкой">${ic('share')}</button><button class="btn sm primary" data-act="editMe">${ic('edit')}Изменить</button></div>
       <div class="p-head"><button class="av-edit" data-act="avatarMenu" aria-label="Сменить фото">${founderAv(S.me, 'xl')}<span class="av-cam">${ic('cam')}</span></button><div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
-      <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
+      ${personFacts(S.me, inRecs, indep)}
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
         <p class="small muted" style="margin:0 0 12px">Одна ссылка на всех: клиент пишет одну фразу — и вас находят его знакомые. Про Сарафан ему знать не нужно.</p>
         <button class="btn primary block" data-act="askLink">${ic('send')}Получить ссылку</button></div>` : ''}
-      ${workView(S.me)}
+      ${seeker ? `<button class="link-row wide" data-act="proAskYes" style="margin-top:16px">${ic('seal')}
+        <span class="grow"><b>Оказываете услуги?</b><i>Укажите, чем занимаетесь, — и знакомые смогут советовать вас</i></span>${ic('arrow')}</button>` : `${workView(S.me)}
       ${howView(S.me)}
-      ${busyView(S.me)}
+      ${busyView(S.me)}`}
       ${collectionsView()}
       ${factsView(S.me)}
-      ${U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
+      ${seeker ? '' : U(S.me).pro ? showcaseView(S.me) || `<div class="card" style="margin-top:18px"><div class="eyebrow">ваша витрина</div>
         <h2 class="h2" style="margin:6px 0 6px">Расскажите о работе</h2>
         <p class="small muted" style="margin:0 0 12px">Что вы делаете, как считаете деньги, где посмотреть работы. Витрину видят все, кто открывает вашу карточку.</p>
         <div class="dir ghost-dir"><div class="dir-head"><h3 class="h3">Свадебная съёмка</h3><span class="tag">пример</span></div>
@@ -3405,17 +3418,19 @@
         <h2 class="h2" style="margin:6px 0 6px">Показать свои работы</h2>
         <p class="small muted" style="margin:0 0 12px">Обычная карточка с рекомендациями есть у всех и всегда бесплатна. Витрина — для тех, кому сеть приносит работу: рассказ о себе, услуги, цены, ссылки и до 12 примеров работ.</p>
         <button class="btn block" data-act="openShowcase">Открыть витрину</button></div>`}
-      <div class="sec-title"><h2 class="h2">Вас рекомендуют</h2></div>
-      <div class="card">${repRows(S.me)}</div>
+      ${seeker ? '' : `<div class="sec-title"><h2 class="h2">Вас рекомендуют</h2></div>
+      <div class="card">${repRows(S.me)}</div>`}
       ${voicesView(S.me)}
+      ${rs.people ? `
       <div class="sec-title"><h2 class="h2">Ваши советы помогают</h2></div>
       <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
         ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
+      ` : ''}
       <button class="link-row wide" data-act="tourOpen" style="margin-top:20px">${ic('spark')}
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       ${LIVE ? `<button class="link-row wide" data-act="report">${ic('send')}<span class="grow"><b>Сообщить о проблеме</b><i>Это тестовая версия: не работает, непонятно, чего-то не хватает — напишите</i></span>${ic('arrow')}</button>` : ''}
-      <div class="sec-title"><h2 class="h2">Рекомендации</h2></div>
+      <div class="sec-title" id="recs"><h2 class="h2">Рекомендации</h2></div>
       <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
       <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
       ${LIVE && !window.API.inTelegram ? '' : `<div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
@@ -4514,6 +4529,10 @@
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
     avatarMenu: () => sheetAvatar(),
+    aboutIndep: () => openSheet({ F: {}, render: () => `${sheetHead(null, 'Независимый источник')}
+      <p style="margin:0 0 12px;line-height:1.55">Это человек, который не знаком с остальными, кто рекомендует. Если мастера советуют трое друзей из одной компании — это один источник: они могли просто договориться.</p>
+      <p style="margin:0 0 12px;line-height:1.55">Трое из разных кругов, которые друг друга не знают, — уже три независимых. Им веришь больше, поэтому таких людей поиск показывает первыми, а от трёх ставится отметка «надёжно».</p>
+      <div class="s-foot"><button class="btn primary block" data-act="closeSheet">Понятно</button></div>` }),
     dropPhoto: async () => { closeSheet(); try { await window.API.post('/profile/photo/delete', {}); await refresh(); toast('Вернули фото из Telegram'); } catch (e) { toast(e.message); } },
     // своя визитка в любой чат: фото, чем занимаюсь, пара строк о себе, кнопка «Открыть в Сарафане» (правка 25.09)
     shareMe: () => shareCard('me', S.me, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${S.me}`,
