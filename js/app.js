@@ -975,7 +975,6 @@
       <div class="me-pop" role="menu">
         ${item('user', 'Профиль', 'meGo')}
         ${isPro() ? item('edit', 'Анкета о себе', 'wizOpen', done < 3 ? `<em>${done} из 3</em>` : '') : ''}
-        ${item('spark', 'Изменить профиль', 'editMe')}
         ${item('net', 'Как это работает', 'tourOpen')}
         ${LIVE ? item('send', 'Сообщить о проблеме', 'report') : ''}
       </div></div>`;
