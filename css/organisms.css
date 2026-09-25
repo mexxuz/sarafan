@@ -901,3 +901,10 @@ body.viewing-as #app { padding-top: 48px; }
 .peek-svc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
 .peek-svc b { font-size: var(--fs-xs); color: var(--ink-3); font-weight: 600; margin-right: 2px; }
 #sheet .p-facts { margin-top: 12px; }
+
+/* Подборка: объяснение прямо в окне */
+.col-explain { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--blue-soft); }
+.col-explain svg { width: 22px; height: 22px; color: var(--blue); flex: none; margin-top: 2px; }
+.col-explain p { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
+.col-explain b { color: var(--ink); }
+.chip svg { width: 14px; height: 14px; }

@@ -1539,14 +1539,22 @@
   // «В подборку» с профиля человека или страницы места
   function sheetColPick(user, node) {
     const list = S.collections || [];
+    const whoName = esc(user ? first(user) : (nodeById(node) || {}).name || '');
+    const c0 = user ? G.catsOf(user)[0] : (nodeById(node) || {}).cat;
+    // готовые названия: сфера этого человека и частые жизненные задачи — нажали, и подборка создана вместе с ним
+    const quick = [...new Set([c0 && cat(c0).name, 'Для ремонта', 'Свадьба', 'Для бизнеса', 'Здоровье семьи'].filter(Boolean))]
+      .filter((t) => !list.some((c) => c.title.toLowerCase() === t.toLowerCase())).slice(0, 4);
     openSheet({
       F: {},
-      render: () => `${sheetHead(null, 'В подборку', esc(user ? full(user) : (nodeById(node) || {}).name || ''))}
-        ${list.length ? `<div class="stack" style="gap:8px">${list.map((c) => {
+      render: () => `${sheetHead(null, 'Добавить в подборку', whoName)}
+        <div class="col-explain">${ic('list')}<p><b>Подборка — ваш список людей под одну задачу.</b> Например, «Свадьба»: фотограф, ведущий, визажист. Отправляете другу одной ссылкой — он видит всех сразу, с вашими словами о каждом.</p></div>
+        ${list.length ? `<div class="sec-title" style="margin-top:14px"><h2 class="h3">Ваши подборки</h2></div><div class="stack" style="gap:8px">${list.map((c) => {
     const has = c.items.some((i) => (user && i.user === user) || (node && i.node === node));
     return `<button class="link-row wide" style="margin:0" data-act="colPut" data-id="${c.id}" data-u="${user || ''}" data-n="${node || ''}" ${has ? 'disabled' : ''}>${ic('list')}<span class="grow"><b>${esc(c.title)}</b><i>${has ? 'уже здесь' : pl(c.items.length, 'позиция', 'позиции', 'позиций')}</i></span>${has ? ic('check') : ic('plus')}</button>`;
-  }).join('')}</div>` : '<p class="small muted">Подборок пока нет</p>'}
-        <div class="s-foot"><button class="btn ghost block" data-act="colNew">${ic('plus')}Новая подборка</button></div>`,
+  }).join('')}</div>` : ''}
+        ${quick.length ? `<div class="sec-title" style="margin-top:14px"><h2 class="h3">${list.length ? 'Или новая' : 'Создать и добавить'} — одним нажатием</h2></div>
+        <div class="chips">${quick.map((t) => `<button class="chip" data-act="colQuick" data-t="${esc(t)}" data-u="${user || ''}" data-n="${node || ''}">${ic('plus')}${esc(t)}</button>`).join('')}</div>` : ''}
+        <div class="s-foot"><button class="btn ghost block" data-act="colNew">${ic('edit')}Своё название</button></div>`,
     });
   }
 
@@ -4516,6 +4524,15 @@
     colAdd: (d) => sheetColAdd(d.id),
     colAddPick: (d) => SH && SH.add && SH.add(d.u, d.n),
     colFor: (d) => sheetColPick(d.u, d.n),
+    // подборка с готовым названием — создаём и сразу кладём туда человека
+    colQuick: async (d) => {
+      try {
+        const r = await window.API.post('/collections', { id: '', title: d.t, note: '' });
+        await window.API.post('/collections/item', { collection: r.id, user: d.u || '', node: d.n || '' });
+        await refresh(); closeAllSheets();
+        toast(`Подборка «${d.t}» создана — ${d.u ? first(d.u) : 'место'} уже в ней`);
+      } catch (e) { toast(e.message); }
+    },
     colPut: async (d) => {
       try { await window.API.post('/collections/item', { collection: d.id, user: d.u || '', node: d.n || '' }); await refresh(); closeAllSheets(); toast('Добавлено в подборку'); } catch (e) { toast(e.message); }
     },
