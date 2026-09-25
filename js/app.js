@@ -923,17 +923,33 @@
     const asked = S.requests.filter((q) => q.from === S.me).length;
     const open = c1.length > 0;
     // Три шага одной строкой: глагол крупно и строчка — что это даёт (правка 25.09: «компактно, но понятно»)
-    const steps = [
-      { done: mine.length > 0, ico: 'user', title: 'Позвать', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'своих знакомых', h: '#/net' },
-      { done: myRecs > 0, ico: 'seal', title: 'Записать', text: myRecs ? `советуете ${pl(myRecs, 'человека', 'человек', 'человек')}` : open ? 'кого советуете сами' : 'после первого знакомого', h: open ? '#/net' : '' },
-      { done: asked > 0, ico: 'ask', title: 'Спросить', text: asked ? 'вопрос у знакомых' : open ? 'совета у своих' : 'после первого знакомого', h: open ? '#/ask' : '' },
+    // Шаги зависят от того, с чего человек начал на регистрации (правка 26.09: «три входа»):
+    // специалисту — отзывы клиентов, анкета, коллеги; начинающему — что умеет, рассказать своим, первый отзыв;
+    // ищущему — как было: позвать, записать, спросить
+    const stage = U(S.me).stage || ((U(S.me).cats || []).length ? 'pro' : 'seek');
+    const inRecs = G.recsTo(S.me).length;
+    const sc = myShow();
+    const shown = !!((sc.prices || '').trim() || (sc.works || []).length || (sc.dirs || []).length);
+    const invite = { done: mine.length > 0, ico: 'user', h: '#/net' };
+    const steps = stage === 'pro' ? [
+      { done: inRecs > 0, ico: 'seal', title: 'Отзывы', text: inRecs ? `о вас ${pl(inRecs, 'рекомендация', 'рекомендации', 'рекомендаций')}` : 'попросите 3 клиентов', act: 'askLink' },
+      { done: shown, ico: 'edit', title: 'Анкета', text: shown ? 'работы и цены есть' : 'работы и цены', act: 'wizOpen' },
+      { ...invite, title: 'Коллеги', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'позовите, с кем работаете' },
+    ] : stage === 'start' ? [
+      { done: shown, ico: 'edit', title: 'Что умею', text: shown ? 'анкета заполнена' : 'и первая цена', act: 'wizOpen' },
+      { ...invite, title: 'Рассказать', text: mine.length ? `знают ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'своим — пусть советуют' },
+      { done: inRecs > 0, ico: 'seal', title: 'Первый отзыв', text: inRecs ? 'уже есть' : 'от того, кому помогли', act: 'askLink' },
+    ] : [
+      { done: asked > 0, ico: 'ask', title: 'Спросить', text: asked ? 'вопрос у знакомых' : open ? 'кто нужен — у своих' : 'после первого знакомого', h: open ? '#/ask' : '' },
+      { ...invite, title: 'Позвать', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : '3 друзей — найдётся больше' },
+      { done: myRecs > 0, ico: 'seal', title: 'Записать', text: myRecs ? `советуете ${pl(myRecs, 'человека', 'человек', 'человек')}` : open ? 'мастера, которым довольны' : 'после первого знакомого', h: open ? '#/net' : '' },
     ];
     const done = steps.filter((st) => st.done).length;
     if (done === 3 || starterOff()) return '';
     return `<div class="starter-top">
       <div class="row"><div class="eyebrow grow">Первые шаги · ${done} из 3</div>
         <button class="icon-btn" style="width:28px;height:28px;box-shadow:none;background:var(--card-2)" data-act="hideStarter" aria-label="Скрыть подсказку">${ic('x')}</button></div>
-      <div class="steps3">${steps.map((st) => `<button class="step3 ${st.done ? 'done' : ''} ${st.h ? '' : 'locked'}" ${st.h ? `data-act="goto" data-h="${st.h}"` : 'disabled'}>
+      <div class="steps3">${steps.map((st) => `<button class="step3 ${st.done ? 'done' : ''} ${st.h || st.act ? '' : 'locked'}" ${st.act ? `data-act="${st.act}"` : st.h ? `data-act="goto" data-h="${st.h}"` : 'disabled'}>
         <span class="mark">${ic(st.done ? 'check' : st.ico)}</span><b>${st.title}</b><i>${st.text}</i></button>`).join('')}</div>
     </div>`;
   };
