@@ -4090,7 +4090,9 @@
     let res;
     try { res = await window.API.post('/invites/ask', {}); } catch (e) { toast(e.message); return; }
     const tgLink = `https://t.me/${S.bot || 'sarafanibot'}?startapp=${res.code}`;
-    const webLink = `${location.origin}${location.pathname}?code=${res.code}`;
+    // ссылка на веб-версию — всегда на настоящий адрес приложения, даже если сейчас открыта проверочная копия (правка 26.09)
+    const site = /^(localhost|127\.|192\.168\.)/.test(location.hostname) ? 'https://mexxuz.github.io/sarafan/' : location.origin + location.pathname;
+    const webLink = `${site}?code=${res.code}`;
     const link = window.API.inTelegram ? tgLink : tgLink;
     openSheet({
       F: {},
