@@ -803,3 +803,5 @@ body.viewing-as #app { padding-top: 48px; }
 .onb-card .field > span { color: rgba(255, 255, 255, .8); }
 .onb-card .btn.primary { background: #fff; color: var(--blue-deep); box-shadow: 0 8px 20px rgba(10, 40, 110, .22); }
 .onb-card .btn.primary:disabled { background: rgba(255, 255, 255, .28); color: rgba(255, 255, 255, .8); box-shadow: none; }
+/* регистрация помещается в экран целиком: нижний запас под меню здесь не нужен — он и давал прокрутку */
+#app.no-nav:has(.onb) { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
