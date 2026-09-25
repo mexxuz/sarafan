@@ -733,7 +733,11 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* Регистрация: та же живая сеть, что на главной, только пониже */
 .cloud-box.onb-cloud {
-  height: 300px; margin-top: 0;   /* сеть — от самого верха экрана; ниже, чтобы плашка регистрации была видна сразу */
+  /* сеть — от самого верха экрана и только на оставшееся место: плашка регистрации важнее и всегда на виду.
+     520px — заголовок, строка под ним и плашка; на низком телефоне сеть ужимается до 120px */
+  height: clamp(120px, calc(100vh - 520px), 300px);
+  height: clamp(120px, calc(var(--tg-viewport-stable-height, 100dvh) - 520px), 300px);
+  margin-top: 0;
   /* края растворяются в фоне — без ровного обрыва линий */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 78%, transparent 100%),
                       linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
