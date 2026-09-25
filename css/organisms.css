@@ -743,8 +743,9 @@ body.viewing-as #app { padding-top: 48px; }
 }
 /* «Вас позвали в [знак] сарафан» — логотип прямо в заголовке */
 .onb-h1 { text-align: center; font-size: 28px; line-height: 1.18; margin-top: -6px; position: relative; z-index: 1; }
-.h1-logo { display: inline-flex; align-items: center; gap: 6px; vertical-align: baseline; color: var(--blue); }
-.h1-logo .logo-mark { width: 1.05em; height: 1.05em; flex: none; transform: translateY(.06em); }
+/* «в» и «сарафан» — на одной линии: надпись обычным текстом, знак опущен до уровня букв */
+.h1-logo { display: inline; white-space: nowrap; color: var(--blue); }
+.h1-logo .logo-mark { display: inline-block; width: 1em; height: 1em; margin: 0 .16em 0 .06em; vertical-align: -.14em; }
 
 /* Регистрация: главный вопрос — две крупные карточки выбора */
 .pro-ask { margin-top: var(--s-5); }
