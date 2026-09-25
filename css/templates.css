@@ -57,7 +57,7 @@
 /* главное действие забирает остаток ширины, второстепенное — по своему тексту.
    Поля и промежутки — общие для всех кнопок, здесь их не урезаем */
 #actions .btn { flex: 0 1 auto; min-width: 0; }
-#actions .btn.primary, #actions .btn.white { flex: 1 1 auto; }
+#actions .btn.primary{ flex: 1 1 auto; }
 #actions .btn.icon { flex: none; width: 50px; padding: 0; }
 
 /* ——— Движение: только вход, до 320 мс ——— */
@@ -143,6 +143,6 @@
 .me-menu.open .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
 @media (hover: hover) and (pointer: fine) { .me-menu:hover .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; } }
 .me-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink); font: 500 var(--fs-md)/1.2 var(--t); text-align: left; cursor: pointer; }
-.me-item:hover { background: var(--card-2, var(--mist)); }
+.me-item:hover { background: var(--card-2); }
 .me-item svg { width: 18px; height: 18px; color: var(--blue); flex: none; }
 .me-item em { font-style: normal; font-size: var(--fs-xs); font-weight: 600; color: var(--warn-ink, #b86a00); background: #fff3e0; padding: 2px 8px; border-radius: 999px; }

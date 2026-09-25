@@ -298,12 +298,8 @@
 .sc-chat .typing i { width: 1.5px; height: 12px; background: var(--blue); animation: caret 900ms steps(1) infinite; }
 @keyframes type { to { width: 128px; } }
 @keyframes caret { 50% { opacity: 0; } }
-
-
 /* Последний экран знакомства — от создателя: крупный портрет в золотой рамке */
-.sc-founder { display: flex; align-items: center; justify-content: center; }
-.sc-founder .founder-av { align-self: center; animation: rise 520ms var(--ease) 120ms backwards; }
-.sc-founder .av.xl { width: 132px; height: 132px; font-size: 40px; }
+
 
 /* Кто делает Сарафан — на последнем шаге: облако с его словами, аватарка внутри, в левом верхнем углу (правка 26.09) */
 .tour-by { display: flex; align-items: flex-start; gap: 12px; width: 100%; margin: 0 0 12px; padding: 14px 16px 14px 14px; text-align: left;

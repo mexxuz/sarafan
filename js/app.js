@@ -2689,7 +2689,7 @@
       ${facts.length ? `<div class="card">${Object.keys(byKind).map((k) => `<div class="fact-group">
         <div class="eyebrow">${esc(FACT_KIND[k] || FACT_KIND.note)}</div>
         ${byKind[k].map((f) => `<div class="fact"><p>${esc(f.text)}</p>
-          <div class="row"><span class="tiny muted grow">${f.official ? '<b style="color:#6b4fd0">от владельца</b> · ' : ''}${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
+          <div class="row"><span class="tiny muted grow">${f.official ? '<b style="color:var(--company)">от владельца</b> · ' : ''}${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
           ${f.from === S.me ? `<button class="btn ghost xs" data-act="delFact" data-id="${f.id}">Убрать</button>` : ''}</div></div>`).join('')}
       </div>`).join('')}</div>`
     : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}

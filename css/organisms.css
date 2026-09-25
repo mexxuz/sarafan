@@ -25,8 +25,6 @@
 .card.accent .stitch b, .card.accent .stitch .you { color: #fff; }
 .card.accent .stitch .thr::before { background: rgba(255, 255, 255, .45); }
 .card.accent .stitch .thr::after { border-color: #fff; }
-.card.accent .stats { color: rgba(255, 255, 255, .85); }
-.card.accent .stats b { color: #fff; }
 
 /* Карточка человека */
 .pcard { display: block; }
@@ -92,19 +90,6 @@
 
 /* Карточка запроса «Спросить сеть» */
 .ask-card .q { font-size: var(--fs-md); line-height: 1.5; margin: var(--s-3) 0; }
-.ask-hero {
-  display: flex; gap: var(--s-4); align-items: center; width: 100%; text-align: left; padding: var(--s-4) var(--s-5);
-  border-radius: var(--r-lg); background: var(--grad-blue); color: var(--blue-ink); box-shadow: var(--sh-blue-lg);
-  position: relative; overflow: hidden;
-  transition: transform var(--fast) var(--ease), background var(--fast) var(--ease);
-}
-.ask-hero::before { content: ''; position: absolute; right: -50px; top: -70px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .24), transparent 68%); pointer-events: none; }
-.ask-hero > * { position: relative; }
-.ask-hero:active { transform: scale(.99); }
-.ask-hero .ic { width: 42px; height: 42px; border-radius: var(--r-sm); display: grid; place-items: center; flex: none; background: rgba(255, 255, 255, .22); }
-.ask-hero .ic svg { width: 22px; height: 22px; }
-.ask-hero .t1 { font: 800 var(--fs-lg)/1.2 var(--t); letter-spacing: -.02em; }
-.ask-hero .t2 { font-size: var(--fs-xs); color: rgba(255, 255, 255, .85); margin-top: 3px; }
 .answer { background: var(--mist); border-radius: var(--r-md); padding: var(--s-3); margin-top: var(--s-2); }
 .answer .txt { font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); margin: var(--s-3) 0; }
 
@@ -130,10 +115,6 @@
 .rep-n { flex: none; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font: 800 var(--fs-sm)/1 var(--t); }
 .rep-rest { padding-top: 10px; border-top: 1px solid var(--line); font-size: var(--fs-xxs); color: var(--ink-3); }
 .rep-rest:first-child { border-top: 0; padding-top: 0; }
-.rep-row { display: flex; align-items: flex-start; gap: var(--s-4); padding: var(--s-4) 0; border-top: 1px solid var(--line); }
-.rep-row:first-child { border-top: 0; padding-top: 0; }
-.rep-row .num { font: 800 var(--fs-2xl)/1 var(--t); letter-spacing: -.03em; min-width: 38px; color: var(--ink-4); }
-.rep-row.on .num { color: var(--blue); }
 
 /* Рекомендация */
 .rec { padding: var(--s-4) 0; border-top: 1px solid var(--line); }
@@ -263,26 +244,12 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
   transition: opacity var(--base) var(--ease), transform var(--base) var(--ease); max-width: calc(100% - 40px); width: max-content;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
 /* Правила на первом экране */
-.onb .rules { display: grid; gap: var(--s-4); }
-.onb .rule { display: flex; gap: var(--s-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); }
-.onb .rule b { color: var(--ink); display: block; font: 700 var(--fs-md)/1.3 var(--t); margin-bottom: 2px; }
-.onb .rule .ic { width: 34px; height: 34px; border-radius: var(--r-xs); background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; flex: none; }
-.onb .rule .ic svg { width: 17px; height: 17px; }
+
 
 
 /* ——— «С чего начать»: путь для новичка ——— */
 .starter { padding: var(--s-5); }
-.step-row { display: flex; gap: var(--s-3); padding: var(--s-4) 0 0; margin-top: var(--s-4); border-top: 1px solid var(--line); }
-.step-row .mark {
-  width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center;
-  font: 700 var(--fs-xs)/1 var(--t); background: var(--blue-soft); color: var(--blue);
-}
-.step-row .mark svg { width: 15px; height: 15px; }
-.step-row.done .mark { background: var(--good-soft); color: var(--good); }
-.step-row.locked { opacity: .55; }
-.step-row .grow { flex: 1; min-width: 0; }
 
 
 /* ——— Будущие знакомые: серые места, медленно плывущие по орбите ——— */
@@ -301,19 +268,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .orbit .spin.slow .orb-in { animation: orbit-spin 80s linear infinite reverse; }
 .orbit .spin.rev .orb-in { animation: orbit-spin 120s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .orbit .spin, .orbit .spin .ghost-av { animation: none !important; } }
-
-
 /* Второй способ позвать — внутри той же карточки приглашения */
-.invite-extra {
-  display: flex; align-items: center; gap: var(--s-3); width: 100%; text-align: left; color: var(--paper);
-  margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid rgba(255, 255, 255, .16);
-  transition: opacity var(--fast) var(--ease);
-}
-.invite-extra b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); }
-.invite-extra span span { display: block; font-size: var(--fs-xs); color: rgba(255, 255, 255, .7); margin-top: 2px; }
-.invite-extra svg { width: 18px; height: 18px; flex: none; opacity: .6; }
-.invite-extra:active { opacity: .7; }
-@media (hover: hover) { .invite-extra:hover { opacity: .85; } }
+
 
 
 /* Подпись у свободного места: пример занятия */
@@ -332,10 +288,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .orb.ghost:hover .ghost-av { box-shadow: inset 0 0 0 1px var(--blue); color: var(--blue); }
 .orb.ghost:hover .ghost-tip { opacity: 1; color: var(--blue); box-shadow: var(--sh-2); }
 @media (max-width: 420px) { .ghost-tip { padding: 3px 7px; } }
-
-
 /* Сильное приглашение — с рекомендацией; обычная ссылка живёт отдельно и тише */
-.invite-strong .eyebrow { color: rgba(255, 255, 255, .75); }
+
 .link-box.plain { background: var(--mist); color: var(--ink-2); }
 .dots.plain i { background: var(--mist-2); }
 .dots.plain i.on { background: var(--blue); }
@@ -412,19 +366,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 
 /* Значок внутри обычного текста держим размером со строку */
 .p-head .about svg, .card p svg, .small svg { width: 15px; height: 15px; vertical-align: -2px; color: var(--ink-4); }
-
 /* Карта сети */
-.netmap { width: 100%; height: auto; display: block; touch-action: manipulation; }
-.netmap .edges line { stroke: var(--line); stroke-width: 1; }
-.netmap .edges line.vouch { stroke: rgba(47, 123, 255, .38); stroke-width: 1.4; }
-.netmap .mp { cursor: pointer; }
-.netmap .mp circle { fill: #fff; stroke: var(--blue); stroke-width: 2; transition: r 160ms var(--ease); }
-.netmap .mp.me circle { fill: var(--blue); stroke: var(--blue-deep); }
-.netmap .mp.c2 circle { stroke: rgba(47, 123, 255, .45); stroke-width: 1.6; }
-.netmap .mp.node rect { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.6; }
-.netmap .mp text { font: 600 8px var(--t); fill: var(--ink-2); text-anchor: middle; }
-@media (hover: hover) { .netmap .mp:hover circle { stroke-width: 3; } .netmap .mp:hover rect { fill: #dce8ff; } }
-.orbit-legend .dot-n { width: 8px; height: 8px; border-radius: 2px; background: var(--blue-soft); box-shadow: inset 0 0 0 1.5px var(--blue); display: inline-block; }
+
 
 /* Облако сети: живой граф на главной и во весь экран */
 /* Облако лежит на общем фоне, без карточки: шапка и плашки идут поверх него */
@@ -602,7 +545,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .job-line { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; }
 .job-line a { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); text-decoration: none; }
 .job-line a b { color: var(--ink); font-weight: 700; }
-.job-add { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 7px; border-radius: 999px; background: var(--card-2, var(--mist)); color: var(--ink-3); font: 600 var(--fs-xxs)/1.4 var(--t); cursor: pointer; }
+.job-add { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 7px; border-radius: 999px; background: var(--card-2); color: var(--ink-3); font: 600 var(--fs-xxs)/1.4 var(--t); cursor: pointer; }
 .job-add svg { width: 13px; height: 13px; }
 @media (hover: hover) { .job-add:hover { color: var(--blue); } }
 .job-line a i { font-style: normal; font-size: var(--fs-xxs); color: var(--ink-3); margin-left: 2px; }
@@ -626,7 +569,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .av.wait { opacity: .7; box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--ink-4); filter: grayscale(.35); }
 
 /* Во весь экран (Telegram на компьютере): кнопка в шапке рядом с портретом */
-.full-btn { flex: none; width: 38px; height: 38px; margin-right: 8px; box-shadow: none; background: var(--card-2, var(--mist)); }
+.full-btn { flex: none; width: 38px; height: 38px; margin-right: 8px; box-shadow: none; background: var(--card-2); }
 .full-btn svg { width: 18px; height: 18px; }
 /* Telegram рисует свои кнопки поверх верхнего края — содержимое и меню начинаются ниже них */
 .tg-full #app { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)); }
@@ -669,7 +612,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .peek-rel { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 10px; border-radius: 999px;
   font: 600 var(--fs-xs)/1.2 var(--t); color: var(--company); background: linear-gradient(170deg, var(--company-soft), #e8e0ff); }
 .peek-rel svg { width: 14px; height: 14px; }
-.peek-info { margin-top: 12px; border-radius: var(--r-md); background: var(--card-2, #f5f8fc); overflow: hidden; }
+.peek-info { margin-top: 12px; border-radius: var(--r-md); background: var(--card-2); overflow: hidden; }
 .peek-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--ink); text-decoration: none; font-size: var(--fs-sm); }
 .peek-row + .peek-row { border-top: 1px solid var(--line); }
 .peek-row > svg { width: 17px; height: 17px; flex: none; color: var(--ink-3); }
@@ -751,9 +694,7 @@ body.viewing-as #app { padding-top: 48px; }
 .link-row.danger { background: var(--warn-soft); color: var(--warn); }
 .link-row.danger i { color: var(--warn); opacity: .8; }
 
-/* «Тестовая версия» на главной — тёплая, чтобы не путалась с делами */
-.beta-note { position: relative; z-index: 2; margin-bottom: 14px; background: linear-gradient(170deg, #fff8ec, #fff3e0); box-shadow: inset 0 0 0 1px rgba(232, 165, 40, .25); }
-.beta-note .eyebrow { color: var(--gold-ink); }
+/* «Тестовая версия» на главной — тёплая{ position: relative; z-index: 2; margin-bottom: 14px; background: linear-gradient(170deg, #fff8ec, #fff3e0); box-shadow: inset 0 0 0 1px rgba(232, 165, 40, .25); }
 
 /* Крестик на плашке — справа столько же воздуха, сколько сверху и снизу (9 из 38), а не впритык к краю */
 .catpick .chip.on .chip-x { margin: 0 0 0 2px; }
@@ -815,7 +756,7 @@ body.viewing-as #app { padding-top: 48px; }
 .pro-opts:has(> .pro-opt:nth-child(3)) .pro-opt i { font-size: var(--fs-xxs); }
 .pro-opt {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
-  padding: 14px 14px 13px; border-radius: var(--r-md); background: var(--card-2, var(--mist));
+  padding: 14px 14px 13px; border-radius: var(--r-md); background: var(--card-2);
   border: 1.5px solid transparent; color: var(--ink); cursor: pointer;
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
@@ -829,7 +770,7 @@ body.viewing-as #app { padding-top: 48px; }
 /* Имя на регистрации: подпись прямо в поле — «Меня зовут Дилноза» */
 .name-in {
   display: flex; align-items: center; gap: 8px; padding: 0 16px; min-height: 52px;
-  border-radius: var(--r-sm); background: var(--card-2, var(--mist)); cursor: text;
+  border-radius: var(--r-sm); background: var(--card-2); cursor: text;
   border: 1.5px solid transparent; transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 .name-in span { flex: none; font-size: var(--fs-md); color: var(--ink-3); }
@@ -903,7 +844,7 @@ body.viewing-as #app { padding-top: 48px; }
 .step3 .mark svg { width: 17px; height: 17px; }
 .step3 b { font: 700 var(--fs-md)/1.2 var(--t); }
 .step3 i { font-style: normal; font-size: var(--fs-xxs); line-height: 1.3; color: var(--ink-3); }
-.step3.done { background: var(--card-2, var(--mist)); }
+.step3.done { background: var(--card-2); }
 .step3.done .mark { background: var(--good, #1faa6b); }
 .step3.done b { color: var(--ink-3); }
 .step3.locked { opacity: .5; cursor: default; }
@@ -924,7 +865,7 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* Анкета о себе: полоса из трёх шагов сверху окна, строка-приглашение на главной */
 .wiz-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 2px 0 14px; }
-.wiz-bar i { height: 4px; border-radius: var(--r-xs); background: var(--card-2, #e8eef7); transition: background var(--base, .25s) var(--ease); }
+.wiz-bar i { height: 4px; border-radius: var(--r-xs); background: var(--card-2); transition: background var(--base, .25s) var(--ease); }
 .wiz-bar i.on { background: var(--blue); }
 .profile-ask { margin-top: 14px; }
 
@@ -940,7 +881,7 @@ body.viewing-as #app { padding-top: 48px; }
 .p-fact:disabled { cursor: default; color: var(--ink-3); }
 .p-fact > svg { width: 18px; height: 18px; color: var(--ink-4); flex: none; }
 .p-fact .av-stack { flex: none; }
-.p-fact-ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2, var(--mist)); color: var(--ink-4); flex: none; }
+.p-fact-ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2); color: var(--ink-4); flex: none; }
 .p-fact-ic svg { width: 16px; height: 16px; }
 
 /* «Моя анкета»: рекомендации — лицо, цитата, кто и в какой сфере */
@@ -952,7 +893,7 @@ body.viewing-as #app { padding-top: 48px; }
 /* Быстрая карточка: о себе в три строки, как работает — плашками, что делает — метками */
 .peek-about { margin: 12px 0 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .peek-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.peek-chips span { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; background: var(--card-2, var(--mist)); font-size: var(--fs-xs); color: var(--ink-2); }
+.peek-chips span { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; background: var(--card-2); font-size: var(--fs-xs); color: var(--ink-2); }
 .peek-chips svg { width: 13px; height: 13px; color: var(--blue); }
 .peek-svc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
 .peek-svc b { font-size: var(--fs-xs); color: var(--ink-3); font-weight: 600; margin-right: 2px; }
@@ -972,21 +913,14 @@ body.viewing-as #app { padding-top: 48px; }
 .col-mark svg + svg { opacity: 0; color: var(--bad, #e5484d); }
 @media (hover: hover) { .col-in:hover .col-mark svg:first-child { opacity: 0; } .col-in:hover .col-mark svg + svg { opacity: 1; } }
 
-/* Ссылка кнопкой соцсети: значок бренда, название, ник */
-.soc-list { display: flex; flex-direction: column; gap: 8px; }
-.soc-btn { display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--r-md); background: var(--card-2, var(--mist)); color: var(--ink); text-decoration: none; margin-top: 8px; }
-.soc-list .soc-btn { margin-top: 0; }
+/* Ссылка кнопкой соцсети: значок бренда, название{ display: flex; flex-direction: column; gap: 8px; }
+.soc-btn { display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--r-md); background: var(--card-2); color: var(--ink); text-decoration: none; margin-top: 8px; }
 /* «Это ваше место?» — заметная строка с пояснением, зачем отмечаться (правка 25.09) */
-.link-row.owner-ask { margin-top: 12px; background: color-mix(in srgb, var(--blue) 8%, var(--card-2, var(--mist))); }
+.link-row.owner-ask { margin-top: 12px; background: color-mix(in srgb, var(--blue) 8%, var(--card-2)); }
 .link-row.owner-ask > svg:first-child { color: var(--blue); }
 .link-row.owner-ask b { color: var(--ink); }
 /* адрес и ссылка места — одним блоком с тонкой линией между строками (правка 25.09) */
-.link-group { border-radius: var(--r-md); background: var(--card-2, var(--mist)); overflow: hidden; }
-.link-group > :is(.link-row, .soc-btn, .about) { margin: 0; border-radius: 0; background: transparent; padding: 12px 14px; gap: 12px; font-size: var(--fs-sm); }
-.link-group > * + * { border-top: 1px solid var(--line); }
-.link-group > * > svg:first-child, .link-group .soc-ic { width: 20px; height: 20px; }
-.link-group .soc-btn b { font-size: var(--fs-sm); }
-.link-group > :is(a, button):hover { box-shadow: none !important; background: color-mix(in srgb, var(--blue) 5%, transparent); }
+ .soc-btn, .about) { margin: 0; border-radius: 0; background: transparent; padding: 12px 14px; gap: 12px; font-size: var(--fs-sm); } button):hover { box-shadow: none !important; background: color-mix(in srgb, var(--blue) 5%, transparent); }
 .soc-btn:active { transform: scale(.99); }
 .soc-btn .soc-ic, .soc-btn > svg:first-child { width: 24px; height: 24px; flex: none; }
 .soc-btn b { display: block; font-weight: 600; font-size: var(--fs-md); }
@@ -1016,10 +950,10 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 @media (hover: hover) and (pointer: fine) {
   a.link-row:hover, button.link-row:not(:disabled):hover, a.soc-btn:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover,
   .me-item:hover, a.person:hover, button.person:hover, .sugg:hover, .step3:not(:disabled):hover, .pro-opt:not(.on):hover {
-    background: color-mix(in srgb, var(--blue) 7%, var(--card-2, var(--mist)));
+    background: color-mix(in srgb, var(--blue) 7%, var(--card-2));
     cursor: pointer;
   }
-  a.person:hover, button.person:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 7%, var(--card-2, var(--mist))); }
+  a.person:hover, button.person:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 7%, var(--card-2)); }
   a.link-row:hover > svg:last-child, a.soc-btn:hover > svg:last-child, a.peek-row:hover > svg:last-child,
   button.link-row:not(:disabled):hover > svg:last-child, button.p-fact:hover > svg:last-child, a.person:hover .chev { color: var(--blue); transform: translateX(2px); }
   :where(.link-row, .soc-btn, .peek-row, .p-fact, .person) > svg:last-child, .person .chev { transition: transform var(--fast) var(--ease), color var(--fast) var(--ease); }
@@ -1053,7 +987,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .peek-cover ~ * { position: relative; z-index: 1; }
 
 /* Цены построчно: что — слева, сколько — справа (правка 25.09) */
-.price-list { margin: 10px 0 12px; border-radius: var(--r-md); background: var(--card-2, var(--mist)); padding: 4px 12px; }
+.price-list { margin: 10px 0 12px; border-radius: var(--r-md); background: var(--card-2); padding: 4px 12px; }
 .price-list > div { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; font-size: var(--fs-sm); }
 .price-list > div + div { border-top: 1px solid var(--line); }
 .price-list span { flex: 1; min-width: 0; color: var(--ink-2); }
@@ -1063,7 +997,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 /* Своя аватарка в профиле нажимается, как в Telegram: камера в углу — сменить фото (правка 25.09) */
 .av-edit { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; flex: none; align-self: flex-start; }
 .av-cam { position: absolute; right: 0; bottom: 2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--blue); color: #fff; box-shadow: 0 0 0 3px var(--bg, #f5f8fc), 0 2px 6px rgba(20, 40, 80, .2); }
+  background: var(--blue); color: #fff; box-shadow: 0 0 0 3px var(--bg), 0 2px 6px rgba(20, 40, 80, .2); }
 .av-cam svg { width: 16px; height: 16px; }
 @media (hover: hover) { .av-edit:hover .av-cam { filter: brightness(1.08); } }
 
@@ -1093,7 +1027,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .job-acts:empty { display: none; }
 
 /* «Сарафан в чатах»: возможности строками со значком, по местам (правка 26.09) */
-.help-list { margin-top: 8px; border-radius: var(--r-md); background: var(--card-2, var(--mist)); padding: 2px 14px; }
+.help-list { margin-top: 8px; border-radius: var(--r-md); background: var(--card-2); padding: 2px 14px; }
 .help-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; }
 .help-row + .help-row { border-top: 1px solid var(--line); }
 .help-row > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--blue); }

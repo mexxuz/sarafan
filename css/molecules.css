@@ -68,11 +68,8 @@
 
 /* Цитата из рекомендации */
 .quote { font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); margin: var(--s-3) 0 0; padding-left: var(--s-3); border-left: 2px solid var(--blue); }
-
 /* Шкала репутации и предупреждение */
-.bar-meter { height: 4px; border-radius: 2px; background: var(--mist-2); overflow: hidden; margin-top: var(--s-2); display: flex; gap: 2px; }
-.bar-meter i { display: block; height: 100%; background: linear-gradient(90deg, #5a9bff, var(--blue)); border-radius: 2px; }
-.bar-meter i.grp { background: var(--warn); opacity: .6; }
+
 .warn { display: flex; gap: var(--s-2); align-items: flex-start; background: var(--warn-soft); color: var(--warn); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--fs-xs); margin-top: var(--s-2); }
 .warn svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
 
@@ -82,8 +79,6 @@
 .stat b { display: block; font: 800 var(--fs-2xl)/1 var(--t); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .stat span { font-size: var(--fs-xs); color: var(--ink-3); display: block; margin-top: 2px; max-width: 110px; }
 .card .stat-grid { border: 0; padding: 0; }
-.stats { display: flex; flex-wrap: wrap; gap: 2px var(--s-4); font-size: var(--fs-xs); color: var(--ink-3); }
-.stats b { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 3px; }
 
 /* Переключатель */
 .tabs { display: flex; gap: var(--s-2); margin-bottom: var(--s-4); }
@@ -117,11 +112,8 @@
 
 /* Кто пригласил */
 .inviter { display: flex; align-items: center; gap: var(--s-3); background: var(--mist); border-radius: var(--r-md); padding: var(--s-3) var(--s-4); }
-
 /* Легенда кругов */
-.orbit-legend { display: flex; justify-content: center; gap: var(--s-5); font-size: var(--fs-xxs); color: var(--ink-3); margin-top: var(--s-4); }
-.orbit-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.orbit-legend i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+
 
 /* Строка «сколько нашли» */
 .count-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin: var(--s-5) 0 var(--s-3); }
