@@ -2898,12 +2898,29 @@
       </div></div>`;
 
 
+    // Список людей: сверху число было, а самих знакомых нигде не было видно (правка 25.09, «Слава не отображается»)
+    function netList() {
+      const far = F.tab === 'c2';
+      const ids = far ? c2 : c1;
+      const shown = F.netAll ? ids : ids.slice(0, 30);
+      const sub = (id) => {
+        if (far) { const p = G.pathTo(id); return who(id) + (p && p[1] ? ' · через ' + first(p[1]) : ''); }
+        const r = myRecTo(id);
+        return r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id);
+      };
+      return `<div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Люди в сети</h2></div>
+      <div class="tabs" role="tablist"><button class="${far ? '' : 'on'}" data-act="tab" data-v="c1">Ваши знакомые<i>${c1.length}</i></button><button class="${far ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button></div>
+      <div class="card" style="padding:6px 10px">${shown.map((id) => personMini(id, sub(id))).join('') || '<p class="small muted" style="margin:8px 0">Пока никого</p>'}</div>
+      ${ids.length > shown.length ? `<p style="text-align:center;margin-top:10px"><button class="btn ghost sm" data-act="netAll">Показать всех · ${ids.length}</button></p>` : ''}`;
+    }
+
     return screenHead('Моя сеть',
       empty ? 'Пока только вы' : `${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')} · ещё ${c2.length} в их кругах`,
       `<button class="icon-btn" data-act="goto" data-h="#/map" aria-label="Облако сети">${ic('net')}</button>`) + `
 
       ${invite}
       ${empty ? howto : ''}
+      ${empty ? '' : netList()}
       ${myNodes().length ? `<div class="sec-title"><h2 class="h2">Ваши места и фирмы</h2><span class="small muted">${myNodes().length}</span></div>
       <div class="stack">${myNodes().map((n) => nodeCard(n)).join('')}</div>` : ''}
       <p style="text-align:center;margin-top:14px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>
@@ -4136,7 +4153,8 @@
     closeReq: (d) => mutate(() => { S.requests.find((x) => x.id === d.id).closed = true; },
       '/requests/close', { request: d.id }, 'Запрос закрыт'),
     // Сеть
-    tab: (d) => { F.tab = d.v; render(); },
+    tab: (d) => { F.tab = d.v; F.netAll = false; render(); },
+    netAll: () => { F.netAll = true; render(); },
     sendInvite: () => inviteCard('', () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Добавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим.')),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     pickCat: (d, el) => {
