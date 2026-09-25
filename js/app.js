@@ -3247,7 +3247,9 @@
     el.hidden = false;
     el.innerHTML = '<div class="shade" data-act="closeSheet"></div><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="body"></div></div>';
     drawSheet();
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
+    // проявляем через кадр — только если за это время шторку не закрыли: иначе она всплывала
+    // поверх нового экрана уже ничьей, и закрыть её было нечем (правка 25.09, «профиль под шторкой»)
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (SH === obj) el.classList.add('open'); }));
   }
   function drawSheet() {
     const p = $('#sheet .panel'); const st = p.scrollTop;
@@ -3276,7 +3278,13 @@
     if (typeof drawFixBtn === 'function') drawFixBtn();
   }
   let peekQuietUntil = 0;   // после перехода из окна — короткая пауза, пока не отзвучат запоздалые касания
-  function closeAllSheets() { SHSTACK.length = 0; if (SH) closeSheet(); }
+  function closeAllSheets() {
+    SHSTACK.length = 0;
+    if (SH) { closeSheet(); return; }
+    // на всякий случай: шторка видна, а за ней уже никого — убираем и её
+    const el = $('#sheet');
+    if (el && el.classList.contains('open')) { el.classList.remove('open'); setTimeout(() => { if (!SH) { el.hidden = true; el.innerHTML = ''; } }, 300); }
+  }
   function syncForm() {
     const scope = SH ? $('#sheet') : $('#app');
     const data = SH ? SH.F : F;
