@@ -790,7 +790,7 @@
   };
 
   // Свой интерес говорят вслух — тогда он не ломает доверие
-  const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'получает с этого доход' };
+  const INTEREST = { family: 'родственник', staff: 'работает у него', money: 'есть личный интерес' };
   // Что написано на кнопке рекомендации: зависит от того, есть ли уже записи
   const recLabel = (id, catId) => {
     const mine = G.recsFrom(S.me).filter((r) => r.to === id);
@@ -3303,7 +3303,6 @@
     const inv = S.invite;
     const bot = S.bot || 'sarafanibot';
     const link = `t.me/${bot}?start=${inv.code}`;
-    const left = inv.max - inv.used;
     const empty = c1.length === 0;
     const myRecTo = (id) => G.recsFrom(S.me).filter((r) => r.to === id && r.cat).map((r) => cat(r.cat).who);
     // места и фирмы, которые есть в вашей сети: сначала ваши, потом от знакомых
@@ -3319,7 +3318,7 @@
     Object.keys(S.users).forEach((uid) => { if (uid !== S.me && (G.dist[uid] ?? 9) <= 2) G.catsOf(uid).forEach((c) => covered.add(c)); });
     const gaps = ESSENTIAL.filter((c) => G.catById[c] && !covered.has(c)).slice(0, 4);
     const invite = `
-      <div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Позвать знакомых</h2><span class="small muted">мест: ${left} из ${inv.max}</span></div>
+      <div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Позвать знакомых</h2></div>
       <div class="card invite-one">
         ${gaps.length ? `<p class="small" style="margin:0 0 10px">В вашей сети пока нет: <b>${gaps.map((c) => esc(cat(c).who.toLowerCase())).join(', ')}</b>. Позовите знакомых — у кого-то из них такие точно есть</p>` : ''}
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
