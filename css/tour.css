@@ -305,18 +305,18 @@
 .sc-founder .founder-av { align-self: center; animation: rise 520ms var(--ease) 120ms backwards; }
 .sc-founder .av.xl { width: 132px; height: 132px; font-size: 40px; }
 
-/* Кто делает Сарафан — на последнем шаге отдельной карточкой над кнопкой: лицо, имя и пара слов от себя (правка 26.09) */
-.tour-by { display: flex; align-items: flex-start; gap: 14px; width: 100%; margin: 0 0 12px; padding: 12px 14px; text-align: left;
-  border: 0; border-radius: 20px; background: #fff; box-shadow: 0 8px 24px rgba(20, 40, 80, .10), inset 0 0 0 1px rgba(20, 40, 80, .05);
-  color: var(--ink-2); font: 400 var(--fs-sm)/1.45 var(--t); cursor: pointer; animation: rise 460ms var(--ease) backwards; }
+/* Кто делает Сарафан — на последнем шаге небольшой карточкой над кнопкой: лицо, имя и пара слов (правка 26.09) */
+.tour-by { display: flex; align-items: flex-start; gap: 12px; width: 100%; margin: 0 0 10px; padding: 10px 12px; text-align: left;
+  border: 0; border-radius: 18px; background: #fff; box-shadow: 0 6px 18px rgba(20, 40, 80, .09), inset 0 0 0 1px rgba(20, 40, 80, .05);
+  color: var(--ink-2); font: 400 var(--fs-xs)/1.4 var(--t); cursor: pointer; animation: rise 460ms var(--ease) backwards; }
 .tour-by[hidden] { display: none; }
 .tour-by .av, .tour-by .founder-av { flex: none; }
-.tour-by .av.xl { width: 52px; height: 52px; font-size: 16px; border-width: 2px; box-shadow: 0 0 0 2px #e8a528; }
-.tour-by b { display: block; font: 700 var(--fs-md)/1.2 var(--t); color: var(--ink); }
-.tour-by i { display: block; font-style: normal; font-size: var(--fs-xxs); color: #c0891a; font-weight: 600; margin-top: 2px; }
-.tour-by q { display: block; margin-top: 6px; quotes: '«' '»'; color: var(--ink-2); }
-.tour-by u { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; text-decoration: none; color: var(--blue); font: 700 var(--fs-xs)/1 var(--t); }
-.tour-by u svg { width: 14px; height: 14px; }
+.tour-by .av.xl { width: 40px; height: 40px; font-size: 13px; border-width: 1.5px; box-shadow: 0 0 0 1.5px #e8a528; }
+.tour-by b { font: 700 var(--fs-sm)/1.2 var(--t); color: var(--ink); }
+.tour-by i { font-style: normal; font-size: var(--fs-xxs); color: #c0891a; font-weight: 600; margin-left: 6px; }
+.tour-by q { display: block; margin-top: 3px; quotes: '«' '»'; color: var(--ink-2); }
+.tour-by u { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; text-decoration: none; color: var(--blue); font: 700 var(--fs-xxs)/1 var(--t); }
+.tour-by u svg { width: 12px; height: 12px; }
 
 /* ——— Для тех, кто оказывает услуги: просьба клиенту → его фраза → рекомендация (правка 26.09) ——— */
 .sc-pro .card-msg { animation-delay: 200ms; }
