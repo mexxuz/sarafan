@@ -733,7 +733,7 @@ body.viewing-as #app { padding-top: 48px; }
 
 /* Регистрация: та же живая сеть, что на главной, только пониже */
 .cloud-box.onb-cloud {
-  height: 440px; margin-top: 0;   /* сеть — от самого верха экрана; логотип — под ней, над заголовком */
+  height: 300px; margin-top: 0;   /* сеть — от самого верха экрана; ниже, чтобы плашка регистрации была видна сразу */
   /* края растворяются в фоне — без ровного обрыва линий */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 78%, transparent 100%),
                       linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);

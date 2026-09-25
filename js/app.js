@@ -1253,6 +1253,15 @@
       nodes.push({ id, ring: 3, kind: 'node', company, r: 8, label: name });
       edges.push({ a: i % 2 ? hubs[i % hubs.length] : 'b' + ((i * 2) % JOBS2.length), b: id, kind: 'vouch', len: 44 });
     });
+    // дальняя россыпь — люди и места знакомых знакомых, без подписей: звёздная карта, ощущение размаха
+    const outer = [...JOBS2.map((_, i) => 'b' + i), ...PLACES.map((_, i) => 'o' + i)];
+    for (let i = 0; i < 46; i++) {
+      const id = 's' + i, place = i % 4 === 3;
+      nodes.push(place ? { id, ring: 4, kind: 'node', company: i % 8 === 7, r: 5, label: '' }
+        : { id, ring: 4, kind: 'person', r: 5, photo: null, initials: '', label: '' });
+      edges.push({ a: outer[(i * 7) % outer.length], b: id, kind: i % 5 ? 'know' : 'vouch', len: 34 });
+      if (i % 6 === 0 && i) edges.push({ a: 's' + (i - 1), b: id, kind: 'know' });
+    }
     return { nodes, edges };
   }
 
