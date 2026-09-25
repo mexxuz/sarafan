@@ -1225,7 +1225,7 @@
     const anchors = [];
     if (inviter) {
       nodes.push({ ...real(inviter, 1, 15), label: isF(inviter) ? first(inviter) : named(inviter) ? first(inviter) : 'позвал вас' });
-      edges.push({ a: 'me', b: 'u' + inviter, kind: 'know' });
+      edges.push({ a: 'me', b: 'u' + inviter, kind: 'vouch', len: 96 });   // держится поодаль от «вы», не налезает
       const theirs = [...(G.adj[inviter] || [])].filter((x) => x !== S.me && U(x))
         .sort((a, b) => (isF(b) - isF(a)) || ((U(b).photo ? 1 : 0) - (U(a).photo ? 1 : 0))).slice(0, 12);
       theirs.forEach((x) => { nodes.push(real(x, 2, 10)); edges.push({ a: 'u' + inviter, b: 'u' + x, kind: 'know', len: 58 }); anchors.push('u' + x); });
@@ -1236,12 +1236,11 @@
         const via = theirs.find((x) => G.connected(x, fid));
         edges.push({ a: via ? 'u' + via : 'u' + inviter, b: 'u' + fid, kind: 'wait', len: 60 });
       }
-      anchors.push('u' + inviter);
     }
     // показательная часть: будущие знакомые, их знакомые, места и фирмы — чтобы ощущался размах
     const ring1 = [];
     JOBS1.forEach((j, i) => { nodes.push({ id: 'a' + i, ring: 1, kind: 'person', r: 13, photo: null, initials: j[0], label: j, ghost: true }); ring1.push('a' + i); edges.push({ a: 'me', b: 'a' + i, kind: 'wait' }); });
-    const hubs = anchors.length ? anchors : ring1;
+    const hubs = anchors.length ? anchors : ring1;   // россыпь растёт от знакомых пригласившего, а не от него самого
     JOBS2.forEach((j, i) => {
       const id = 'b' + i;
       nodes.push({ id, ring: 3, kind: 'person', r: 8, photo: null, initials: j[0], label: j });
