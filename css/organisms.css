@@ -936,6 +936,13 @@ body.viewing-as #app { padding-top: 48px; }
 .soc-list { display: flex; flex-direction: column; gap: 8px; }
 .soc-btn { display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--r-md); background: var(--card-2, #f1f5fa); color: var(--ink); text-decoration: none; margin-top: 8px; }
 .soc-list .soc-btn { margin-top: 0; }
+/* адрес и ссылка места — одним блоком с тонкой линией между строками (правка 25.09) */
+.link-group { border-radius: var(--r-md); background: var(--card-2, #f1f5fa); overflow: hidden; }
+.link-group > :is(.link-row, .soc-btn, .about) { margin: 0; border-radius: 0; background: transparent; padding: 12px 14px; gap: 12px; font-size: var(--fs-sm); }
+.link-group > * + * { border-top: 1px solid var(--line); }
+.link-group > * > svg:first-child, .link-group .soc-ic { width: 20px; height: 20px; }
+.link-group .soc-btn b { font-size: var(--fs-sm); }
+.link-group > :is(a, button):hover { box-shadow: none !important; background: color-mix(in srgb, var(--blue) 5%, transparent); }
 .soc-btn:active { transform: scale(.99); }
 .soc-btn .soc-ic, .soc-btn > svg:first-child { width: 24px; height: 24px; flex: none; }
 .soc-btn b { display: block; font-weight: 600; font-size: var(--fs-md); }

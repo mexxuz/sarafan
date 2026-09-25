@@ -2550,11 +2550,12 @@
           <span class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</span></div>
         <h1 class="h1" style="margin-top:-6px">${esc(n.name)}</h1>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
+        ${(mapLink(n) || n.address) && n.link ? '<div class="link-group">' : ''}
         ${mapLink(n)
       ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}
           <span class="grow">${n.address ? esc(n.address) : 'Посмотреть на карте'}<i>${n.lat ? 'Открыть в Яндекс Картах — точка уже стоит' : 'Найти в Яндекс Картах'}</i></span>${ic('arrow')}</a>`
       : n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
-        ${n.link ? linkBtn(n.link) : ''}</div>
+        ${n.link ? linkBtn(n.link) : ''}${(mapLink(n) || n.address) && n.link ? '</div>' : ''}</div>
 
       <div class="stat-grid" style="margin-top:18px">
         <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
