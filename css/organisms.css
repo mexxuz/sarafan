@@ -620,8 +620,13 @@
 .chip.on .chip-x { background: rgba(255, 255, 255, .25); }
 
 /* Карточка места из облака: обложка, кто вы здесь, сведения строками, люди, слово знакомых */
-.peek-cover { margin: -8px -20px 12px; height: 132px; overflow: hidden; border-radius: 28px 28px 0 0; }
-.peek-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Обложка места — от самого верхнего края окна, 16:9, прижата к верху картинки (правка 25.09) */
+/* Обложка места — на всю ширину окна, от самого верха, в своих пропорциях: без полей по бокам
+   и без обрезки сверху; совсем высокую картинку подрезаем только снизу (правка 25.09) */
+.peek-cover { margin: -8px -20px 12px; max-height: 360px; overflow: hidden; }   /* углы скругляет само окно */
+.peek-cover img { width: 100%; height: auto; display: block; }
+/* полоска для смахивания — поверх обложки, а не отдельной строкой над ней */
+.sheet .panel:has(.peek-cover) .grab { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); margin: 0; z-index: 2; background: rgba(255, 255, 255, .75); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
 .peek-rel { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 10px; border-radius: 999px;
   font: 600 var(--fs-xs)/1.2 var(--t); color: #6b4fd0; background: linear-gradient(170deg, #f1ecff, #e8e0ff); }
 .peek-rel svg { width: 14px; height: 14px; }

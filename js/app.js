@@ -1783,7 +1783,7 @@
     const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
     openSheet({
       F: {},
-      render: () => `${n.photo ? `<div class="peek-cover"><img src="${esc(srvUrl(n.photo))}" alt=""></div>` : ''}
+      render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt=""></div>` : ''}
         <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>

@@ -90,3 +90,8 @@
 @media (min-width: 1500px) {
   :root { --col: calc(50% - 280px); }
 }
+
+@media (min-width: 1000px) {
+  /* в окне по центру у тела отступ сверху — обложку тянем до самого края окна */
+  .sheet .panel .body > .peek-cover:first-child { margin-top: calc(-8px - var(--s-5)); }
+}
