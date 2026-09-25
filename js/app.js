@@ -671,7 +671,17 @@
     const has = sc.story || sc.services || sc.prices || lines(sc.links).length || works.length || dirs.length;
     if (!has) return '';
     const loose = works.filter((w) => !w.dir || !dirs.some((d) => d.id === w.dir));
+    // сначала кто вы и на каких условиях, потом направления с примерами; услуги плашками — только если направлений нет,
+    // иначе они повторяют их названия (правка 26.09)
+    const general = sc.headline || sc.story || sc.prices || lines(sc.links).length || (dirs.length < 2 && lines(sc.services).length);
     return `<div class="sec-title"><h2 class="h2">О работе</h2>${id === S.me ? '<button class="btn sm" data-act="editShowcase">Изменить</button>' : ''}</div>
+      ${general ? `<div class="card" style="margin-bottom:var(--s-2)">
+        ${sc.headline ? `<div class="h3" style="margin-bottom:8px">${esc(sc.headline)}</div>` : ''}
+        ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
+        ${dirs.length < 2 && lines(sc.services).length ? `<div class="field" style="margin-top:0"><span>Что делает</span><div class="chips">${lines(sc.services).map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div></div>` : ''}
+        ${sc.prices ? `<div class="field"><span>Условия</span>${priceList(sc.prices)}</div>` : ''}
+        ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span>${linkRows(lines(sc.links))}</div>` : ''}
+      </div>` : ''}
       ${dirs.map((d) => {
       const mine = works.filter((w) => w.dir === d.id);
       return `<div class="dir">
@@ -680,14 +690,7 @@
         ${d.prices ? priceList(d.prices) : ''}
         ${mine.length ? workStrip(mine) : (id === S.me ? worksGhost(d.id) : '')}</div>`;
     }).join('')}
-      ${workStrip(loose)}
-      <div class="card">
-        ${sc.headline ? `<div class="h3" style="margin-bottom:8px">${esc(sc.headline)}</div>` : ''}
-        ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
-        ${lines(sc.services).length ? `<div class="field" style="margin-top:0"><span>Что делает</span><div class="chips">${lines(sc.services).map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div></div>` : ''}
-        ${sc.prices ? `<div class="field"><span>Про деньги</span>${priceList(sc.prices)}</div>` : ''}
-        ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span>${linkRows(lines(sc.links))}</div>` : ''}
-      </div>`;
+      ${workStrip(loose)}`;
   }
 
   // Вместо голых цифр — две строки с лицами, которые ведут дальше (правка 25.09: «цифры никуда не ведут»)

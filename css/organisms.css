@@ -347,6 +347,11 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 
 /* Витрина: работы сеткой, подписи под картинкой */
 .works { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-2); margin-top: var(--s-2); }
+/* работы в направлении — лентой вбок, как сторис: одна строка вместо сетки на пол-экрана (правка 26.09) */
+.dir .works:not(.ghost) { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+  margin: var(--s-3) calc(-1 * var(--s-4)) 0; padding: 2px var(--s-4) 6px; }
+.dir .works:not(.ghost)::-webkit-scrollbar { display: none; }
+.dir .works:not(.ghost) .work { flex: 0 0 58%; scroll-snap-align: start; scroll-margin-left: var(--s-4); }
 .works .work { position: relative; margin: 0; border-radius: var(--r-md); overflow: hidden; background: var(--mist); box-shadow: var(--sh-1); }
 .works .work img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
 .works .work figcaption { padding: var(--s-3); display: grid; gap: 3px; }
