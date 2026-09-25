@@ -120,7 +120,7 @@ window.Cloud = function (canvas, opts) {
       const d = Math.max(1, Math.hypot(dx, dy));
       const want = e.len || 92;
       // тонкая нить пересечения почти не тянет: раскладку держат основные
-      const f = (d - want) * 0.008 * (e.faint ? 0.3 : e.kind === 'vouch' ? 1.25 : 1);
+      const f = (d - want) * 0.008 * (e.faint ? 0.3 : e.kind === 'vouch' ? 1.25 : 1) * (e.strong || 1);   // strong — нить, которая держит своё расстояние твёрдо
       const ux = dx / d, uy = dy / d;
       // нить со звездой тянет только звезду: ваше созвездие звёзды не растаскивают
       if (!a.self && !(e.faint && !a.star)) { a.vx += ux * f; a.vy += uy * f; }
@@ -140,7 +140,8 @@ window.Cloud = function (canvas, opts) {
         n.vy += (cy - n.y) * 0.0012;
       } else {
         // на звёздном небе ваши знакомые держатся плотной группой вокруг вас — ваше созвездие в центре
-        const want = big() ? (58 + n.ring * 42) * k : (70 + n.ring * 58) * k;
+        const orb = n.orbit ?? n.ring;   // orbit — своё расстояние от центра, если кольцо должно стоять дальше обычного
+        const want = big() ? (58 + orb * 42) * k : (70 + orb * 58) * k;
         const pull = (want - d) * (big() ? 0.01 : 0.006);
         n.vx += (dx / d) * pull / wide;
         n.vy += (dy / d) * pull;

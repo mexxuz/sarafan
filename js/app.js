@@ -1224,8 +1224,8 @@
     // настоящая часть: кто позвал, его знакомые и создатель — у кого они есть
     const anchors = [];
     if (inviter) {
-      nodes.push({ ...real(inviter, 1, 15), label: isF(inviter) ? first(inviter) : named(inviter) ? first(inviter) : 'позвал вас' });
-      edges.push({ a: 'me', b: 'u' + inviter, kind: 'vouch', len: 96 });   // держится поодаль от «вы», не налезает
+      nodes.push({ ...real(inviter, 1, 15), orbit: 2.3, label: isF(inviter) ? first(inviter) : named(inviter) ? first(inviter) : 'позвал вас' });
+      edges.push({ a: 'me', b: 'u' + inviter, kind: 'vouch', len: 115, strong: 6 });   // держится поодаль от «вы», не налезает
       const theirs = [...(G.adj[inviter] || [])].filter((x) => x !== S.me && U(x))
         .sort((a, b) => (isF(b) - isF(a)) || ((U(b).photo ? 1 : 0) - (U(a).photo ? 1 : 0))).slice(0, 12);
       theirs.forEach((x) => { nodes.push(real(x, 2, 10)); edges.push({ a: 'u' + inviter, b: 'u' + x, kind: 'know', len: 58 }); anchors.push('u' + x); });
