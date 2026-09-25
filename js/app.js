@@ -3058,8 +3058,10 @@
       ${allRecs.length ? `<div class="sec-title" id="recs"><h2 class="h2">Рекомендации</h2></div>
       ${cats.length > 1 ? `<div class="chips scroll" style="margin-bottom:10px"><button class="chip ${F.rc === 'all' ? 'on' : ''}" data-act="rc" data-v="all">Все<span class="n">${allRecs.length}</span></button>${cats.filter((c) => G.recsTo(id, c).length).map((c) => `<button class="chip ${F.rc === c ? 'on' : ''}" data-act="rc" data-v="${c}">${esc(cat(c).name)}<span class="n">${G.recsTo(id, c).length}</span></button>`).join('')}</div>` : ''}
       <div class="card">${shown.map((r) => recItem(r)).join('')}${recs.length > shown.length ? `<button class="btn ghost block" style="margin-top:12px" data-act="more">Показать все ${recs.length}</button>` : ''}</div>` : ''}
-      ${nodesOf(id).length ? `<div class="sec-title"><h2 class="h2">Какие места советует</h2><span class="small muted">${nodesOf(id).length}</span></div>
-      <div class="stack">${nodesOf(id).slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''}
+      ${((vouched) => (vouched.length ? `<div class="sec-title"><h2 class="h2">Какие места советует</h2><span class="small muted">${vouched.length}</span></div>
+      <div class="stack">${vouched.slice(0, 4).map((n) => nodeCard(n)).join('')}</div>` : ''))(
+        // только то, что человек рекомендовал; просто записанные им места сюда не попадают (правка 25.09)
+        nodesAll().filter((n) => (n.recs || []).some((r) => r.from === id && !r.private)))}
       ${given.length ? `<div class="sec-title"><h2 class="h2">Кого рекомендует</h2><span class="small muted">${pl(rs.people, 'человек', 'человека', 'человек')} · ${pl(rs.cats, 'сфера', 'сферы', 'сфер')}</span></div>
       <div class="card">${[...new Map(given.map((r) => [r.to, r])).values()].slice(0, 6).map((r) => personMini(r.to, r.cat ? cat(r.cat).who : '')).join('')}</div>` : ''}
       ${direct && LIVE ? `<p style="text-align:center;margin-top:22px"><button class="btn ghost xs" data-act="connMenu" data-id="${id}">${connOf(id) && connOf(id).hidden ? 'Знакомство скрыто от других' : 'Скрыть знакомство или убрать из знакомых'}</button></p>` : ''}
