@@ -597,6 +597,9 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .job-line { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; }
 .job-line a { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); text-decoration: none; }
 .job-line a b { color: var(--ink); font-weight: 700; }
+.job-add { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 7px; border-radius: 999px; background: var(--card-2, #f1f5fa); color: var(--ink-3); font: 600 var(--fs-xxs)/1.4 var(--t); cursor: pointer; }
+.job-add svg { width: 13px; height: 13px; }
+@media (hover: hover) { .job-add:hover { color: var(--blue); } }
 .job-line a i { font-style: normal; font-size: var(--fs-xxs); color: var(--ink-3); margin-left: 2px; }
 .node-ic.mini { width: 20px; height: 20px; border-radius: 7px; }
 .node-ic.mini svg { width: 12px; height: 12px; }

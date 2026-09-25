@@ -2097,9 +2097,12 @@
   function jobLine(uid) {
     const cur = jobsOf(uid).filter((x) => !x.past && (!x.waiting || uid === S.me));
     if (!cur.length) return '';
-    return `<div class="job-line">${cur.slice(0, 2).map((x) => { const n = nodeById(x.node);
+    // в чужом профиле раздела «Где работает» больше нет — здесь все места и кнопка добавить ещё (правка 25.09)
+    const other = uid !== S.me;
+    return `<div class="job-line">${cur.slice(0, other ? 9 : 2).map((x) => { const n = nodeById(x.node);
       return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${nodeGlyph(n)}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${x.days ? ` <i>${esc(x.days)}</i>` : ''}${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
-      ${cur.length > 2 ? `<span class="tiny muted">и ещё ${cur.length - 2}</span>` : ''}</div>`;
+      ${!other && cur.length > 2 ? `<span class="tiny muted">и ещё ${cur.length - 2}</span>` : ''}
+      ${other ? `<button class="job-add" data-act="pickNode" data-id="${uid}">${ic('plus')}Место работы</button>` : ''}</div>`;
   }
 
   // Что о человеке говорят чаще всего, сколько коллег его советуют и что советуют без имени
