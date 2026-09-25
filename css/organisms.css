@@ -1031,3 +1031,11 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .peek-cover.dark { -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 58%, rgba(0,0,0,.75) 72%, rgba(0,0,0,.35) 86%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 58%, rgba(0,0,0,.75) 72%, rgba(0,0,0,.35) 86%, transparent 100%); }
 .peek-cover.dark::before { background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, .45) 62%, rgba(0, 0, 0, .2) 100%); }
 .peek-cover ~ * { position: relative; z-index: 1; }
+
+/* Цены построчно: что — слева, сколько — справа (правка 25.09) */
+.price-list { margin: 10px 0 12px; border-radius: 14px; background: var(--card-2, #f1f5fa); padding: 4px 12px; }
+.price-list > div { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; font-size: var(--fs-sm); }
+.price-list > div + div { border-top: 1px solid var(--line); }
+.price-list span { flex: 1; min-width: 0; color: var(--ink-2); }
+.price-list b { flex: none; font-weight: 700; color: var(--ink); text-align: right; max-width: 55%; }
+.price-list .wide span { color: var(--ink-3); font-size: var(--fs-xs); }

@@ -651,6 +651,13 @@
     return `<a class="soc-btn" href="${esc(href)}" target="_blank" rel="noopener">${icon}<span class="grow"><b>${esc(label)}</b>${sub ? `<i>${esc(sub)}</i>` : ''}</span>${ic('arrow')}</a>`;
   }
 
+  // Цены построчно: «Фирменный стиль — от $520» → слева что, справа сколько; строка без тире — целиком (правка 25.09)
+  const priceList = (t) => {
+    const rows = lines(t);
+    if (rows.length < 2 && !/ — /.test(t || '')) return `<p class="dir-price">${esc(t)}</p>`;
+    return `<div class="price-list">${rows.map((x) => { const k = x.indexOf(' — ');
+      return k > 0 && k < 48 ? `<div><span>${esc(x.slice(0, k))}</span><b>${esc(x.slice(k + 3))}</b></div>` : `<div class="wide"><span>${esc(x)}</span></div>`; }).join('')}</div>`;
+  };
   function showcaseView(id) {
     const sc = (S.showcases || {})[id];
     if (!sc) return '';
@@ -665,7 +672,7 @@
       return `<div class="dir">
         <div class="dir-head"><h3 class="h3">${esc(d.title)}</h3>${mine.length ? `<span class="tag">${pl(mine.length, 'работа', 'работы', 'работ')}</span>` : ''}</div>
         ${d.story ? `<p class="small" style="margin:6px 0 0;color:var(--ink-2);line-height:1.55">${esc(d.story).split('\n').join('<br>')}</p>` : ''}
-        ${d.prices ? `<p class="dir-price">${esc(d.prices)}</p>` : ''}
+        ${d.prices ? priceList(d.prices) : ''}
         ${mine.length ? workStrip(mine) : (id === S.me ? worksGhost(d.id) : '')}</div>`;
     }).join('')}
       ${workStrip(loose)}
@@ -673,7 +680,7 @@
         ${sc.headline ? `<div class="h3" style="margin-bottom:8px">${esc(sc.headline)}</div>` : ''}
         ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
         ${lines(sc.services).length ? `<div class="field" style="margin-top:0"><span>Что делает</span><div class="chips">${lines(sc.services).map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div></div>` : ''}
-        ${sc.prices ? `<div class="field"><span>Про деньги</span><p class="small" style="margin:0;color:var(--ink-2)">${esc(sc.prices)}</p></div>` : ''}
+        ${sc.prices ? `<div class="field"><span>Про деньги</span>${priceList(sc.prices)}</div>` : ''}
         ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span>${linkRows(lines(sc.links))}</div>` : ''}
       </div>`;
   }
