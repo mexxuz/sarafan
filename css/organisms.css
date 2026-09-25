@@ -975,3 +975,8 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .s-head.on-dark .icon-btn { background: rgba(255, 255, 255, .22) !important; color: #fff; }
 
 .peek-cover.ready { margin-bottom: -66px; }   /* заходим под название, только когда картинка на месте */
+/* тёмная уходит глубже — под первую плашку, и растворяется уже под ней, без видимой границы */
+.peek-cover.dark.ready { margin-bottom: -150px; }
+.peek-cover.dark { -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 58%, rgba(0,0,0,.75) 72%, rgba(0,0,0,.35) 86%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 58%, rgba(0,0,0,.75) 72%, rgba(0,0,0,.35) 86%, transparent 100%); }
+.peek-cover.dark::before { background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, .45) 62%, rgba(0, 0, 0, .2) 100%); }
+.peek-cover ~ * { position: relative; z-index: 1; }
