@@ -3294,7 +3294,7 @@
       <div class="cloud-box onb-cloud"><canvas id="onbcloud" aria-label="Ваша сеть"></canvas></div>
       <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : inviter ? 'Вас позвали<br>в Сарафан' : 'Добро пожаловать<br>в Сарафан'}</h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
-      <div class="card">
+      <div class="card onb-card">
         <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
         <div class="pro-ask">
           <div class="pro-q">Вас можно советовать знакомым?</div>

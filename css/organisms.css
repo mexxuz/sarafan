@@ -766,3 +766,23 @@ body.viewing-as #app { padding-top: 48px; }
 }
 .name-in:focus-within { border-color: var(--blue); background: #fff; }
 @media (hover: none) and (pointer: coarse) { .name-in input { font-size: 16px; } }
+
+/* Плашка регистрации — синяя, фирменная: белый текст, светлые поля, выбранное — белым */
+.onb-card { background: var(--grad-blue); color: #fff; box-shadow: 0 14px 34px rgba(47, 123, 255, .32); border: 0; }
+.onb-card .name-in { background: rgba(255, 255, 255, .16); }
+.onb-card .name-in span { color: rgba(255, 255, 255, .72); }
+.onb-card .name-in input { color: #fff; }
+.onb-card .name-in input::placeholder { color: rgba(255, 255, 255, .55); }
+.onb-card .name-in:focus-within { background: rgba(255, 255, 255, .24); border-color: rgba(255, 255, 255, .7); }
+.onb-card .pro-q { color: #fff; }
+.onb-card .pro-sub { color: rgba(255, 255, 255, .75); }
+.onb-card .pro-sub b { color: #fff; }
+.onb-card .pro-opt { background: rgba(255, 255, 255, .14); color: #fff; }
+.onb-card .pro-opt svg { color: #fff; }
+.onb-card .pro-opt i { color: rgba(255, 255, 255, .72); }
+.onb-card .pro-opt.on { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 8px 20px rgba(10, 40, 110, .25); }
+.onb-card .pro-opt.on svg { color: var(--blue); }
+.onb-card .pro-opt.on i { color: var(--blue-deep); }
+.onb-card .field > span { color: rgba(255, 255, 255, .8); }
+.onb-card .btn.primary { background: #fff; color: var(--blue-deep); box-shadow: 0 8px 20px rgba(10, 40, 110, .22); }
+.onb-card .btn.primary:disabled { background: rgba(255, 255, 255, .28); color: rgba(255, 255, 255, .8); box-shadow: none; }
