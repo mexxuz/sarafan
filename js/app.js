@@ -1903,9 +1903,11 @@
     // до ввода — первые двадцать; дальше — все, у кого в имени есть набранное
     function peopleHtml() {
       const q = normCat(f.q || '');
-      const list = f.data.people.filter((p) => !q || normCat(p.name).includes(q) || normCat((U(p.id) || {}).tgName || '').includes(q));
-      return list.slice(0, q ? 50 : 20).map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(p.name)}">
-          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(p.name[0] || '?')}</span>`}<div class="grow" style="min-width:0"><div class="name ellip">${esc(p.name)}</div><div class="sub">${distWord(p)}</div></div></button>`).join('')
+      // имя — как вы его записали («Слава»), а не как он назвался в Telegram («….»); искать можно по обоим
+      const nm = (p) => (U(p.id) && U(p.id).name) || p.name;
+      const list = f.data.people.filter((p) => !q || normCat(nm(p)).includes(q) || normCat(p.name).includes(q) || normCat((U(p.id) || {}).tgName || '').includes(q));
+      return list.slice(0, q ? 50 : 20).map((p) => `<button class="person" style="width:100%;text-align:left" data-act="viewAsGo" data-id="${p.id}" data-label="${esc(distWord(p)[0].toUpperCase() + distWord(p).slice(1))}" data-name="${esc(nm(p))}">
+          ${U(p.id) ? av(p.id, 's') : `<span class="av s" style="--h:${hue(p.id)}">${esc(nm(p)[0] || '?')}</span>`}<div class="grow" style="min-width:0"><div class="name ellip">${esc(nm(p))}</div><div class="sub">${distWord(p)}</div></div></button>`).join('')
         || '<p class="small muted" style="margin:0">Никого с таким именем</p>';
     }
   }
