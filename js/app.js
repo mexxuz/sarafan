@@ -3678,7 +3678,7 @@
           <div class="pro-opts">
             ${[['pro', 'seal', 'Я оказываю услуги', 'есть клиенты, хочу больше'],
       ['start', 'spark', 'Хочу начать своё дело', 'найду первых клиентов'],
-      ['seek', 'search', 'Мне нужен специалист', 'ищу через своих']]
+      ['seek', 'search', 'Ищу проверенного человека', 'через своих']]
     .map(([v, icon, t, sub]) => `<button class="pro-opt ${F.pro === v ? 'on' : ''}" data-act="onbPro" data-v="${v}">${ic(icon)}<span><b>${t}</b><i>${sub}</i></span></button>`).join('')}
           </div></div>
         ${F.pro === 'pro' || F.pro === 'start' ? catPick(F, 'cats', 'who', F.pro === 'start' ? 'Что умеете' : 'Чем занимаетесь') : ''}
