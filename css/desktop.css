@@ -63,7 +63,7 @@
   .works { grid-template-columns: repeat(3, 1fr); }
   .works.small-works { grid-template-columns: repeat(4, 1fr); }
   .stat-grid { gap: var(--s-6); }
-  .node-photo.full { height: 320px; }
+  .node-photo.full { max-height: 420px; }
   .search { max-width: none; }
 
   /* длинные абзацы не растягиваем во всю ширину — глазу тяжело */

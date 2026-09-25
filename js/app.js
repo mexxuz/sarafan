@@ -1791,7 +1791,7 @@
   };
   // «Что делают» коротко: главное одной строкой и направления плашками, а не простынёй (правка 25.09).
   // Уточнения в скобках уходят — они на полной странице; если разложить не выходит — три строки текста
-  function svcView(text) {
+  function svcView(text, all) {
     const t = String(text || '').trim();
     const cut = t.indexOf(':');
     const head = cut > 0 && cut < 70 ? t.slice(0, cut).trim() : '';
@@ -1808,8 +1808,23 @@
       .map((x) => (x.length > 26 ? x.replace(/\s+(с|со|для|под|по)\s.*$/i, '') : x))   // «наружная реклама с монтажом» → «наружная реклама»
       .filter((x) => x.length > 1 && x.length <= 40).map(cap1);
     if (items.length < 3) return `<span class="clamp3">${esc(t)}</span>`;
-    const show = items.slice(0, 6);
+    const show = all ? items : items.slice(0, 6);
     return `${head ? `<b class="svc-head">${esc(head)}</b>` : ''}<span class="svc-chips">${show.map((x) => `<span>${esc(x)}</span>`).join('')}${items.length > show.length ? `<span class="more">ещё ${items.length - show.length}</span>` : ''}</span>`;
+  }
+  // Сведения о месте одним блоком: что делают (главное и плашки), где, часы, цены, ссылка, к кому подходить.
+  // Одинаково в быстрой карточке и на полной странице; на странице — без обрезки (правка 25.09)
+  function nodeInfoHtml(n, whole) {
+    const fact = (k) => (n.facts || []).slice().sort(officialFirst).find((f) => f.kind === k);
+    const rows = [
+      fact('service') && [ic('work'), 'service', fact('service').text],
+      (n.address || mapLink(n)) && [ic('pin'), 'where', n.address || 'На карте', mapLink(n)],
+      fact('hours') && [ic('clock'), 'hours', fact('hours').text],
+      fact('price') && [ic('tag'), 'price', fact('price').text],
+      n.link && linkInfo(n.link) && ((L) => [L.icon, 'link', L.label, L.href])(linkInfo(n.link)),
+      fact('who') && [ic('user'), 'who', fact('who').text],
+    ].filter(Boolean);
+    if (!rows.length) return '';
+    return `<div class="peek-info">${rows.map(([i, kind, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow">${kind === 'service' ? svcView(text, whole) : whole ? esc(text) : `<span class="clamp3">${esc(text)}</span>`}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`;
   }
   function sheetNodePeek(id) {
     const n = nodeById(id);
@@ -1827,14 +1842,7 @@
     const relation = me ? (me.role === 'owner' ? 'Вы владелец' : `Вы здесь работаете${me.title ? ' · ' + esc(me.title) : ''}`)
       : friends.length ? `Здесь работает ваш знакомый — ${esc(first(friends[0].user))}${friends[0].title ? ', ' + esc(friends[0].title) : ''}`
         : '';
-    const info = [
-      fact('service') && [ic('work'), 'Что делают', fact('service').text],
-      (n.address || mapLink(n)) && [ic('pin'), 'Где', n.address || 'На карте', mapLink(n)],
-      fact('hours') && [ic('clock'), 'Когда работают', fact('hours').text],
-      fact('price') && [ic('tag'), 'Сколько стоит', fact('price').text],
-      n.link && linkInfo(n.link) && ((L) => [L.icon, L.soc ? '' : 'Сайт', L.label, L.href])(linkInfo(n.link)),   // соцсеть видно по значку — без подписи
-      fact('who') && [ic('user'), 'К кому подходить', fact('who').text],
-    ].filter(Boolean);
+    const info = nodeInfoHtml(n);
     const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
     openSheet({
       F: {},
@@ -1843,7 +1851,7 @@
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         ${relation ? `<div class="peek-rel">${ic('seal')}${relation}</div>` : ''}
-        ${info.length ? `<div class="peek-info">${info.map(([i, label, text, href]) => `${href ? `<a href="${esc(href)}" target="_blank" rel="noopener"` : '<div'} class="peek-row">${i}<span class="grow">${label === 'Что делают' ? svcView(text) : `<span class="clamp3">${esc(text)}</span>`}</span>${href ? `${ic('arrow')}</a>` : '</div>'}`).join('')}</div>`
+        ${info || ''}${info ? ''
     : `<p class="small muted" style="margin:12px 0 0">О ${n.kind === 'company' ? 'фирме' : 'месте'} пока ничего не дописали: что делают, часы, цены. Знаете — добавьте, это увидят ваши знакомые</p>`}
         ${total ? `<div class="peek-people"><span class="faces">${people.slice(0, 4).map((x) => face(x.user)).join('')}${waitHere.slice(0, Math.max(0, 4 - people.length)).map((w) => `<span class="stack-face">${waitAv(w, 'xs')}</span>`).join('')}</span>
           <span class="grow small">${pl(total, 'человек', 'человека', 'человек')} ${n.kind === 'company' ? 'в фирме' : 'здесь работают'}${friends.length ? ` · ${pl(friends.length, 'ваш знакомый', 'ваших знакомых', 'ваших знакомых')}` : ''}</span></div>` : ''}
@@ -2578,12 +2586,7 @@
           <span class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</span></div>
         <h1 class="h1" style="margin-top:-6px">${esc(n.name)}</h1>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
-        ${(mapLink(n) || n.address) && n.link ? '<div class="link-group">' : ''}
-        ${mapLink(n)
-      ? `<a class="link-row" href="${esc(mapLink(n))}" target="_blank" rel="noopener">${ic('pin')}
-          <span class="grow">${n.address ? esc(n.address) : 'Посмотреть на карте'}<i>${n.lat ? 'Открыть в Яндекс Картах — точка уже стоит' : 'Найти в Яндекс Картах'}</i></span>${ic('arrow')}</a>`
-      : n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
-        ${n.link ? linkBtn(n.link) : ''}${(mapLink(n) || n.address) && n.link ? '</div>' : ''}</div>
+        ${nodeInfoHtml(n, true)}</div>
 
       ${recs.length ? ((from) => `<div class="p-facts" style="margin-top:16px">
         <button class="p-fact" data-act="toRecs">${stack(from, 4)}<span class="grow">Советуют ${pl(from.length, 'человек', 'человека', 'человек')}</span>${ic('chev')}</button></div>`)([...new Set(recs.map((r) => r.from))].filter((x) => U(x))) : ''}
