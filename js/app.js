@@ -2125,8 +2125,9 @@
         ${others ? `<p class="tiny muted" style="margin:8px 0 0">И ещё ${pl(others, 'человек', 'человека', 'человек')} — не из ваших кругов</p>` : ''}
         ${past.length ? `<div class="eyebrow" style="margin-top:12px">раньше работали</div><div class="chips" style="margin-top:6px">${past.map((x) => `<span class="chip"><a href="#/p/${x.user}" style="text-decoration:none">${esc(full(x.user))}</a>${iOwn || x.user === S.me ? `<button class="chip-x" data-act="workErase" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Удалить запись">${ic('x')}</button>` : ''}</span>`).join('')}</div>` : ''}
         <div class="btn-row" style="margin-top:12px">${mine ? '' : `<button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>`}
-          <button class="btn sm ghost" data-act="proposePerson" data-id="${n.id}">${ic('plus')}Добавить человека</button></div>
-        ${mine || hasOwner ? '' : `<button class="btn ghost xs" style="margin-top:6px" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}Это моя ${n.kind === 'company' ? 'фирма' : 'точка'}</button>`}</div>`;
+          <button class="btn sm ghost" data-act="proposePerson" data-id="${n.id}">${ic('plus')}Добавить</button></div>
+        ${mine || hasOwner ? '' : `<button class="link-row wide owner-ask" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}
+          <span class="grow"><b>${n.kind === 'company' ? 'Это ваша фирма?' : 'Это ваше место?'}</b><i>Отметьтесь владельцем — сами поправите часы, цены и фото, а знакомые будут знать, к кому обращаться</i></span>${ic('arrow')}</button>`}</div>`;
   }
 
   // Отметить другого человека в фирме: выбираем из знакомых по имени
@@ -2557,10 +2558,8 @@
       : n.address ? `<p class="about">${ic('pin')} ${esc(n.address)}</p>` : ''}
         ${n.link ? linkBtn(n.link) : ''}${(mapLink(n) || n.address) && n.link ? '</div>' : ''}</div>
 
-      <div class="stat-grid" style="margin-top:18px">
-        <div class="stat"><b>${recs.length}</b><span>${plural(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')}</span></div>
-        <div class="stat"><b>${new Set(recs.map((r) => r.from)).size}</b><span>${plural(new Set(recs.map((r) => r.from)).size, 'человек рекомендует', 'человека рекомендуют', 'человек рекомендуют')}</span></div>
-        <div class="stat"><b>${facts.length}</b><span>${plural(facts.length, 'уточнение', 'уточнения', 'уточнений')}</span></div></div>
+      ${recs.length ? ((from) => `<div class="p-facts" style="margin-top:16px">
+        <button class="p-fact" data-act="toRecs">${stack(from, 4)}<span class="grow">Советуют ${pl(from.length, 'человек', 'человека', 'человек')}</span>${ic('chev')}</button></div>`)([...new Set(recs.map((r) => r.from))].filter((x) => U(x))) : ''}
 
       ${canCard(n) && !(n.facts || []).some((x) => x.official) ? `<button class="link-row wide" data-act="nodeCard" data-id="${n.id}" style="margin-top:16px">${ic('edit')}<span class="grow"><b>Заполните карточку ${n.kind === 'company' ? 'фирмы' : 'места'}</b><i>Что делаете, часы, цены, к кому подходить — одним экраном</i></span>${ic('arrow')}</button>` : ''}
 
@@ -2579,7 +2578,7 @@
       </div>`).join('')}</div>`
     : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}
 
-      ${recs.length ? `<div class="sec-title"><h2 class="h2">Кто рекомендует</h2></div>
+      ${recs.length ? `<div class="sec-title" id="recs"><h2 class="h2">Кто рекомендует</h2></div>
       <div class="card">${recs.map((r) => `<div class="rec"><div class="row"><a href="#/p/${r.from}">${av(r.from, 's')}</a>
         <div class="grow"><div class="row" style="gap:8px"><a href="#/p/${r.from}" class="h3 ellip" style="text-decoration:none">${esc(full(r.from))}</a>${G.dist[r.from] === 1 ? circleTag(1) : G.dist[r.from] === 2 ? circleTag(2) : ''}${r.private ? '<span class="tag">только для вас</span>' : ''}</div>
         <div class="tiny muted">${when(r.at)}</div></div></div>
@@ -2619,8 +2618,7 @@
       F: f,
       valid: () => f.name.trim().length >= 2,
       render: () => `${sheetHead(null, 'Записать место или фирму')}
-        <div class="field" style="margin-top:0"><span>Что это</span><div class="chips">
-          ${Object.entries(NODE_KIND).map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-act="set" data-k="kind" data-v="${k}">${l}</button>`).join('')}</div></div>
+        ${kindPick(f, 'margin-top:0')}
         <label class="field"><span>Название</span><input class="input" data-bind="name" maxlength="90" placeholder="${f.kind === 'company' ? 'Например: Ремстрой' : 'Например: Чайхана на Мирабаде'}" value="${esc(f.name)}"></label>
         ${catChips(f, S.cats.slice(0, 10).map((c) => c.id))}
         <label class="field"><span>Адрес — если это место</span><input class="input" data-bind="address" maxlength="160" placeholder="Мирабад, 12" value="${esc(f.address)}"></label>
@@ -2649,16 +2647,23 @@
     });
   }
 
+  // Место или фирма — с подсказкой, по какому признаку выбирать
+  const KIND_HINT = { place: 'Куда приходят сами: бар, кафе, салон, автомойка', company: 'С кем договариваются: ремонт, юристы, типография, IT-студия' };
+  const kindPick = (f, style = '') => `<div class="field" style="${style}"><span>Что это</span><div class="chips">
+      ${Object.entries(NODE_KIND).map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-act="set" data-k="kind" data-v="${k}">${ic(k === 'company' ? 'house' : 'pin')}${l}</button>`).join('')}</div>
+      <p class="hint">${KIND_HINT[f.kind] || ''}</p></div>`;
+
   // Поправить карточку места: адрес меняется, ссылка тоже
   function sheetEditNode(id) {
     const n = nodeById(id);
-    const f = { name: n.name, cat: n.cat || '', address: n.address || '', link: n.link || '',
+    const f = { kind: n.kind, name: n.name, cat: n.cat || '', address: n.address || '', link: n.link || '',
       lat: n.lat || null, lng: n.lng || null, allCats: false };
     openSheet({
       F: f,
       valid: () => f.name.trim().length >= 2,
-      render: () => `${sheetHead(null, 'Поправить карточку', esc(NODE_KIND[n.kind]))}
-        <label class="field" style="margin-top:0"><span>Название</span><input class="input" data-bind="name" maxlength="90" value="${esc(f.name)}"></label>
+      render: () => `${sheetHead(null, 'Поправить карточку')}
+        ${kindPick(f, 'margin-top:0')}
+        <label class="field"><span>Название</span><input class="input" data-bind="name" maxlength="90" value="${esc(f.name)}"></label>
         ${catChips(f, S.cats.slice(0, 10).map((c) => c.id))}
         <label class="field"><span>Адрес</span><input class="input" data-bind="address" maxlength="160" value="${esc(f.address)}"></label>
         <label class="field"><span>Ссылка</span><input class="input" data-bind="link" maxlength="200" value="${esc(f.link)}"></label>
@@ -2668,10 +2673,10 @@
     : `<button class="btn block" data-act="takeWhere">${ic('pin')}Взять моё местоположение</button>`}</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitEditNode" data-id="${id}" data-submit>Сохранить</button></div>`,
       submit: () => {
-        const body = { id, name: f.name.trim(), cat: f.cat, address: f.address.trim(), link: f.link.trim(),
+        const body = { id, kind: f.kind, name: f.name.trim(), cat: f.cat, address: f.address.trim(), link: f.link.trim(),
           lat: f.lat || null, lng: f.lng || null };
         closeSheet();
-        mutate(() => Object.assign(nodeById(id), { name: body.name, cat: body.cat, address: body.address, link: body.link }),
+        mutate(() => Object.assign(nodeById(id), { kind: body.kind, name: body.name, cat: body.cat, address: body.address, link: body.link }),
           '/nodes/edit', body, 'Поправили');
       },
     });
