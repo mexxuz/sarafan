@@ -2186,12 +2186,12 @@
         : `<div style="margin-top:12px">${addBtn}</div>`;
     }
     const row = (x) => { const n = nodeById(x.node);
-      return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
-        <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x) + jobDays(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
-        ${mine && !x.past && x.accepted !== false ? `<button class="btn ghost xs" data-act="workDays" data-id="${x.id}">${x.days ? 'Дни' : 'Дни приёма'}</button>` : ''}
+      return `<div class="person job-row"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
+        <div class="grow"><div class="name">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x) + jobDays(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
+        <div class="job-acts">${mine && !x.past && x.accepted !== false ? `<button class="btn ghost xs" data-act="workDays" data-id="${x.id}">${x.days ? 'Дни' : 'Дни приёма'}</button>` : ''}
         ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
     : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
-        ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div>`; };
+        ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div></div>`; };
     // чужой профиль: нынешние места уже стоят в шапке — здесь не повторяем, остаётся только «раньше» (правка 25.09)
     if (!mine && cur.length) {
       return past.length ? `<div class="sec-title"><h2 class="h2">Раньше работал</h2></div><div class="card">${past.map(row).join('')}</div>` : '';

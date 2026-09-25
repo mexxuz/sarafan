@@ -1081,3 +1081,13 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .reach-card i { display: block; margin-top: 3px; font-style: normal; font-size: var(--fs-xxs); line-height: 1.35; color: var(--ink-3); }
 .reach-card > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--blue); }
 .reach-card.in-me { margin-top: var(--s-3); }
+
+/* значок места или фирмы — всегда скруглённый квадрат одной формы, в любом размере (правка 26.09:
+   «полукруглые, полуквадратные»): радиус от размера, а не одним числом на все размеры */
+.node-ic, .node-ic.big, .node-ic.big.lift, .node-ic.mini { border-radius: 26%; }
+
+/* место работы: название целиком, кнопки — строкой под ним, а не сбоку (правка 26.09: «Premiu…») */
+.job-row { flex-wrap: wrap; row-gap: 8px; }
+.job-row > a.grow { flex: 1 1 100%; }
+.job-acts { display: flex; gap: 6px; padding-left: 46px; }
+.job-acts:empty { display: none; }
