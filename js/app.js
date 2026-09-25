@@ -1005,7 +1005,7 @@
       <p class="sec-note">Вы нажали «Сохранить себе» под советом в переписке</p>
       <div class="card">${items.map((x) => {
     const n = x.kind === 'place' ? nodeById(x.id) : null;
-    const pic = n ? `<span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>` : av(x.id, 's');
+    const pic = n ? `<span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>` : av(x.id, 's');
     const title = n ? n.name : full(x.id);
     const sub = (n ? cat(n.cat).who : who(x.id)) + ' · ' + by(x);
     return `<div class="person"><a class="grow row" href="#/${n ? 'o' : 'p'}/${x.id}" style="min-width:0">${pic}<div class="grow"><div class="name ellip">${esc(title)}</div><div class="sub ellip">${esc(sub)}</div></div></a>
@@ -1340,7 +1340,7 @@
         const waitStaff = onlyPlaces ? [] : (S.waiting || []).slice(0, 12).filter((w) => w.node === n.id).map((w) => 'w' + w.id);
         if (!voices.length && !staff.length && !waitStaff.length) return;
         const id = 'o' + n.id;
-        nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company',
+        nodes.push({ id, ring: 2, kind: 'node', company: n.kind === 'company', photo: n.logo ? srvUrl(n.logo) : null,
           r: n.kind === 'company' ? 8 : 8.5,
           label: n.name.length > 18 ? n.name.slice(0, 17) + '…' : n.name,
           go: '#/o/' + n.id });
@@ -1579,7 +1579,7 @@
       const ps = people.filter((id) => ok(U(id).name + ' ' + who(id))).slice(0, 25)
         .map((id) => `<button class="pick ${f.added.has(id) ? 'on' : ''}" data-act="colAddPick" data-u="${id}">${av(id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(full(id))}</span><span class="small muted ellip" style="display:block">${esc(who(id))}${mine.has(id) ? ' · вы рекомендуете' : ''}</span></span>${f.added.has(id) ? ic('check') : ic('plus')}</button>`).join('');
       const ns = q ? nodesAll().filter((n) => ok(n.name + ' ' + (n.cat ? cat(n.cat).name : ''))).slice(0, 10)
-        .map((n) => `<button class="pick ${f.added.has('o' + n.id) ? 'on' : ''}" data-act="colAddPick" data-n="${n.id}"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span><span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span><span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</span></span>${f.added.has('o' + n.id) ? ic('check') : ic('plus')}</button>`).join('') : '';
+        .map((n) => `<button class="pick ${f.added.has('o' + n.id) ? 'on' : ''}" data-act="colAddPick" data-n="${n.id}"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span><span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span><span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</span></span>${f.added.has('o' + n.id) ? ic('check') : ic('plus')}</button>`).join('') : '';
       return ps + ns || '<p class="small muted">Никого не нашли</p>';
     };
     openSheet({
@@ -1733,7 +1733,7 @@
         <div class="note" style="font-size:14px;color:var(--ink)">«${esc(q.text)}»</div>
         <div class="field"><span>Что советуете</span>
           ${list.length ? list.map((n) => `<button class="pick ${f.node === n.id ? 'on' : ''}" data-act="pickWho" data-k="node" data-v="${n.id}">
-            <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+            <span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
             <span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span>
             <span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}${n.address ? ' · ' + esc(n.address) : ''}</span></span>
             <span class="radio"></span></button>`).join('')
@@ -1811,6 +1811,8 @@
     const show = all ? items : items.slice(0, 6);
     return `${head ? `<b class="svc-head">${esc(head)}</b>` : ''}<span class="svc-chips">${show.map((x) => `<span>${esc(x)}</span>`).join('')}${items.length > show.length ? `<span class="more">ещё ${items.length - show.length}</span>` : ''}</span>`;
   }
+  // Значок места: логотип, если его поставили, иначе булавка или домик (правка 25.09)
+  const nodeGlyph = (n) => (n && n.logo ? `<img src="${esc(srvUrl(n.logo))}" alt="" loading="lazy">` : ic(n && n.kind === 'company' ? 'house' : 'pin'));
   // Сведения о месте одним блоком: что делают (главное и плашки), где, часы, цены, ссылка, к кому подходить.
   // Одинаково в быстрой карточке и на полной странице; на странице — без обрезки (правка 25.09)
   function nodeInfoHtml(n, whole) {
@@ -1847,7 +1849,7 @@
     openSheet({
       F: {},
       render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt="" onload="sarafanCover(this)"></div>` : `<div class="peek-cover blank ${n.kind}">${ic(n.kind === 'company' ? 'house' : 'pin')}</div>`}
-        <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+        <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${nodeGlyph(n)}</span>
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         ${relation ? `<div class="peek-rel">${ic('seal')}${relation}</div>` : ''}
@@ -1966,11 +1968,11 @@
         : n.by === S.me ? 'Вы записали' : esc(first(n.by)) + ' записал(а)';
     return `<a class="card tap pcard ${accent ? 'accent' : ''} ${n.closed ? 'closed' : ''}" href="#/o/${n.id}">
       ${n.photo ? `<div class="node-cover"><img src="${esc(srvUrl(n.photo))}" alt="" loading="lazy"></div>` : ''}
-      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}
+      <div class="head">${n.photo ? '' : `<span class="node-ic ${n.kind} ${n.closed ? 'off' : ''}">${nodeGlyph(n)}</span>`}
         <div class="grow"><div class="name two">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         ${n.closed ? '<span class="tag warm">закрылось</span>'
-      : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}</div>
+      : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${nodeGlyph(n)}</span>`}</div>
       <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : (n.facts || []).length ? 'пока без рекомендаций' : 'пока только запись'}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p><div class="by ellip">${esc(full(best.from))}</div>`
     : service ? `<p class="quote plain">${esc(service.text)}</p><div class="by ellip">${service.official ? 'от владельца' : esc(full(service.from))}</div>`
@@ -2083,7 +2085,7 @@
     const cur = jobsOf(uid).filter((x) => !x.past && (!x.waiting || uid === S.me));
     if (!cur.length) return '';
     return `<div class="job-line">${cur.slice(0, 2).map((x) => { const n = nodeById(x.node);
-      return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${x.days ? ` <i>${esc(x.days)}</i>` : ''}${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
+      return `<a href="#/o/${n.id}"><span class="node-ic ${n.kind} mini">${nodeGlyph(n)}</span>${esc(jobRole(x))} · <b>${esc(n.name)}</b>${x.days ? ` <i>${esc(x.days)}</i>` : ''}${jobState(x) ? `<i>${jobState(x)}</i>` : ''}</a>`; }).join('')}
       ${cur.length > 2 ? `<span class="tiny muted">и ещё ${cur.length - 2}</span>` : ''}</div>`;
   }
 
@@ -2122,7 +2124,7 @@
         : `<div style="margin-top:12px">${addBtn}</div>`;
     }
     const row = (x) => { const n = nodeById(x.node);
-      return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+      return `<div class="person"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
         <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x) + jobDays(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
         ${mine && !x.past && x.accepted !== false ? `<button class="btn ghost xs" data-act="workDays" data-id="${x.id}">${x.days ? 'Дни' : 'Дни приёма'}</button>` : ''}
         ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
@@ -2226,7 +2228,7 @@
     };
     const listHtml = () => (f.q.trim().length < 2 ? '<p class="tiny muted" style="margin:6px 2px">Название, хотя бы две буквы</p>'
       : f.items.map((n) => `<button class="person" data-act="pickNodeFor" data-id="${n.id}" data-name="${esc(n.name)}" style="width:100%;text-align:left">
-          <span class="node-ic ${n.kind}" style="width:34px;height:34px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+          <span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
           <div class="grow"><div class="name ellip">${esc(n.name)}</div><div class="sub ellip">${esc([n.address, n.people ? pl(n.people, 'человек', 'человека', 'человек') + ' отмечены' : ''].filter(Boolean).join(' · ') || NODE_KIND[n.kind])}</div></div></button>`).join('')
         + `<button class="link-row wide" data-act="newNode" data-v="company" style="margin-top:6px">${ic('plus')}<span class="grow"><b>Нет в списке — записать фирму</b><i>${f.items.length ? 'Если нужной среди найденных нет' : 'Такой фирмы в Сарафане ещё нет'}</i></span>${ic('arrow')}</button>`);
     const drawList = () => { const box = $('#sheet .node-find'); if (box) box.innerHTML = listHtml(); };
@@ -2582,7 +2584,7 @@
         <button class="icon-btn" data-act="shareNode" data-id="${n.id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${photoBlock(n, can)}
       <div class="p-head">
-        <div class="node-line ${n.photo ? 'on-photo' : ''}"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
+        <div class="node-line ${n.photo ? 'on-photo' : ''}"><span class="node-ic big ${n.kind} ${n.closed ? 'off' : ''} ${n.photo ? 'lift' : ''}">${nodeGlyph(n)}</span>
           <span class="who">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</span></div>
         <h1 class="h1" style="margin-top:-6px">${esc(n.name)}</h1>
         ${n.closed ? `<div class="warn">${ic('alert')}<div>Закрылось или переехало${n.closedBy ? ' — отметил ' + esc(full(n.closedBy)) : ''}. Рекомендации оставили: они часть истории.</div></div>` : ''}
@@ -2636,6 +2638,9 @@
         <label class="link-row wide" style="cursor:pointer">${ic('cam')}
           <span class="grow"><b>${n.photo ? 'Заменить снимок' : 'Добавить снимок'}</b><i>Знакомые узнают место с первого взгляда</i></span>
           <input type="file" accept="image/*" id="nodephoto2" data-node="${n.id}" hidden></label>
+        ${canCard(n) || n.by === S.me ? `<label class="link-row wide" style="cursor:pointer">${n.logo ? `<span class="node-ic" style="width:22px;height:22px;border-radius:6px">${nodeGlyph(n)}</span>` : ic('house')}
+          <span class="grow"><b>${n.logo ? 'Заменить логотип' : 'Добавить логотип'}</b><i>Встанет кружком вместо значка — в списках, облаке и карточках в чатах</i></span>
+          <input type="file" accept="image/*" id="nodelogo" data-node="${n.id}" hidden></label>` : ''}
         <button class="link-row wide" data-act="closeNode" data-id="${n.id}" data-v="${n.closed ? '' : '1'}">${ic('alert')}
           <span class="grow"><b>${n.closed ? 'Снова работает' : 'Закрылось или переехало'}</b><i>${n.closed ? 'Уберём отметку, карточка снова обычная' : 'Знакомые не поедут зря. Рекомендации останутся'}</i></span></button>`,
     });
@@ -3689,6 +3694,9 @@
     $('#sheet .body').innerHTML = SH.render();
     p.scrollTop = st;
     syncForm();
+    const nl = $('#nodelogo', $('#sheet'));
+    if (nl) nl.onchange = async () => { const file = nl.files && nl.files[0]; const id = nl.dataset.node; closeSheet();
+      if (!file) return; toast('Загружаем…'); try { await window.API.upload('/nodes/logo', file, { node: id }); await refresh(); toast('Логотип поставили'); } catch (e) { toast(e.message); } };
     const np2 = $('#nodephoto2', $('#sheet'));
     if (np2) np2.onchange = () => { const file = np2.files && np2.files[0]; const id = np2.dataset.node; closeSheet(); uploadPlacePhoto(file, id); };
   }

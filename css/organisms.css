@@ -368,6 +368,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 /* Места и фирмы: значок вместо портрета */
 .node-ic { width: 46px; height: 46px; border-radius: var(--r-md); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); }
 .node-ic svg { width: 22px; height: 22px; }
+.node-ic > img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+.node-ic:has(> img) { background: #fff; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
 /* Место — синяя булавка, фирма — сиреневый дом: вид узла виден по цвету и по знаку */
 .node-ic.company { background: linear-gradient(170deg, #f1ecff, #e4dbff); color: #6b4fd0; }
 .node-ic.big { width: 64px; height: 64px; border-radius: var(--r-lg); }

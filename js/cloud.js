@@ -465,6 +465,23 @@ window.Cloud = function (canvas, opts) {
     ctx.lineWidth = 1;
     ctx.stroke();
 
+    // есть логотип — он в кружке вместо значка (правка 25.09)
+    const logo = n.photo ? imgs[n.photo] : null;
+    if (logo) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logo, n.x - r, n.y - r, r * 2, r * 2);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = c.line;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      return;
+    }
+
     // значок рисуем в своей системе координат: 24×24 масштабируем под узел
     const k = (r * 1.32) / 24;
     ctx.save();
