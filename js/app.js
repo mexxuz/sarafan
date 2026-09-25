@@ -164,7 +164,7 @@
   const founderAv = (id, size, ring = '') => (isFounder(id)
     ? `<span class="founder-av">${av(id, size, 'founder')}</span>`
     : av(id, size, ring));
-  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Основатель, разработчик и просто хороший человек</div>' + otherProject : '');
+  const founderTag = (id) => (isFounder(id) ? '<div class="founder-tag">Создатель Сарафана и просто хороший человек</div>' + otherProject : '');
   // Второй проект создателя — одной строкой у него в карточке: кто зашёл узнать, кто он, заодно узнает и это
   const otherProject = '<div class="vz-line"><span class="vz-note">Ещё один мой проект:</span><button class="vz-pill" data-act="openTg" data-u="vzaimnodatingbot" aria-label="Взаимно — знакомства в Ташкенте, второй проект создателя">'
     + '<svg viewBox="0 0 64 44" aria-hidden="true"><path stroke="#8b45e8" d="M32 12C30 7.5 26.5 5 22.5 5C16.5 5 12.5 10 13.5 17C15 26.5 25.5 33.5 36 41"/>'
