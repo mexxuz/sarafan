@@ -858,4 +858,10 @@ body.viewing-as #app { padding-top: 48px; }
 .starter-top .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
 .starter-top .step3 { background: rgba(255, 255, 255, .78); box-shadow: 0 1px 0 rgba(23, 43, 77, .04), 0 6px 16px rgba(23, 43, 77, .06); }
 .starter-top .step3.done { background: rgba(255, 255, 255, .5); box-shadow: none; }
-.starter-top + .cloud-box, .starter-top + .card + .cloud-box { margin-top: 0; }
+/* сеть — фоном под шапкой и шагами, поиск ложится на её нижний край; на виду остаётся ~40% экрана */
+.starter-top + .cloud-box, .starter-top + .card + .cloud-box {
+  margin-top: -150px; height: calc(40vh + 150px); min-height: 380px; max-height: 560px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 82%, transparent 100%);
+}
+.starter-top ~ .home-find { position: relative; z-index: 1; margin-top: -52px; }
