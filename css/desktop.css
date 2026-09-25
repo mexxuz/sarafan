@@ -19,14 +19,14 @@
     left: calc(var(--col) - 208px); right: auto; top: 26px; bottom: auto; margin: 0;
     width: 188px; height: auto; max-width: none; flex-direction: column;
     align-items: stretch; justify-content: flex-start; gap: 2px;
-    padding: var(--s-3); border-radius: 20px;
+    padding: var(--s-3); border-radius: var(--r-lg);
   }
   .nav.hide { transform: translateX(-120%); }
   .tg-full .nav { top: calc(26px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)); }
   .nav .pill { display: none; }
   .nav a {
     flex: none; flex-direction: row; justify-content: flex-start; gap: 11px;
-    height: 42px; padding: 0 12px; border-radius: 12px; color: var(--ink-2);
+    height: 42px; padding: 0 12px; border-radius: var(--r-sm); color: var(--ink-2);
     transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
   }
   .nav a span { max-height: none; opacity: 1; font: 600 var(--fs-xs)/1 var(--t); }
@@ -38,7 +38,7 @@
 
   /* «Спросить» — главное действие, отдельной кнопкой */
   .nav a.ask {
-    order: -1; margin-bottom: 6px; height: 46px; border-radius: 14px;
+    order: -1; margin-bottom: 6px; height: 46px; border-radius: var(--r-md);
     background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue);
   }
   .nav a.ask span { display: block; }

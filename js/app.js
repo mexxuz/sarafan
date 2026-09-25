@@ -1008,10 +1008,10 @@
       ${myList()}
       ${near2.length ? `<div class="sec-title"><h2 class="h2">Кого советуют ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Их рекомендуют знакомые и знакомые знакомых</p>
-      <div class="rail-x">${near2.map((r, i) => resultCard(r, i === 0)).join('')}</div>` : ''}
+      <div class="rail-x">${near2.map((r) => resultCard(r, false)).join('')}</div>` : ''}
       ${((vouched) => (vouched.length ? `<div class="sec-title"><h2 class="h2">Куда ходят ваши</h2><a class="link" href="#/search">Все</a></div>
       <p class="sec-note">Места и фирмы, которые советуют знакомые</p>
-      <div class="rail-x">${vouched.slice(0, 6).map((n, i) => nodeCard(n, i === 0)).join('')}</div>` : ''))(
+      <div class="rail-x">${vouched.slice(0, 6).map((n) => nodeCard(n, false)).join('')}</div>` : ''))(
         // «проверенные» — значит, кто-то рекомендовал; просто записанные места сюда не попадают (правка 26.09)
         nodesNear().filter((n) => nodeRecs(n).length))}
       ${savedList()}

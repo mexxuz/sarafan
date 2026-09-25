@@ -34,7 +34,7 @@
 .av-stack { display: flex; }
 .av-stack .av { box-shadow: 0 0 0 2px var(--paper); }
 .av-stack .av + .av { margin-left: -10px; }
-.more-n { width: 26px; height: 26px; border-radius: 50%; background: var(--grad-ink); color: #fff; font: 700 10px/26px var(--t); text-align: center; margin-left: -10px; box-shadow: 0 0 0 2px var(--paper); position: relative; }
+.more-n { width: 26px; height: 26px; border-radius: 50%; background: var(--grad-ink); color: #fff; font: 700 11px/26px var(--t); text-align: center; margin-left: -10px; box-shadow: 0 0 0 2px var(--paper); position: relative; }
 
 /* Нить доверия строкой: Вы — Сергей — Рустам */
 .stitch { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); font-size: var(--fs-xs); color: var(--ink-2); }
@@ -71,7 +71,7 @@
 
 /* Шкала репутации и предупреждение */
 .bar-meter { height: 4px; border-radius: 2px; background: var(--mist-2); overflow: hidden; margin-top: var(--s-2); display: flex; gap: 2px; }
-.bar-meter i { display: block; height: 100%; background: linear-gradient(90deg, #5a9bff, #2f7bff); border-radius: 2px; }
+.bar-meter i { display: block; height: 100%; background: linear-gradient(90deg, #5a9bff, var(--blue)); border-radius: 2px; }
 .bar-meter i.grp { background: var(--warn); opacity: .6; }
 .warn { display: flex; gap: var(--s-2); align-items: flex-start; background: var(--warn-soft); color: var(--warn); border-radius: var(--r-sm); padding: var(--s-2) var(--s-3); font-size: var(--fs-xs); margin-top: var(--s-2); }
 .warn svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
