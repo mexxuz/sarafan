@@ -368,6 +368,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 /* Места и фирмы: значок вместо портрета */
 .node-ic { width: 46px; height: 46px; border-radius: var(--r-md); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); }
 .node-ic svg { width: 22px; height: 22px; }
+/* логотип никогда не вылезает из своего значка */
+.nglyph { width: 100%; height: 100%; max-width: 64px; max-height: 64px; }
 .node-ic > img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .node-ic:has(> img) { background: #fff; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
 /* Место — синяя булавка, фирма — сиреневый дом: вид узла виден по цвету и по знаку */
@@ -506,7 +508,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .node-photo.blank span { font-size: var(--fs-xxs); color: var(--ink-3); max-width: 260px; }
 @media (hover: hover) { .node-photo.blank:hover { background: var(--mist-2); } }
 .node-cover { margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) var(--s-3); height: 104px; overflow: hidden; border-radius: var(--r-lg) var(--r-lg) 0 0; }
-.node-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.node-cover img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }   /* верх картинки не срезаем — как везде */
 
 /* Метка вида в карточке: та же таблетка, что была со словом, но со знаком */
 .tag.sign { width: 28px; height: 28px; padding: 0; border-radius: 50%; justify-content: center; flex: none; }

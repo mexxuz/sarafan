@@ -1812,7 +1812,7 @@
     return `${head ? `<b class="svc-head">${esc(head)}</b>` : ''}<span class="svc-chips">${show.map((x) => `<span>${esc(x)}</span>`).join('')}${items.length > show.length ? `<span class="more">ещё ${items.length - show.length}</span>` : ''}</span>`;
   }
   // Значок места: логотип, если его поставили, иначе булавка или домик (правка 25.09)
-  const nodeGlyph = (n) => (n && n.logo ? `<img src="${esc(srvUrl(n.logo))}" alt="" loading="lazy">` : ic(n && n.kind === 'company' ? 'house' : 'pin'));
+  const nodeGlyph = (n) => (n && n.logo ? `<img class="nglyph" src="${esc(srvUrl(n.logo))}" alt="" loading="lazy">` : ic(n && n.kind === 'company' ? 'house' : 'pin'));
   // Сведения о месте одним блоком: что делают (главное и плашки), где, часы, цены, ссылка, к кому подходить.
   // Одинаково в быстрой карточке и на полной странице; на странице — без обрезки (правка 25.09)
   function nodeInfoHtml(n, whole) {
@@ -1972,7 +1972,7 @@
         <div class="grow"><div class="name two">${esc(n.name)}</div>
           <div class="job ellip">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</div></div>
         ${n.closed ? '<span class="tag warm">закрылось</span>'
-      : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${nodeGlyph(n)}</span>`}</div>
+      : `<span class="tag sign ${n.kind} ${n.photo ? 'on-cover' : ''}" title="${NODE_KIND[n.kind]}" aria-label="${NODE_KIND[n.kind]}">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>`}</div>
       <div class="nums">${recs.length ? `${pl(recs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} · ${pl((n.facts || []).length, 'уточнение', 'уточнения', 'уточнений')}` : (n.facts || []).length ? 'пока без рекомендаций' : 'пока только запись'}</div>
       ${best ? `<p class="quote">«${esc(best.text)}»</p><div class="by ellip">${esc(full(best.from))}</div>`
     : service ? `<p class="quote plain">${esc(service.text)}</p><div class="by ellip">${service.official ? 'от владельца' : esc(full(service.from))}</div>`
