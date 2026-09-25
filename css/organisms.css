@@ -908,3 +908,10 @@ body.viewing-as #app { padding-top: 48px; }
 .col-explain p { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
 .col-explain b { color: var(--ink); }
 .chip svg { width: 14px; height: 14px; }
+
+/* Подборка, где человек уже есть: галочка, при наведении — крестик «убрать» */
+.col-in { background: var(--blue-soft); }
+.col-mark { position: relative; width: 20px; height: 20px; flex: none; color: var(--blue); }
+.col-mark svg { position: absolute; inset: 0; width: 20px; height: 20px; transition: opacity var(--fast) var(--ease); }
+.col-mark svg + svg { opacity: 0; color: var(--bad, #e5484d); }
+@media (hover: hover) { .col-in:hover .col-mark svg:first-child { opacity: 0; } .col-in:hover .col-mark svg + svg { opacity: 1; } }
