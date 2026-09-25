@@ -1647,7 +1647,7 @@
           <div class="small muted" style="margin-top:4px">${w.username ? '@' + esc(w.username) + ' · ' : ''}ещё не в Сарафане</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
-        <label class="field"><span>Приветствие — встанет в само приглашение, вашими словами</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
+        <label class="field"><span>Приветствие — уйдёт ему в Telegram вместе с приглашением</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
