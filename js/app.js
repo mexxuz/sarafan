@@ -1763,6 +1763,8 @@
     if (!wrap) return;
     const tall = img.naturalHeight > img.naturalWidth * 1.2;
     wrap.classList.toggle('tall', tall);
+    // широкая и низкая (баннер, логотип с надписью) — название ставим под ней, а не поверх текста картинки
+    if (img.naturalWidth > img.naturalHeight * 1.5) { wrap.classList.add('wide'); return; }
     wrap.classList.add('ready');   // картинка есть — только теперь название заходит на её низ
     // яркость читаем по отдельной копии картинки: показ самой обложки от этого не зависит
     const probe = new Image();
@@ -1813,7 +1815,7 @@
     const face = (uid) => `<span class="stack-face">${av(uid, 'xs')}</span>`;
     openSheet({
       F: {},
-      render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt="" onload="sarafanCover(this)"></div>` : ''}
+      render: () => `${n.photo ? `<div class="peek-cover" style="--cover:url('${esc(srvUrl(n.photo))}')"><img src="${esc(srvUrl(n.photo))}" alt="" onload="sarafanCover(this)"></div>` : `<div class="peek-cover blank ${n.kind}">${ic(n.kind === 'company' ? 'house' : 'pin')}</div>`}
         <div class="s-head"><span class="node-ic ${n.kind}" style="width:44px;height:44px">${ic(n.kind === 'company' ? 'house' : 'pin')}</span>
           <div class="grow"><h2 class="h2">${esc(n.name)}</h2><div class="small muted" style="margin-top:4px">${NODE_KIND[n.kind]}${n.cat ? ' · ' + esc(cat(n.cat).name) : ''}</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
@@ -2083,7 +2085,7 @@
     const mine = uid === S.me;
     const cur = all.filter((x) => !x.past && (!x.waiting || mine));
     const past = all.filter((x) => x.past && (!x.hidden || mine));
-    const addBtn = `<button class="btn sm ghost" style="margin-top:10px" data-act="pickNode" data-id="${uid}">${ic('house')}${mine ? 'Отметиться в фирме' : 'Указать, где работает'}</button>`;
+    const addBtn = `<button class="btn sm ghost block" style="margin-top:10px" data-act="pickNode" data-id="${uid}">${ic('house')}${all.length ? 'Добавить ещё место работы' : mine ? 'Отметиться в фирме' : 'Указать, где работает'}</button>`;
     if (!cur.length && !past.length) {
       return mine ? `<div class="sec-title"><h2 class="h2">Где вы работаете</h2></div><div class="card"><p class="small muted" style="margin:0">Найдите свою фирму по названию — знакомые выйдут через вас на неё и наоборот</p>${addBtn}</div>`
         : `<div style="margin-top:12px">${addBtn}</div>`;
@@ -2113,7 +2115,7 @@
     const iOwn = cur.some((x) => x.user === S.me && x.role === 'owner' && x.confirmed);
     const row = (x) => `<div class="person"><a class="grow row" href="#/p/${x.user}" style="min-width:0">${av(x.user, 's')}
         <div class="grow"><div class="name ellip">${esc(full(x.user))}</div>
-        <div class="sub ellip">${x.role === 'owner' ? 'Владелец' + (x.title ? ' · ' + esc(x.title) : '') : esc(jobRole(x))}${esc(jobDays(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
+        <div class="sub ellip">${x.role === 'owner' ? esc(cap1(x.title) || 'Владелец') + (x.title && !/владел/i.test(x.title) ? ' · ведёт карточку' : '') : esc(jobRole(x))}${esc(jobDays(x))}${jobState(x) ? ' · ' + jobState(x) : ''}${recommended(x.user) && x.user !== S.me ? ' · его рекомендуют' : ''}</div></div></a>
         ${x.canConfirm ? `<button class="btn xs" data-act="workConfirm" data-id="${x.id}">Подтвердить</button>` : ''}
         ${iOwn && x.user !== S.me ? `<button class="icon-btn" style="width:30px;height:30px;box-shadow:none;background:var(--card-2);margin-left:6px" data-act="workLeave" data-id="${x.id}" data-name="${esc(full(x.user))}" aria-label="Убрать из фирмы">${ic('x')}</button>` : ''}</div>`;
     return `<div class="sec-title"><h2 class="h2">Люди</h2>${cur.length + waitHere.length ? `<span class="tag">${cur.length + others + waitHere.length}</span>` : ''}</div>
@@ -2127,7 +2129,7 @@
         <div class="btn-row" style="margin-top:12px">${mine ? '' : `<button class="btn sm" data-act="workJoin" data-id="${n.id}" data-v="staff">${ic('user')}Я здесь работаю</button>`}
           <button class="btn sm ghost" data-act="proposePerson" data-id="${n.id}">${ic('plus')}Добавить</button></div>
         ${mine || hasOwner ? '' : `<button class="link-row wide owner-ask" data-act="workJoin" data-id="${n.id}" data-v="owner">${ic('house')}
-          <span class="grow"><b>${n.kind === 'company' ? 'Это ваша фирма?' : 'Это ваше место?'}</b><i>Отметьтесь владельцем — сами поправите часы, цены и фото, а знакомые будут знать, к кому обращаться</i></span>${ic('arrow')}</button>`}</div>`;
+          <span class="grow"><b>Отвечаете за ${n.kind === 'company' ? 'эту фирму' : 'это место'}?</b><i>Владелец, управляющий, менеджер — отметьтесь, сами поправите часы, цены и фото, а знакомые будут знать, к кому обращаться</i></span>${ic('arrow')}</button>`}</div>`;
   }
 
   // Отметить другого человека в фирме: выбираем из знакомых по имени
@@ -2307,23 +2309,25 @@
     setTimeout(() => { const inp = $('#fixfile'); if (inp) inp.onchange = () => { f.file = inp.files && inp.files[0]; drawSheet(); setTimeout(() => { const i2 = $('#fixfile'); if (i2) i2.onchange = inp.onchange; }, 30); }; }, 60);
   }
 
+  const OWNER_TITLES = ['владелец', 'управляющий', 'менеджер', 'арт-директор'];
   function sheetWorkJoin(nid, role) {
     const n = nodeById(nid);
     if (!n) return;
     const hasOwner = nodePeople(nid).some((x) => !x.past && x.role === 'owner' && x.confirmed);
-    const f = { role: role === 'owner' && !hasOwner ? 'owner' : 'staff', title: '' };
+    const f = { role: role === 'owner' && !hasOwner ? 'owner' : 'staff', title: role === 'owner' && !hasOwner ? 'владелец' : '' };
     openSheet({
       F: f,
       valid: () => true,
-      render: () => `${sheetHead(null, esc(n.name), f.role === 'owner' ? 'Это ваша фирма' : 'Вы здесь работаете')}
+      render: () => `${sheetHead(null, esc(n.name), f.role === 'owner' ? `Вы отвечаете за ${n.kind === 'company' ? 'фирму' : 'место'}` : 'Вы здесь работаете')}
         <div class="field" style="margin-top:0"><span>Кто вы здесь</span><div class="chips">
           <button class="chip ${f.role === 'staff' ? 'on' : ''}" data-act="set" data-k="role" data-v="staff">Работаю здесь</button>
           <button class="chip ${f.role === 'promoter' ? 'on' : ''}" data-act="set" data-k="role" data-v="promoter">Делаю здесь мероприятия</button>
-          ${hasOwner ? '' : `<button class="chip ${f.role === 'owner' ? 'on' : ''}" data-act="set" data-k="role" data-v="owner">Владелец</button>`}</div></div>
-        <label class="field"><span>${f.role === 'owner' ? 'Должность, если хотите' : f.role === 'promoter' ? 'Что делаете' : 'Кем'}</span><input class="input" data-bind="title" maxlength="60"
-          placeholder="${f.role === 'owner' ? 'директор, основатель' : f.role === 'promoter' ? 'вечеринки по пятницам, арт-директор' : 'мастер, врач, администратор'}" value="${esc(f.title)}"></label>
+          ${hasOwner ? '' : `<button class="chip ${f.role === 'owner' ? 'on' : ''}" data-act="set" data-k="role" data-v="owner">Отвечаю за ${n.kind === 'company' ? 'фирму' : 'место'}</button>`}</div></div>
+        ${f.role === 'owner' ? `<div class="chips" style="margin-top:-4px">${OWNER_TITLES.map((t) => `<button class="chip ${f.title === t ? 'on' : ''}" data-act="set" data-k="title" data-v="${t}">${cap1(t)}</button>`).join('')}</div>` : ''}
+        <label class="field"><span>${f.role === 'owner' ? 'Кто вы — или впишите своё' : f.role === 'promoter' ? 'Что делаете' : 'Кем'}</span><input class="input" data-bind="title" maxlength="60"
+          placeholder="${f.role === 'owner' ? 'управляющий, арт-директор' : f.role === 'promoter' ? 'вечеринки по пятницам, арт-директор' : 'мастер, врач, администратор'}" value="${esc(f.title)}"></label>
         <p class="why">${ic('spark')}${f.role === 'owner'
-    ? 'Подтвердит ваш знакомый или тот, кто записал фирму. После этого вы сможете подтверждать сотрудников и править карточку'
+    ? 'Владелец, управляющий, менеджер — кто отвечает, тот и ведёт карточку. Подтвердит ваш знакомый или тот, кто записал. После этого вы сможете подтверждать сотрудников и править карточку'
     : hasOwner ? 'Подтвердит владелец. До этого отметку видите только вы и он'
       : 'Видно сразу, с пометкой «не подтверждено», — пока не подтвердит коллега или владелец'}</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitWork" data-submit>Отметиться</button></div>`,

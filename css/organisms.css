@@ -985,6 +985,15 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .s-head.on-dark .small { color: rgba(255, 255, 255, .88) !important; text-shadow: 0 1px 8px rgba(0, 0, 0, .5); }
 .s-head.on-dark .icon-btn { background: rgba(255, 255, 255, .22) !important; color: #fff; }
 
+/* без снимка — спокойная подложка с крупным значком, чтобы карточки мест и фирм выглядели одинаково */
+.peek-cover.blank { height: 132px; justify-content: center; align-items: center; margin-bottom: -40px;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--blue) 16%, transparent), transparent 70%); }
+.peek-cover.blank.company { background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, #7c5cff 16%, transparent), transparent 70%); }
+.peek-cover.blank::after { display: none; }
+.peek-cover.blank > svg { width: 56px; height: 56px; margin-top: -24px; color: var(--blue); opacity: .22; }
+.peek-cover.blank.company > svg { color: #7c5cff; }
+.peek-cover.wide { margin-bottom: 14px; -webkit-mask-image: none; mask-image: none; }
+.peek-cover.wide::after { display: none; }
 .peek-cover.ready { margin-bottom: -66px; }   /* заходим под название, только когда картинка на месте */
 /* тёмная уходит глубже — под первую плашку, и растворяется уже под ней, без видимой границы */
 .peek-cover.dark.ready { margin-bottom: -150px; }
