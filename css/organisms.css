@@ -967,7 +967,7 @@ body.viewing-as #app { padding-top: 48px; }
 .peek-row .svc-chips .more { background: transparent; box-shadow: none; color: var(--ink-3); }
 /* значок — у первой строки, а не посередине многострочного текста; стрелка остаётся по центру */
 .peek-row { align-items: flex-start; }
-.peek-row > svg:first-child { margin-top: 1px; }
+.peek-row > svg:first-child { margin-top: 3px; }   /* по середине строчных букв первой строки */
 .peek-row > svg:last-child:not(:first-child) { align-self: center; }   /* стрелка — у правого края строки */
 
 /* ——— Общее правило для всех строк-кнопок (правка 25.09) ———
