@@ -1555,7 +1555,7 @@
       if (!el) return;
       if (cloud) cloud.stop();
       if (id === 'onbcloud') {   // регистрация: показательная сеть — ощутить размах, трогать нечего
-        cloud = window.Cloud(el, { onPick: () => {}, centerY: 0.55, safeTop: 60, sky: true });
+        cloud = window.Cloud(el, { onPick: () => {}, centerY: 0.5, sky: true });
         cloud.setData(demoCloudData());
         cloud.start();
         const c0 = cloud;   // на широком экране ширина устанавливается чуть позже — пересчитываем, чтобы сеть встала по центру
@@ -3290,8 +3290,8 @@
     // Регистрация — одна короткая страница (правка 25.09 «максимально простой»): живая сеть, как на главной,
     // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
     return `<div class="onb">
-      <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       <div class="cloud-box onb-cloud"><canvas id="onbcloud" aria-label="Ваша сеть"></canvas></div>
+      <div class="logo onb-logo">${logoMark}сарафан</div>
       <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : inviter ? 'Вас позвали<br>в Сарафан' : 'Добро пожаловать<br>в Сарафан'}</h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card onb-card">
