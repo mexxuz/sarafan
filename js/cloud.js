@@ -576,6 +576,7 @@ window.Cloud = function (canvas, opts) {
   }
 
   // ——— касания ———
+  const TAP = 10;   // на сколько точек палец может сдвинуться, чтобы это всё ещё было нажатием
   const at = (e) => {
     const b = canvas.getBoundingClientRect();
     const sx = e.clientX - b.left, sy = e.clientY - b.top;
@@ -602,7 +603,7 @@ window.Cloud = function (canvas, opts) {
     held = find(p);
     moved = 0;
     cam.vx = cam.vy = 0;
-    pointer = { x: p.x, y: p.y, sx: p.sx, sy: p.sy, down: true, id: e.pointerId };
+    pointer = { x: p.x, y: p.y, sx: p.sx, sy: p.sy, down: true, id: e.pointerId, x0: p.sx, y0: p.sy };
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* и без захвата работает */ }
   });
   canvas.addEventListener('pointermove', (e) => {
@@ -619,8 +620,12 @@ window.Cloud = function (canvas, opts) {
       return;
     }
 
+    // касание пальцем всегда чуть дрожит: считаем, насколько ушли от точки нажатия на экране, а не сумму всех дрожаний,
+    // и пока ушли меньше 10 точек — это ещё нажатие, узел не тащим (правка 26.09: «приходится удерживать аватарку»)
+    const off = pointer.down ? Math.hypot(p.sx - pointer.x0, p.sy - pointer.y0) : 0;
+    if (pointer.down && off < TAP) return;
     if (pointer.down && held) {                      // тянем узел
-      moved += Math.hypot(p.x - pointer.x, p.y - pointer.y);
+      moved = Math.max(moved, off);
       held.x = p.x; held.y = p.y; held.vx = held.vy = 0;
       pointer.x = p.x; pointer.y = p.y;
       if (calm) draw();
@@ -628,7 +633,7 @@ window.Cloud = function (canvas, opts) {
     }
     if (pointer.down) {                              // тянем всё полотно
       const dx = p.sx - pointer.sx, dy = p.sy - pointer.sy;
-      moved += Math.hypot(dx, dy);
+      moved = Math.max(moved, off);
       cam.x += dx; cam.y += dy;
       cam.vx = dx; cam.vy = dy;
       pointer.sx = p.sx; pointer.sy = p.sy;
@@ -644,7 +649,7 @@ window.Cloud = function (canvas, opts) {
   const release = (e) => {
     if (e && e.pointerId != null) touches.delete(e.pointerId);
     if (touches.size < 2) pinch = 0;
-    if (held && moved < 6 && opts.onPick) opts.onPick(held);
+    if (held && moved < TAP && opts.onPick) opts.onPick(held);
     if (held) settleUntil = frames + 90;   // отпустили точку — соседи ещё немного укладываются и снова замирают
     held = null; pointer.down = false;
     canvas.style.cursor = 'grab';
@@ -653,7 +658,8 @@ window.Cloud = function (canvas, opts) {
     }
   };
   canvas.addEventListener('pointerup', release);
-  canvas.addEventListener('pointercancel', release);
+  // браузер забрал жест себе (прокрутка страницы) — это не нажатие, профиль не открываем
+  canvas.addEventListener('pointercancel', (e) => { held = null; release(e); });
   canvas.addEventListener('pointerleave', () => { hover = null; });
 
   function zoomAt(point, factor) {
