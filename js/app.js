@@ -1817,9 +1817,12 @@
   const nodesAll = () => Object.values(S.nodes || {});
   // мои записи и те, что пришли от знакомых
   const myNodes = () => nodesAll().filter((n) => n.by === S.me || (n.recs || []).some((r) => r.from === S.me));
-  const nodesOf = (id) => nodesAll().filter((n) => (n.recs || []).some((r) => r.from === id && !r.private));
+  // своё место — то, что человек советует или сам завёл: завёл без отзыва — место всё равно его
+  // (правка 25.09: Слава завёл Q bar без текста, и его нигде не было видно)
+  const nodesOf = (id) => nodesAll().filter((n) => n.by === id || (n.recs || []).some((r) => r.from === id && !r.private));
+  const nearBy = (id) => id !== undefined && G.dist[id] !== undefined && G.dist[id] <= 2;
   const nodesNear = () => nodesAll()
-    .filter((n) => (n.recs || []).some((r) => !r.private && G.dist[r.from] !== undefined && G.dist[r.from] <= 2))
+    .filter((n) => nearBy(n.by) || (n.recs || []).some((r) => !r.private && nearBy(r.from)))
     .sort((a, b) => nodeNear(b).length - nodeNear(a).length || (b.facts || []).length - (a.facts || []).length);
   const nodeById = (id) => (S.nodes || {})[id];
   const nodeRecs = (n) => (n.recs || []).filter((r) => !r.private || r.from === S.me);
