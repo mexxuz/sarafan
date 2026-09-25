@@ -1042,3 +1042,10 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .price-list span { flex: 1; min-width: 0; color: var(--ink-2); }
 .price-list b { flex: none; font-weight: 700; color: var(--ink); text-align: right; max-width: 55%; }
 .price-list .wide span { color: var(--ink-3); font-size: var(--fs-xs); }
+
+/* Своя аватарка в профиле нажимается, как в Telegram: камера в углу — сменить фото (правка 25.09) */
+.av-edit { position: relative; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; flex: none; align-self: flex-start; }
+.av-cam { position: absolute; right: 0; bottom: 2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--blue); color: #fff; box-shadow: 0 0 0 3px var(--bg, #f5f8fc), 0 2px 6px rgba(20, 40, 80, .2); }
+.av-cam svg { width: 16px; height: 16px; }
+@media (hover: hover) { .av-edit:hover .av-cam { filter: brightness(1.08); } }

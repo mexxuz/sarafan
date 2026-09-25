@@ -3357,8 +3357,8 @@
     const rs = G.recommenderStats(S.me);
     const thanks = S.requests.flatMap((q) => q.answers).filter((a) => a.from === S.me && a.thanked).length;
     const indep = G.groupsOf([...new Set(inRecs.map((r) => r.from))]).length;
-    return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="btn sm" data-act="editMe">Изменить</button></div>
-      <div class="p-head">${founderAv(S.me, 'xl')}<div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
+    return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="icon-btn" data-act="shareMe" aria-label="Поделиться своей карточкой">${ic('share')}</button><button class="btn sm primary" data-act="editMe">${ic('edit')}Изменить</button></div>
+      <div class="p-head"><button class="av-edit" data-act="avatarMenu" aria-label="Сменить фото">${founderAv(S.me, 'xl')}<span class="av-cam">${ic('cam')}</span></button><div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       <div class="stat-grid" style="margin-top:18px"><div class="stat"><b>${inRecs.length}</b><span>${plural(inRecs.length, 'рекомендация', 'рекомендации', 'рекомендаций')} вам</span></div><div class="stat"><b>${indep}</b><span>${plural(indep, 'независимый источник', 'независимых источника', 'независимых источников')}</span></div><div class="stat"><b>${myContacts().length}</b><span>${plural(myContacts().length, 'контакт', 'контакта', 'контактов')}</span></div></div>
       ${me.role !== 'client' ? `<div class="card" style="margin-top:18px"><div class="eyebrow">рекомендации клиентов</div>
         <h2 class="h2" style="margin:6px 0 6px">Попросите довольных клиентов</h2>
@@ -4350,6 +4350,29 @@
   }
 
   // Снимок места: показывает, куда человек придёт, лучше любого описания
+  // Аватарка как в Telegram: нажали — выбрали снимок; тут же живая аватарка и возврат фото из Telegram (правка 25.09)
+  function sheetAvatar() {
+    const own = String(U(S.me).photo || '').includes('/media/userphotos/');
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'Фото профиля', 'Его видят знакомые в облаке, поиске и карточках')}
+        <label class="link-row wide" style="cursor:pointer;margin-top:0">${ic('cam')}<span class="grow"><b>${U(S.me).photo ? 'Выбрать другое фото' : 'Выбрать фото'}</b><i>Из галереи или снять сейчас</i></span>
+          <input type="file" id="avphoto" accept="image/*" hidden></label>
+        <label class="link-row wide" style="cursor:pointer">${ic('spark')}<span class="grow"><b>${U(S.me).video ? 'Заменить живую аватарку' : 'Живая аватарка'}</b><i>Короткий ролик вместо фото — оживает в профиле</i></span>
+          <input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
+        ${U(S.me).video ? `<button class="link-row wide" data-act="dropVideo">${ic('x')}<span class="grow"><b>Убрать живую аватарку</b><i>Останется фото</i></span></button>` : ''}
+        ${own ? `<button class="link-row wide" data-act="dropPhoto">${ic('back')}<span class="grow"><b>Вернуть фото из Telegram</b><i>Подтянется при следующем входе</i></span></button>` : ''}`,
+    });
+    wireVideoInput();
+    setTimeout(() => { const inp = $('#avphoto'); if (inp) inp.onchange = () => uploadPhoto(inp.files && inp.files[0]); }, 60);
+  }
+  async function uploadPhoto(file) {
+    if (!file) return;
+    if (!LIVE) { toast('В демо фото не загружаются'); return; }
+    closeSheet();
+    toast('Загружаем…');
+    try { await window.API.upload('/profile/photo', file, {}); await refresh(); toast('Фото обновили'); } catch (e) { toast(e.message); }
+  }
   async function uploadVideoAvatar(file) {
     if (!file) return;
     if (!LIVE) { toast('В демо ролики не загружаются'); return; }
@@ -4446,6 +4469,11 @@
     recommend: (d) => sheetRecommend(d.id, d.cat),
     submitRec: () => SH.submit(),
     share: (d) => sheetShare(d.id),
+    avatarMenu: () => sheetAvatar(),
+    dropPhoto: async () => { closeSheet(); try { await window.API.post('/profile/photo/delete', {}); await refresh(); toast('Вернули фото из Telegram'); } catch (e) { toast(e.message); } },
+    // своя визитка в любой чат: фото, чем занимаюсь, пара строк о себе, кнопка «Открыть в Сарафане» (правка 25.09)
+    shareMe: () => shareCard('me', S.me, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${S.me}`,
+      `${U(S.me).name} — ${who(S.me)}. Моя карточка в Сарафане`)),
     submitShare: () => SH.submit(),
     tgShare: (d) => shareCard('person', d.id, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}p${d.id}`, `${U(d.id).name} — ${who(d.id)}. Рекомендую, посмотри в Сарафане:`)),
     tgSend: (d) => tgShareLink(d.url, d.text),
