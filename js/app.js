@@ -3282,7 +3282,10 @@
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
     // Уже в сети и открыли регистрацию — это просмотр глазами новичка: поля пустые, сохранять нечего
     const preview = S.onboarded;
-    if (F.name === undefined) { F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
+    if (F.name === undefined) {
+      // имя — из профиля Telegram; если там «….» или одни значки — поле пустое, пусть напишет сам
+      F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name;
+      if (!/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(F.name || '')) F.name = ''; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = F.cats.length ? 'yes' : undefined; }
     const asked = (S.whoisAskedMe || []).filter((x) => U(x));
     // Регистрация — одна короткая страница (правка 25.09 «максимально простой»): живая сеть, как на главной,
     // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
