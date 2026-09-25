@@ -1203,6 +1203,8 @@
     return { nodes, edges };
   }
 
+  // Имя, которое можно показать: в Telegram бывает «….» или одни значки — такое вместо имени не пишем
+  const named = (id) => /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/.test((U(id) || {}).name || '');
   // Показательная сеть для регистрации: вы в центре, тот, кто позвал, — со своим фото,
   // вокруг — люди разных занятий, их знакомые, места и фирмы. Имён нет — только занятия
   function demoCloudData() {
@@ -1216,7 +1218,7 @@
     const nodes = [{ id: 'me', ring: 0, self: true, kind: 'person', r: 21, photo: U(S.me).photo || null, initials: ini(U(S.me).name || 'Вы'), label: 'вы' }];
     const edges = [];
     const ring1 = [];
-    if (inviter) { nodes.push({ id: 'inv', ring: 1, kind: 'person', r: 15, photo: U(inviter).photo || null, initials: ini(U(inviter).name || '?'), label: first(inviter) }); ring1.push('inv'); }
+    if (inviter) { nodes.push({ id: 'inv', ring: 1, kind: 'person', r: 15, photo: U(inviter).photo || null, initials: named(inviter) ? ini(U(inviter).name) : '', label: named(inviter) ? first(inviter) : 'позвал вас' }); ring1.push('inv'); }
     JOBS1.forEach((j, i) => { nodes.push({ id: 'a' + i, ring: 1, kind: 'person', r: 15, photo: null, initials: j[0], label: j }); ring1.push('a' + i); });
     ring1.forEach((id) => edges.push({ a: 'me', b: id, kind: 'know' }));
     JOBS2.forEach((j, i) => {
@@ -1535,6 +1537,8 @@
         cloud = window.Cloud(el, { onPick: () => {}, centerY: 0.55, safeTop: 60, sky: true });
         cloud.setData(demoCloudData());
         cloud.start();
+        const c0 = cloud;   // на широком экране ширина устанавливается чуть позже — пересчитываем, чтобы сеть встала по центру
+        setTimeout(() => { if (cloud === c0) cloud.resize(); }, 350);
         return;
       }
       cloud = window.Cloud(el, { onPick: pickInCloud, centerY: id === 'homecloud' ? 0.56 : 0.5, wheelZoom: id === 'bigcloud',
@@ -3264,11 +3268,11 @@
     return `<div class="onb">
       <div class="top"><div class="logo grow">${logoMark}сарафан</div></div>
       <div class="cloud-box onb-cloud"><canvas id="onbcloud" aria-label="Ваша сеть"></canvas></div>
-      <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : 'Добро пожаловать<br>в Сарафан'}</h1>
+      <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : inviter ? 'Вас позвали<br>в Сарафан' : 'Добро пожаловать<br>в Сарафан'}</h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card">
         <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
-        ${asked.length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)"><b>${esc(asked.map((x) => first(x)).join(', '))}</b> хочет советовать вас знакомым — выберите, чем занимаетесь</div>` : ''}
+        ${asked.length && !preview ? `<div class="note" style="margin-top:14px;color:var(--ink)">${asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет` : 'Вас хотят'} советовать знакомым — выберите, чем занимаетесь</div>` : ''}
         <div class="field"><span>Вас можно советовать знакомым?</span><div class="chips">
           <button class="chip ${F.pro === 'yes' ? 'on' : ''}" data-act="onbPro" data-v="yes">Да</button>
           <button class="chip ${F.pro === 'no' ? 'on' : ''}" data-act="onbPro" data-v="no">Пока нет</button></div></div>
