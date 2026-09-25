@@ -692,7 +692,7 @@
       + (helped >= 3 ? `<span class="tag warm" title="Его советы помогли ${helped} людям">советчик</span>` : '');
     const canThank = author !== S.me && r.to !== S.me && !r.private && LIVE;
     const thank = canThank ? (r.thanked ? `<span class="tiny muted">${ic('check')} Вы сказали спасибо</span>`
-      : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Сходил(а) по совету — спасибо</button>`) : '';
+      : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Обратился(ась) по совету — спасибо</button>`) : '';
     // рекомендация о вас — можно убрать со своей страницы: шутка, чужая сфера. Второе касание — насовсем
     const uncat = r.to === S.me && author !== S.me && LIVE
       ? `<button class="btn ghost xs" data-act="recUncat" data-id="${r.id}" data-v="${r.catOff ? '' : '1'}">${r.catOff ? 'Вернуть сферу' : 'Не моя сфера'}</button>` : '';
