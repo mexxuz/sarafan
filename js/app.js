@@ -3674,7 +3674,7 @@
         <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
         <div class="pro-ask">
           <div class="pro-q">С чего начнёте?</div>
-          <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') + ' — выберите, чем занимаетесь' : 'Знакомые ваших знакомых найдут вас по вашей сфере'}</div>
+          <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') + ' — нажмите «Я специалист»' : 'От этого зависят первые шаги в приложении'}</div>
           <div class="pro-opts">
             ${[['pro', 'seal', 'Я специалист', 'есть клиенты — хочу, чтобы меня советовали дальше'],
       ['start', 'spark', 'Хочу начать своё дело', 'умею что-то — найду первых клиентов через знакомых'],
