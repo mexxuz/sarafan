@@ -928,3 +928,23 @@ body.viewing-as #app { padding-top: 48px; }
 .soc-btn .grow { flex: 1 1 auto; min-width: 0; }   /* текст занимает всё место — стрелка уходит к правому краю, как у адреса */
 .peek-row .soc-ic { width: 20px; height: 20px; flex: none; }
 .peek-row .grow { flex: 1 1 auto; min-width: 0; }   /* стрелка — у правого края строки */
+
+/* ——— Общее правило для всех строк-кнопок (правка 25.09) ———
+   1) текст занимает всё место, стрелка всегда у правого края;
+   2) на компьютере при наведении строка подсвечивается, при нажатии чуть темнеет */
+:where(a, button, label, div)[class] > .grow { flex: 1 1 auto; min-width: 0; }
+:where(.link-row, .peek-row, .soc-btn, .p-fact, .me-item, .sugg, .dir-edit, .profile-ask, .col-in) { transition: background var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
+@media (hover: hover) and (pointer: fine) {
+  a.link-row:hover, button.link-row:not(:disabled):hover, a.soc-btn:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover,
+  .me-item:hover, a.person:hover, button.person:hover, .sugg:hover, .step3:not(:disabled):hover, .pro-opt:not(.on):hover {
+    background: color-mix(in srgb, var(--blue) 7%, var(--card-2, #f1f5fa));
+    cursor: pointer;
+  }
+  a.person:hover, button.person:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 7%, var(--card-2, #f1f5fa)); }
+  a.link-row:hover > svg:last-child, a.soc-btn:hover > svg:last-child, a.peek-row:hover > svg:last-child,
+  button.link-row:not(:disabled):hover > svg:last-child, button.p-fact:hover > svg:last-child, a.person:hover .chev { color: var(--blue); transform: translateX(2px); }
+  :where(.link-row, .soc-btn, .peek-row, .p-fact, .person) > svg:last-child, .person .chev { transition: transform var(--fast) var(--ease), color var(--fast) var(--ease); }
+}
+:where(a.link-row, button.link-row, a.soc-btn, a.peek-row, button.p-fact, a.person, button.person):active { filter: brightness(.97); }
+.onb-card .pro-opt:not(.on):hover { background: rgba(255, 255, 255, .24); }
