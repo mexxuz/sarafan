@@ -623,7 +623,7 @@
 /* Обложка места — от самого верхнего края окна, 16:9, прижата к верху картинки (правка 25.09) */
 /* Обложка места — на всю ширину окна, от самого верха, в своих пропорциях: без полей по бокам
    и без обрезки сверху; совсем высокую картинку подрезаем только снизу (правка 25.09) */
-.peek-cover { position: relative; display: flex; align-items: center; margin: -8px -20px 12px; max-height: 380px; overflow: hidden;   /* углы скругляет само окно */
+.peek-cover { position: relative; display: flex; align-items: center; margin: -8px -20px 12px; max-height: min(380px, 76vw); overflow: hidden;   /* на узком экране — та же часть картинки, что на широком */   /* углы скругляет само окно */
   /* весь низ обложки растворяется в фоне окна — надписи стоят уже на фоне */
   -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 64%, rgba(0,0,0,.6) 78%, rgba(0,0,0,.22) 90%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0, #000 64%, rgba(0,0,0,.6) 78%, rgba(0,0,0,.22) 90%, transparent 100%); }
 /* картинка вписана по ширине и стоит по центру, пропорции не искажаются:
