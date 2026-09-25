@@ -3420,7 +3420,7 @@
       ${chosen.length ? `<div class="chips" style="margin-bottom:8px">${chosen.map((id) => `<span class="chip on">${show(id)}
         <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать">${ic('x')}</button></span>`).join('')}</div>` : ''}
       <input class="input" data-catq="${key}" data-label="${label}" autocomplete="off" maxlength="40"
-        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: врач, юрист, магазин…'}">
+        placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' && chosen.length ? 'Ещё одна — начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: врач, юрист, магазин…'}">
       <div class="cat-sugg"></div></div>`;
   };
 
@@ -3434,7 +3434,9 @@
     const q = input.value.trim();
     const pop = catPopularity();
     let list;
-    if (!q && key === 'cats') {
+    if (!q && key === 'cats' && chosen.length) {
+      list = [];   // сфера уже выбрана — готовый список больше не нужен, только место занимает; ещё одну — печатают
+    } else if (!q && key === 'cats') {
       // своё занятие: не «что частое у знакомых» (в маленькой сети это сферы одного человека),
       // а разные области жизни — врач, юрист, дом, красота, учёба, машина, деньги, еда
       list = START_CATS.map((id) => S.cats.find((c) => c.id === id)).filter((c) => c && !chosen.includes(c.id));
