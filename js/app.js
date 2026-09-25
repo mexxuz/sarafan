@@ -3292,7 +3292,7 @@
       <h1 class="h1" style="text-align:center;font-size:28px;line-height:1.12;margin-top:4px">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас<br>в Сарафан` : inviter ? 'Вас позвали<br>в Сарафан' : 'Добро пожаловать<br>в Сарафан'}</h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card">
-        <label class="field" style="margin-top:0"><span>Как вас зовут</span><input class="input" data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name"></label>
+        <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
         <div class="pro-ask">
           <div class="pro-q">Вас можно советовать знакомым?</div>
           <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> хочет советовать вас` : 'Вас уже хотят советовать') + ' — выберите, чем занимаетесь' : 'Знакомые ваших знакомых найдут вас по вашей сфере'}</div>
