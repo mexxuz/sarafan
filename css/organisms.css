@@ -966,7 +966,8 @@ body.viewing-as #app { padding-top: 48px; }
 .soc-btn i { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .soc-btn > svg:last-child { width: 18px; height: 18px; color: var(--ink-4); flex: none; }
 .soc-btn .grow { flex: 1 1 auto; min-width: 0; }   /* текст занимает всё место — стрелка уходит к правому краю, как у адреса */
-.peek-row .soc-ic { width: 20px; height: 20px; flex: none; }
+.peek-row .soc-ic { width: 18px; height: 18px; flex: none; }
+.peek-info > a.peek-row { border-radius: 0; }   /* строки блока — одним целым, а не отдельными плашками */
 .peek-row .grow { flex: 1 1 auto; min-width: 0; }
 /* длинное — не простынёй: главное строкой, направления плашками; остальное — не длиннее трёх строк */
 .peek-row .clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

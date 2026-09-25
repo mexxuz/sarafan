@@ -621,6 +621,11 @@
     const icon = SOC_ICON[soc[1]] ? `<svg class="soc-ic" viewBox="0 0 24 24" style="color:${soc[3]}" aria-hidden="true"><path fill="currentColor" d="${SOC_ICON[soc[1]]}"/></svg>` : ic('link');
     return { href: url.origin + path, label, icon, soc: soc[2] };
   }
+  // Ссылки одним компактным блоком, как в карточке места: значок, адрес, стрелка — без подписи «сайт» (правка 25.09)
+  const linkRows = (list) => {
+    const rows = list.map(linkInfo).filter(Boolean);
+    return rows.length ? `<div class="peek-info" style="margin-top:6px">${rows.map((L) => `<a class="peek-row" href="${esc(L.href)}" target="_blank" rel="noopener">${L.icon}<span class="grow">${esc(L.label)}</span>${ic('arrow')}</a>`).join('')}</div>` : '';
+  };
   function linkBtn(raw) {
     const href0 = String(raw || '').trim();
     if (!href0) return '';
@@ -669,7 +674,7 @@
         ${sc.story ? `<p class="small" style="margin:0 0 12px;color:var(--ink-2);line-height:1.55">${esc(sc.story).replace(/\n/g, '<br>')}</p>` : ''}
         ${lines(sc.services).length ? `<div class="field" style="margin-top:0"><span>Что делает</span><div class="chips">${lines(sc.services).map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div></div>` : ''}
         ${sc.prices ? `<div class="field"><span>Про деньги</span><p class="small" style="margin:0;color:var(--ink-2)">${esc(sc.prices)}</p></div>` : ''}
-        ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span><div class="soc-list">${lines(sc.links).map(linkBtn).join('')}</div></div>` : ''}
+        ${lines(sc.links).length ? `<div class="field"><span>Где посмотреть ещё</span>${linkRows(lines(sc.links))}</div>` : ''}
       </div>`;
   }
 
