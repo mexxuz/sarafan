@@ -82,7 +82,8 @@ window.Graph = function (S) {
     const words = norm(q).split(/\s+/).filter((w) => w.length >= 2);
     if (!words.length) return [];
     return S.cats.filter((c) => {
-      const keys = [...c.words, c.name.toLowerCase(), c.who.toLowerCase()].map(norm);
+      // пустое слово (сфера с запятой в конце: «…, художник,») подходило к любому запросу — отбрасываем (правка 26.09)
+      const keys = [...c.words, c.name.toLowerCase(), c.who.toLowerCase()].map(norm).map((k) => k.trim()).filter((k) => k.length >= 2);
       return words.some((w) => keys.some((k) => {
         if (k.includes(' ')) return k.includes(w) && w.length >= 4;
         return w.length >= 3 ? (w.startsWith(k) || k.startsWith(w)) : w === k;
