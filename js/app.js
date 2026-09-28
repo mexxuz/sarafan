@@ -108,7 +108,7 @@
   const plural = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c; };
   const pl = (n, a, b, c) => n + ' ' + plural(n, a, b, c);
   const U = (id) => S.users[id];
-  const first = (id) => (id === S.me ? 'Вы' : U(id).name.split(' ')[0]);
+  const first = (id) => (id === S.me ? 'Вы' : U(id).noName && !U(id).aliasBy ? U(id).name : U(id).name.split(' ')[0]);
   const full = (id) => (id === S.me ? 'Вы' : U(id).name);
   const cat = (id) => G.catById[id] || { name: 'Другое', who: '' };
   const recCat = (r) => (r.cat ? cat(r.cat).name : 'о человеке');   // сферу снял тот, о ком рекомендация
@@ -425,6 +425,8 @@
     const kept = keepOnb && $('#onbcloud', app) === keepOnb;
     if (cloud && !kept) { cloud.stop(); cloud = null; }
     if (active === 'home' && S.onboarded) mountCloud('homecloud', 2, true, 12);
+    // своё имя из одних значков — один раз за открытие просим написать его буквами (правка 28.09)
+    if (S.onboarded && LIVE && U(S.me) && U(S.me).noName && !askedMyName && !document.body.classList.contains('viewing-as')) { askedMyName = true; setTimeout(() => { if (!SH) sheetMyName(); }, 700); }
     if (active === 'home' && S.onboarded && LIVE && !betaHidden && !document.body.classList.contains('viewing-as')) setTimeout(() => { if (!SH && !betaHidden && route().path[0] !== 'start') sheetBeta(); }, 900);
     if (!S.onboarded && $('#onbcloud', app)) { fitOnbCloud(); if (!kept) mountCloud('onbcloud', 2, false, 12); }
     if (name === 'map') mountCloud('bigcloud', 2, F.show !== 'people', 0, F.show === 'places');
@@ -3107,7 +3109,7 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.tgName ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName && !u.noName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${u.noName ? `<div class="small muted" style="margin-top:2px">${u.aliasBy && U(u.aliasBy) ? `так его называет ${esc(first(u.aliasBy))}` : 'имени не указал'}${u.username ? ` · @${esc(u.username)}` : ''}</div>` : ''}${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.alias ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       ${personFacts(id, allRecs, indep)}
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
@@ -3139,7 +3141,7 @@
   // В Telegram человек «ULTIMA», а для вас он Даниил: имя видите только вы, телеграмное остаётся рядом серым
   function sheetRename(id) {
     const u = U(id);
-    const f = { name: u.tgName ? u.name : '' };
+    const f = { name: u.alias ? u.name : '' };
     openSheet({
       F: f,
       valid: () => true,
@@ -3147,7 +3149,7 @@
         <label class="field"><span>Имя для вас</span><input class="input" data-bind="name" maxlength="60" placeholder="Например: Даниил" value="${esc(f.name)}" autocomplete="off"></label>
         <p class="why">${ic('eye')}Видите только вы. У вас везде будет это имя, а из Telegram — рядом серым</p>
         <div class="s-foot"><button class="btn primary block" data-act="saveRename" data-id="${id}" data-submit>Сохранить</button>
-          ${u.tgName ? `<button class="btn ghost block" data-act="saveRename" data-id="${id}" data-v="clear">Вернуть имя из Telegram</button>` : ''}</div>`,
+          ${u.alias ? `<button class="btn ghost block" data-act="saveRename" data-id="${id}" data-v="clear">Вернуть имя из Telegram</button>` : ''}</div>`,
     });
   }
 
@@ -3356,15 +3358,13 @@
       <div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Позвать знакомых</h2></div>
       <div class="card invite-one">
         ${gaps.length ? `<p class="small" style="margin:0 0 10px">В вашей сети пока нет: <b>${gaps.map((c) => esc(cat(c).who.toLowerCase())).join(', ')}</b>. Позовите знакомых — у кого-то из них такие точно есть</p>` : ''}
-        <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span>${link}</span></div>
-        <div class="btn-row"><button class="btn primary sm" data-act="sendInvite">${ic('send')}Отправить ссылку</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div>
+        <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span class="grow" style="min-width:0;overflow:hidden;text-overflow:ellipsis">${link}</span><button data-act="copy" data-v="https://${link}" aria-label="Скопировать ссылку" style="flex:none;border:0;background:none;padding:6px;margin:-6px -4px -6px 0;color:var(--accent,#2a7de1);cursor:pointer;display:flex">${ic('copy').replace('<svg', '<svg style="width:20px;height:20px"')}</button></div>
+        <button class="btn primary block" data-act="sendInvite" style="margin-top:10px">${ic('send')}Отправить ссылку</button>
         <p class="tiny muted" style="margin:8px 2px 0">Кто войдёт по ссылке — сразу ваш контакт</p>
         <button class="link-row wide" data-act="pickCircle">${ic('user')}
-          <span class="grow"><b>Отметить из контактов Telegram</b><i>Придут в Сарафан — и сразу окажутся вашими знакомыми</i></span>${ic('arrow')}</button>
-        <button class="link-row wide" data-act="outsider">${ic('seal')}
-          <span class="grow"><b>Позвать и сразу порекомендовать</b><i>Рекомендация будет ждать его в профиле, когда он войдёт</i></span>${ic('arrow')}</button>
+          <span class="grow"><b>Позвать из контактов Telegram</b><i>Отметьте людей — придут и сразу станут вашими знакомыми. Порекомендовать можно здесь же</i></span>${ic('arrow')}</button>
         ${waiting.length ? `<div class="invite-wait"><div class="small" style="font-weight:600">Ждут в круге · ${waiting.length}</div>
-          <div class="tiny muted" style="margin-top:2px">Их ещё нет в Сарафане. Нажмите на человека — отправьте ему приглашение</div>
+          <div class="tiny muted" style="margin-top:2px">Их ещё нет в Сарафане. Нажмите на человека — отправьте приглашение или порекомендуйте его</div>
           <div class="face-rail" style="margin-top:6px">${waiting.map((w) => `<button class="face" data-act="openWaiting" data-id="${w.id}">${waitAv(w, 'l')}<span>${esc((w.name || 'Без имени').split(' ')[0])}</span><i class="${w.cat || w.node ? '' : 'call'}">${esc(w.cat ? cat(w.cat).who : w.node && nodeById(w.node) ? nodeById(w.node).name : 'позвать')}</i></button>`).join('')}</div></div>` : ''}
       </div>`;
 
@@ -3408,9 +3408,7 @@
       <p style="text-align:center;margin-top:14px"><button class="btn ghost sm" data-act="newNode" data-v="place">${ic('plus')}Записать место или фирму</button></p>
       ${S.pendingInvites.length ? `<div class="sec-title"><h2 class="h2">Ждут приглашения</h2></div><div class="card">${S.pendingInvites.map((p) => `<div class="person"><span class="av s" style="background:var(--mist-2)">${esc(p.name.slice(0, 1).toUpperCase())}</span><div class="grow"><div class="name">${esc(p.name)}</div><div class="sub">${esc(cat(p.cat).who)} · ссылка отправлена ${when(p.at)}</div></div><span class="tag">ждём</span></div>`).join('')}</div>` : ''}
       ${empty ? '' : `
-      <button class="link-row wide" data-act="goto" data-h="#/search" style="margin-top:var(--s-5)">${ic('search')}
-        <span class="grow"><b>Найти в своей сети</b><i>${pl(c2.length, 'человек', 'человека', 'человек')} и ${pl(allPlaces.length, 'место', 'места', 'мест')} через знакомых — по сфере или имени</i></span>${ic('arrow')}</button>
-      <button class="link-row wide" data-act="goto" data-h="#/map">${ic('net')}
+      <button class="link-row wide" data-act="goto" data-h="#/map" style="margin-top:var(--s-5)">${ic('net')}
         <span class="grow"><b>Вся сеть на небе</b><i>Кто с кем знаком, какие места советуют</i></span>${ic('arrow')}</button>`}`;
   }
 
@@ -3721,14 +3719,35 @@
   }
 
   // ——— Первый вход ———
+  // имя можно прочесть: хотя бы две обычные буквы — «𓆩♱𓆪», «….», «V» не годятся
+  function readableName(s) { return ((s || '').match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length >= 2; }
+  let askedMyName = false;
+  function sheetMyName() {
+    const f = { name: '' };
+    openSheet({
+      F: f,
+      valid: () => readableName(f.name),
+      render: () => `${sheetHead(null, 'Как вас зовут?', 'Сейчас знакомые не видят вашего имени — в Telegram оно из значков. Напишите буквами — это только для Сарафана')}
+        <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" autocomplete="name" placeholder="Например: Анжела Каримова" value="${esc(f.name)}"></label>
+        <p class="hint">Можно с фамилией — чтобы точно не перепутали</p>
+        <div class="s-foot"><button class="btn primary block" data-act="saveMyName" data-submit>Сохранить</button><button class="btn ghost block" data-act="closeSheet">Позже</button></div>`,
+      submit: async () => {
+        const name = f.name.trim().replace(/\s+/g, ' ');
+        try { await window.API.post('/profile/name', { name }); } catch (e) { toast(e.message); return; }
+        const me = U(S.me); me.name = name; me.noName = false; delete me.tgName;
+        closeSheet(); render(); toast('Готово — теперь вас узнают');
+      },
+    });
+  }
+
   function Onboarding() {
     const inviter = U(S.me).invitedBy && U(U(S.me).invitedBy) ? U(S.me).invitedBy : null;
     // Уже в сети и открыли регистрацию — это просмотр глазами новичка: поля пустые, сохранять нечего
     const preview = S.onboarded;
     if (F.name === undefined) {
       // имя — из профиля Telegram; если там «….» или одни значки — поле пустое, пусть напишет сам
-      F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || U(S.me).name;
-      if (!/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/.test(F.name || '')) F.name = ''; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = U(S.me).stage || (F.cats.length ? 'pro' : undefined); }
+      F.name = (tg && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || (U(S.me).noName ? '' : U(S.me).name);
+      if (!readableName(F.name)) F.name = ''; F.cats = preview ? [] : [...U(S.me).cats]; F.pro = U(S.me).stage || (F.cats.length ? 'pro' : undefined); }
     const asked = (S.whoisAskedMe || []).filter((x) => U(x));
     // Регистрация — одна короткая страница (правка 25.09 «максимально простой»): живая сеть, как на главной,
     // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
@@ -3737,7 +3756,8 @@
       <h1 class="h1 onb-h1">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас` : inviter ? 'Вас позвали' : 'Добро пожаловать'}<br>в <span class="h1-logo">${logoMark}сарафан</span></h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card onb-card">
-        <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="given-name" aria-label="Как вас зовут" placeholder="имя"></label>
+        <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="name" aria-label="Как вас зовут" placeholder="имя"></label>
+        <p style="margin:8px 4px 0;font-size:12px;line-height:1.35;color:rgba(255,255,255,.85)">Так вас увидят знакомые. Можно с фамилией — чтобы точно не перепутали</p>
         <div class="pro-ask">
           <div class="pro-q">С чего начнёте?</div>
           <div class="pro-sub">${asked.length && !preview ? (asked.some(named) ? `<b>${esc(asked.filter(named).map((x) => first(x)).join(', '))}</b> спрашивает, чем вы занимаетесь` : 'Знакомые спрашивают, чем вы занимаетесь') : 'От этого зависят первые шаги'}</div>
@@ -3778,10 +3798,10 @@
   }
   window.addEventListener('resize', () => { if ($('.onb-cloud')) { fitOnbCloud(); if (cloud) cloud.resize(); } });
   // Кнопка сама говорит, чего не хватает: серая «Войти» без объяснений непонятна (правка 25.09)
-  const onbLabel = () => (!(F.name || '').trim() ? 'Напишите, как вас зовут'
+  const onbLabel = () => (!readableName(F.name) ? 'Напишите, как вас зовут'
     : !F.pro ? 'Выберите, с чего начнёте'
       : F.pro !== 'seek' && !(F.cats || []).length ? (F.pro === 'start' ? 'Выберите, что умеете' : 'Выберите, чем занимаетесь') : 'Войти');
-  const onbValid = () => !!(F.name || '').trim() && (F.pro === 'seek' || ((F.pro === 'pro' || F.pro === 'start') && (F.cats || []).length > 0));
+  const onbValid = () => readableName(F.name) && (F.pro === 'seek' || ((F.pro === 'pro' || F.pro === 'start') && (F.cats || []).length > 0));
 
   // ——— Шторка ———
   let SH = null;
@@ -4790,6 +4810,7 @@
       `${d.name}, я записал вас в Сарафан — сети рекомендаций по знакомым. Моя рекомендация уже ждёт в вашем профиле:`),
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
+    saveMyName: () => SH.submit(),
     submitWork: () => SH.submit(),
     submitFix: () => SH.submit(),
     submitPropose: () => SH.submit(),

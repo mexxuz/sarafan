@@ -67,10 +67,18 @@ window.API = (function () {
     // своё имя для знакомого: везде показываем его, а имя из Telegram держим рядом — для профиля и поиска
     bootstrap: () => call('/bootstrap').then((d) => {
       // имя без единой буквы («….», одни значки) показываем ником из Telegram — иначе человека не узнать
-      const letters = /[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ0-9]/;
+      // нечитаемое — меньше двух обычных букв: «𓆩♱𓆪», «….», «V». Ник Telegram вместо имени не показываем (правка 28.09):
+      // сначала — как его подписал ваш знакомый, иначе — чем занимается («Визажист из сети»), иначе — «Участник сети»
+      const readable = (s) => ((s || '').match(/[A-Za-zА-Яа-яЁёЎўҚқҒғҲҳ]/g) || []).length >= 2;
+      const who = {};
+      ((d && d.cats) || []).forEach((c) => { who[c.id] = c.who; });
       Object.values((d && d.users) || {}).forEach((u) => {
-        if (u.alias) { u.tgName = u.name; u.name = u.alias; return; }
-        if (!letters.test(u.name || '')) { u.tgName = u.name; u.noName = true; u.name = u.username ? '@' + u.username : 'Без имени'; }
+        if (u.alias) { if (readable(u.name)) u.tgName = u.name; u.name = u.alias; return; }   // «(….)» рядом со своим именем не показываем
+        if (readable(u.name)) return;
+        u.tgName = u.name; u.noName = true;
+        if (u.friendAlias) { u.name = u.friendAlias.name; u.aliasBy = u.friendAlias.by; return; }
+        const w = (u.cats || []).map((c) => who[c]).find(Boolean);
+        u.name = w ? w + ' из сети' : 'Участник сети';
       });
       return d;
     }),
