@@ -966,14 +966,41 @@
     const people = Object.keys(S.users).filter((id) => id !== S.me && (G.dist[id] ?? 9) <= 3);
     const spheres = new Set();
     people.forEach((id) => G.catsOf(id).forEach((c) => spheres.add(c)));
+    // Помним не только число, но и самих людей: по «+N» видно, кто добавился (правка 30.09).
+    // Новые держатся сутки после того, как их заметили; старая запись без списка даёт только число
     let grew = 0;
+    dirFresh = [];
     try {
       const was = JSON.parse(localStorage.getItem('sarafan.dir') || 'null');
-      if (was && people.length > was.n) grew = people.length - was.n;
-      if (!was || Date.now() - was.at > 864e5) localStorage.setItem('sarafan.dir', JSON.stringify({ n: people.length, at: Date.now() }));
+      const now = new Set(people);
+      if (was && was.ids) {
+        const seen = new Set(was.ids);
+        dirFresh = [...new Set([...(was.fresh || []).filter((id) => now.has(id)), ...people.filter((id) => !seen.has(id))])];
+        grew = dirFresh.length;
+        if (Date.now() - was.at > 864e5) localStorage.setItem('sarafan.dir', JSON.stringify({ n: people.length, at: Date.now(), ids: people, fresh: people.filter((id) => !seen.has(id)) }));
+      } else {
+        if (was && people.length > was.n) grew = people.length - was.n;
+        localStorage.setItem('sarafan.dir', JSON.stringify({ n: was ? was.n : people.length, at: was ? was.at : Date.now(), ids: people, fresh: [] }));
+      }
     } catch (e) { /* приватный режим — без «+N» */ }
     const why = c1.length < 10 && starterOff() ? '<p class="dir-why">Чем больше ваших знакомых здесь, тем вероятнее, что на вопрос «кто знает хорошего…» кто-то ответит — и что найдут вас</p>' : '';
-    return why + `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? ` <span class="grew">+${grew} с прошлого раза</span>` : ''}</p>`;
+    return why + `<p class="dir-line">В вашем справочнике <b>${pl(people.length, 'человек', 'человека', 'человек')}</b>${spheres.size ? ` в ${pl(spheres.size, 'сфере', 'сферах', 'сферах')}` : ''} — через ${pl(c1.length, 'знакомого', 'знакомых', 'знакомых')}${grew ? (dirFresh.length ? ` <button class="grew" data-act="dirFresh">+${grew} с прошлого раза</button>` : ` <span class="grew">+${grew} с прошлого раза</span>`) : ''}</p>`;
+  }
+  let dirFresh = [];
+
+  // Кто добавился в справочник: с тем, через кого он вам виден
+  function sheetDirFresh() {
+    const ids = dirFresh.filter((id) => U(id));
+    const via = (id) => {
+      const p = G.pathTo(id);
+      const mid = p ? p.slice(1, -1) : [];
+      return (mid.length ? 'Через ' + mid.map(first).join(' → ') : 'Ваш знакомый') + ' · ' + who(id);
+    };
+    openSheet({
+      F: {},
+      render: () => `${sheetHead(null, 'Новые в справочнике', pl(ids.length, 'человек', 'человека', 'человек'))}
+        <div class="card" style="margin-top:14px;padding:6px 10px">${ids.map((id) => personMini(id, via(id))).join('')}</div>`,
+    });
   }
 
   function Home() {
@@ -4652,6 +4679,7 @@
     myCard: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); sheetMyCard(); },
     toRecs: () => { const el = $('#recs'); if (el) el.scrollIntoView({ behavior: calmMotion() ? 'auto' : 'smooth', block: 'start' }); },
     knowsList: (d) => sheetKnows(d.id),
+    dirFresh: () => sheetDirFresh(),
     meGo: () => { $$('.me-menu.open').forEach((m) => m.classList.remove('open')); go('#/me'); },
     wizStep: (d) => {
       const f = SH.F;
