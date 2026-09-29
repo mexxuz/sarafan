@@ -6,7 +6,7 @@
 .card { background: var(--grad-card); border-radius: var(--r-lg); padding: var(--s-4); box-shadow: var(--sh-1); }
 .card + .card { margin-top: var(--s-2); }
 .card.tap { display: block; transition: box-shadow var(--base) var(--ease), transform var(--fast) var(--ease); }
-.card.tap:active { transform: scale(.99); }
+.card.tap:active { filter: brightness(.97); }   /* крупное не проседает — только темнеет, как строки списков */
 @media (hover: hover) { .card.tap:hover { box-shadow: var(--sh-2); transform: translateY(-1px); } }
 
 /* Синяя карточка — одно главное дело на экране */
@@ -16,10 +16,10 @@
 .card.accent .muted, .card.accent .small.muted, .card.accent .eyebrow { color: rgba(255, 255, 255, .8); }
 .card.accent .tag { background: rgba(255, 255, 255, .2); color: #fff; }
 .card.accent .btn { background: rgba(255, 255, 255, .22); color: #fff; box-shadow: none; }
-.card.accent .btn.primary { background: #fff; color: var(--blue); }
+.card.accent .btn.primary { background: #fff; color: var(--blue-text); }
 .card.accent .av-stack .av { box-shadow: 0 0 0 2px var(--blue); }
-.card.accent .more-n { background: #fff; color: var(--blue); box-shadow: 0 0 0 2px var(--blue); }
-.card.accent .go { background: #fff; color: var(--blue); }
+.card.accent .more-n { background: #fff; color: var(--blue-text); box-shadow: 0 0 0 2px var(--blue); }
+.card.accent .go { background: #fff; color: var(--blue-text); }
 .card.accent .trust { color: #fff; }
 .card.accent .stitch { color: rgba(255, 255, 255, .9); }
 .card.accent .stitch b, .card.accent .stitch .you { color: #fff; }
@@ -38,8 +38,8 @@
   overflow: hidden; white-space: normal; line-height: 1.25;
 }
 .pcard .role { font: 800 var(--fs-lg)/1.25 var(--t); letter-spacing: -.02em; margin: var(--s-3) 0 var(--s-2); }
-.pcard .job { font: 700 var(--fs-sm)/1.3 var(--t); color: var(--blue); margin-top: 3px; }
-.pcard .job .more { color: var(--ink-4); font-weight: 600; }
+.pcard .job { font: 700 var(--fs-sm)/1.3 var(--t); color: var(--blue-text); margin-top: 3px; }
+.pcard .job .more { color: var(--ink-3); font-weight: 600; }
 .pcard .meta { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 
 /* Чужие слова — главное в карточке: две строки, дальше многоточие */
@@ -47,11 +47,11 @@
   font: 500 var(--fs-sm)/1.5 var(--t); color: var(--ink-2); margin: var(--s-3) 0 0;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.pcard .quote.none { color: var(--ink-4); }
+.pcard .quote.none { color: var(--ink-3); }
 .pcard .quote.plain { color: var(--ink-2); font-weight: 400; }
 .pcard .pc-addr { display: flex; align-items: center; gap: 5px; margin-top: 8px; font: 500 var(--fs-xxs)/1.3 var(--t); color: var(--ink-3); }
 .pcard .pc-addr svg { width: 13px; height: 13px; flex: none; }
-.pcard .by { font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-4); margin-top: 7px; }
+.pcard .by { font: 600 var(--fs-xxs)/1 var(--t); color: var(--ink-3); margin-top: 7px; }
 .pcard .foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); padding-top: var(--s-3); border-top: 1px solid var(--line); }
 .pcard .foot .grow { flex: 1; min-width: 0; }
 .pcard .nums { font: 600 var(--fs-xxs)/1.3 var(--t); color: var(--ink-3); font-variant-numeric: tabular-nums; margin-top: 10px; }
@@ -104,7 +104,7 @@
 .feed-item:last-child::after { display: none; }
 .feed-item .txt { font-size: var(--fs-sm); color: var(--ink-2); }
 .feed-item .txt b { color: var(--ink); font-weight: 700; }
-.feed-item .when { font-size: var(--fs-xxs); color: var(--ink-4); margin-top: 5px; }
+.feed-item .when { font-size: var(--fs-xxs); color: var(--ink-3); margin-top: 5px; }
 .feed-item .mini { margin-top: var(--s-2); }
 
 /* Репутация по сферам */
@@ -112,7 +112,7 @@
 .rep-line:first-child { border-top: 0; padding-top: 0; }
 .rep-line b { display: block; font-weight: 700; font-size: var(--fs-sm); color: var(--ink); }
 .rep-line .grow > span { display: block; font-size: var(--fs-xxs); color: var(--ink-3); margin-top: 2px; }
-.rep-n { flex: none; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font: 800 var(--fs-sm)/1 var(--t); }
+.rep-n { flex: none; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue-text); font: 800 var(--fs-sm)/1 var(--t); }
 .rep-rest { padding-top: 10px; border-top: 1px solid var(--line); font-size: var(--fs-xxs); color: var(--ink-3); }
 .rep-rest:first-child { border-top: 0; padding-top: 0; }
 
@@ -191,15 +191,15 @@
   /* доли равные и сжимаемые: иначе скрытая подпись распирает колонку по ширине
      слова, планка становится шире экрана, а подложка встаёт мимо значка */
   position: relative; z-index: 1; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  color: var(--ink-4); font: 600 11px/1 var(--t); transition: color var(--base) var(--ease);
+  color: var(--ink-3); font: 600 var(--fs-xxs)/1 var(--t); transition: color var(--base) var(--ease);
 }
-.nav a svg { width: 22px; height: 22px; transition: transform 360ms cubic-bezier(.34, 1.4, .44, 1); }
-.nav a:active svg { transform: scale(.88); }
+.nav a svg { width: 22px; height: 22px; transition: transform var(--fast) var(--ease); }   /* по меню жмут постоянно — без пружины (правка 30.09) */
+.nav a:active svg { transform: scale(.96); }
 .nav a span {
   max-height: 0; opacity: 0; overflow: hidden; max-width: 100%; white-space: nowrap; text-overflow: ellipsis;
   transition: opacity var(--base) var(--ease), max-height var(--base) var(--ease);
 }
-.nav a.on { color: var(--blue); }
+.nav a.on { color: var(--blue-text); }
 .nav a.on svg { transform: translateY(-1px) scale(1.06); }
 .nav a.on span { opacity: 1; max-height: 14px; }
 .nav a.ask { color: #fff; }
@@ -208,9 +208,9 @@
 .nav a.ask::before {
   content: ''; position: absolute; width: 54px; height: 54px; border-radius: 50%; background: var(--grad-blue);
   box-shadow: var(--sh-blue-lg), 0 0 0 6px rgba(47, 123, 255, .1); top: -18px; z-index: -1;
-  transition: transform 360ms cubic-bezier(.34, 1.4, .44, 1), box-shadow var(--base) var(--ease);
+  transition: transform var(--fast) var(--ease), box-shadow var(--base) var(--ease);
 }
-.nav a.ask:active::before { transform: scale(.92); }
+.nav a.ask:active::before { transform: scale(.96); }
 .nav a.ask.on::before { box-shadow: var(--sh-blue-lg), 0 0 0 10px rgba(47, 123, 255, .12); }
 .nav .badge { position: absolute; top: 12px; right: calc(50% - 26px); animation: badge-pop 420ms cubic-bezier(.34, 1.5, .44, 1) both; }
 .nav a.ask .badge { top: -26px; right: calc(50% - 30px); background: var(--ink); }
@@ -221,6 +221,7 @@
 /* пока открыта шторка, экран под ней стоит на месте; прокрутка шторки не передаётся ему, дойдя до края */
 html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .sheet .panel { overscroll-behavior: contain; }
+.sheet .panel:focus { outline: none; }   /* фокус ставим на саму шторку, чтобы диктор начал с неё; это не кнопка — кольцо не нужно */
 .sheet .shade { touch-action: none; }
 .sheet .shade { position: absolute; inset: 0; background: rgba(18, 20, 26, .38); opacity: 0; transition: opacity var(--base) var(--ease); backdrop-filter: blur(2px); }
 .sheet .panel {
@@ -285,8 +286,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
   transition: color var(--fast) var(--ease), box-shadow var(--fast) var(--ease), opacity var(--base) var(--ease);
 }
 .orb.ghost .ghost-tip { opacity: 0; }
-.orb.ghost:hover .ghost-av { box-shadow: inset 0 0 0 1px var(--blue); color: var(--blue); }
-.orb.ghost:hover .ghost-tip { opacity: 1; color: var(--blue); box-shadow: var(--sh-2); }
+.orb.ghost:hover .ghost-av { box-shadow: inset 0 0 0 1px var(--blue); color: var(--blue-text); }
+.orb.ghost:hover .ghost-tip { opacity: 1; color: var(--blue-text); box-shadow: var(--sh-2); }
 @media (max-width: 420px) { .ghost-tip { padding: 3px 7px; } }
 /* Сильное приглашение — с рекомендацией; обычная ссылка живёт отдельно и тише */
 
@@ -332,7 +333,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .link-row.wide i { display: block; margin-top: 2px; font: 400 var(--fs-xxs)/1.4 var(--t); font-style: normal; color: var(--ink-3); }
 
 /* Места и фирмы: значок вместо портрета */
-.node-ic { width: 46px; height: 46px; border-radius: var(--r-md); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); }
+.node-ic { width: 46px; height: 46px; border-radius: var(--r-md); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue-text); }
 .node-ic svg { width: 22px; height: 22px; }
 /* логотип никогда не вылезает из своего значка */
 .nglyph { width: 100%; height: 100%; max-width: 64px; max-height: 64px; }
@@ -394,16 +395,16 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 }
 .cloud-full {
   position: absolute; right: 14px; bottom: 14px; width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue);
+  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue-text);
   box-shadow: 0 1px 4px rgba(23, 43, 77, .07); backdrop-filter: blur(10px);
   opacity: .8; transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.cloud-full:active { transform: scale(.94); }
+.cloud-full:active { transform: scale(.96); }
 @media (hover: hover) { .cloud-full:hover { opacity: 1; } }
 .cloud-full svg { width: 17px; height: 17px; }
 
 /* Легенда облака: что означает форма и цвет */
-.cloud-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: center; margin-top: var(--s-3); font-size: 10.5px; color: var(--ink-4); }
+.cloud-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: center; margin-top: var(--s-3); font-size: var(--fs-xxs); color: var(--ink-3); }
 .cloud-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .cloud-legend i { flex: none; display: inline-block; }
 .cloud-legend .lg-me { width: 11px; height: 11px; border-radius: 50%; background: var(--blue); }
@@ -422,12 +423,12 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 /* Кнопка «вернуть в центр» — рядом с разворотом */
 .cloud-home {
   position: absolute; right: 14px; bottom: 54px; width: 32px; height: 32px; border-radius: 50%;
-  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue);
+  display: grid; place-items: center; background: rgba(255, 255, 255, .7); color: var(--blue-text);
   box-shadow: 0 1px 4px rgba(23, 43, 77, .07); backdrop-filter: blur(10px);
   opacity: .8; transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
 .cloud-home svg { width: 16px; height: 16px; }
-.cloud-home:active { transform: scale(.94); }
+.cloud-home:active { transform: scale(.96); }
 @media (hover: hover) { .cloud-home:hover { opacity: 1; } }
 
 /* Снимок места */
@@ -468,7 +469,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 /* Метка вида в карточке: та же таблетка, что была со словом, но со знаком */
 .tag.sign { width: 28px; height: 28px; padding: 0; border-radius: 50%; justify-content: center; flex: none; }
 .tag.sign svg { width: 15px; height: 15px; }
-.tag.sign { color: var(--blue); background: var(--blue-soft); }
+.tag.sign { color: var(--blue-text); background: var(--blue-soft); }
 .pcard .tag.sign.company, .tag.sign.company { color: var(--company); background: var(--company-soft); }
 .card.accent .tag.sign { background: rgba(255, 255, 255, .2); color: #fff; }
 /* с обложкой метка поднимается на её границу — половиной на снимке */
@@ -476,7 +477,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
   margin-top: -26px; position: relative; z-index: 1;
   background: rgba(255, 255, 255, .94); box-shadow: 0 3px 10px rgba(10, 14, 24, .2);
 }
-.tag.sign.on-cover, .card.accent .tag.sign.on-cover { color: var(--blue); }
+.tag.sign.on-cover, .card.accent .tag.sign.on-cover { color: var(--blue-text); }
 .tag.sign.on-cover.company, .card.accent .tag.sign.on-cover.company { color: var(--company); }
 
 /* Направление витрины: отдельное занятие со своими работами */
@@ -506,13 +507,13 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 }
 .work-ghost svg { width: 20px; height: 20px; color: var(--ink-4); }
 .work-ghost b { font: 700 var(--fs-xxs)/1.25 var(--t); color: var(--ink-3); }
-.work-ghost span { font-size: 11px; color: var(--ink-4); }
+.work-ghost span { font-size: var(--fs-xxs); color: var(--ink-3); }
 .work-ghost.sm { aspect-ratio: 1; gap: 3px; padding: var(--s-2); }
 .work-ghost.sm svg { width: 16px; height: 16px; }
-.work-ghost.sm span { font: 600 9.5px/1.2 var(--t); }
+.work-ghost.sm span { font: 600 var(--fs-xxs)/1.2 var(--t); }
 @media (hover: hover) {
   .work-ghost:hover { background: var(--blue-soft); box-shadow: inset 0 0 0 1.5px rgba(47, 123, 255, .35); }
-  .work-ghost:hover svg, .work-ghost:hover b { color: var(--blue); }
+  .work-ghost:hover svg, .work-ghost:hover b { color: var(--blue-text); }
 }
 /* Пример витрины: то же оформление, но приглушённое — чтобы не спутать со своим */
 .ghost-dir { box-shadow: none; background: var(--mist); }
@@ -521,18 +522,18 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 /* Частые фразы под полем: рекомендация одним нажатием, как ответ в чате */
 .chips.quick { margin-top: 8px; gap: 6px; }
 .chips.quick .chip { height: 32px; padding: 0 12px; font-size: var(--fs-xxs); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
-@media (hover: hover) { .chips.quick .chip:hover { background: var(--blue-soft); color: var(--blue); } }
+@media (hover: hover) { .chips.quick .chip:hover { background: var(--blue-soft); color: var(--blue-text); } }
 
 /* Подсказка «советуйте прямо в чате» */
 .chat-tip {
   display: flex; gap: var(--s-3); align-items: flex-start; margin-top: var(--s-4); padding: var(--s-4);
   border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--sh-1);
 }
-.chat-tip .ic { width: 38px; height: 38px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); }
+.chat-tip .ic { width: 38px; height: 38px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue-text); }
 .chat-tip .ic svg { width: 19px; height: 19px; }
 .chat-tip b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); }
 .chat-tip p { margin: 4px 0 0; font-size: var(--fs-xs); line-height: 1.5; color: var(--ink-2); }
-.chat-tip code { font: 600 var(--fs-xs)/1 var(--t); color: var(--blue); background: var(--blue-soft); padding: 2px 6px; border-radius: var(--r-xs); white-space: nowrap; }
+.chat-tip code { font: 600 var(--fs-xs)/1 var(--t); color: var(--blue-text); background: var(--blue-soft); padding: 2px 6px; border-radius: var(--r-xs); white-space: nowrap; }
 
 
 /* Вставка совета из переписки: пунктир — сюда кладут, а не пишут */
@@ -547,7 +548,7 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .job-line a b { color: var(--ink); font-weight: 700; }
 .job-add { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 7px; border-radius: 999px; background: var(--card-2); color: var(--ink-3); font: 600 var(--fs-xxs)/1.4 var(--t); cursor: pointer; }
 .job-add svg { width: 13px; height: 13px; }
-@media (hover: hover) { .job-add:hover { color: var(--blue); } }
+@media (hover: hover) { .job-add:hover { color: var(--blue-text); } }
 .job-line a i { font-style: normal; font-size: var(--fs-xxs); color: var(--ink-3); margin-left: 2px; }
 .node-ic.mini { width: 20px; height: 20px; border-radius: var(--r-xs); }
 .node-ic.mini svg { width: 12px; height: 12px; }
@@ -561,8 +562,8 @@ html.sheet-lock, html.sheet-lock body { overflow: hidden; }
 .cat-sugg .sugg { display: flex; align-items: baseline; gap: 8px; text-align: left; padding: 10px 12px; border-radius: var(--r-sm, 10px); background: var(--mist); }
 .cat-sugg .sugg b { font-weight: 600; color: var(--ink); }
 .cat-sugg .sugg i { font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); }
-.cat-sugg .sugg:active { transform: scale(.99); }
-.cat-sugg .sugg.new { color: var(--blue); font-weight: 600; align-items: center; background: var(--blue-soft, #eaf2ff); }
+.cat-sugg .sugg:active { transform: scale(.96); }
+.cat-sugg .sugg.new { color: var(--blue-text); font-weight: 600; align-items: center; background: var(--blue-soft, #eaf2ff); }
 .cat-sugg .sugg.new svg { width: 16px; height: 16px; }
 
 /* Ждёт в круге: портрет бледный и в пунктирной рамке — место есть, человек ещё не пришёл */
@@ -654,7 +655,7 @@ body.viewing-as #app { padding-top: 48px; }
 .face-rail { display: flex; gap: 14px; overflow-x: auto; margin: var(--s-4) calc(-1 * var(--s-5)) 0; padding: 4px var(--s-5) 8px; scrollbar-width: none; }
 .face-rail::-webkit-scrollbar { display: none; }
 .face-rail .face { flex: none; width: 66px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: var(--ink-2); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
-.face-rail .face i { font: 400 11px/1.2 var(--t); font-style: normal; color: var(--ink-4); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.face-rail .face i { font: 400 var(--fs-xxs)/1.2 var(--t); font-style: normal; color: var(--ink-3); max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .face-rail .face .av { margin-bottom: 2px; }
 .face-rail .face > span:not(.av) { font: 500 var(--fs-xxs)/1.2 var(--t); max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -667,7 +668,7 @@ body.viewing-as #app { padding-top: 48px; }
 .cal { margin-top: var(--s-3); }
 .cal-m { font: 600 var(--fs-sm)/1.3 var(--t); margin: 0 0 6px 2px; }
 .cal-w, .cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-w span { text-align: center; font: 500 11px/1.6 var(--t); color: var(--ink-4); }
+.cal-w span { text-align: center; font: 500 var(--fs-xxs)/1.6 var(--t); color: var(--ink-3); }
 .cal-d { height: 36px; border: 0; border-radius: var(--r-sm); background: var(--mist); color: var(--ink); font: 500 var(--fs-sm)/1 var(--t); cursor: pointer; }
 .cal-d.today { box-shadow: inset 0 0 0 1.5px var(--blue); }
 .cal-d.on { background: var(--blue); color: #fff; }
@@ -678,7 +679,7 @@ body.viewing-as #app { padding-top: 48px; }
 .col-item { padding: var(--s-3) 0; }
 .col-item + .col-item { border-top: 1px solid var(--line); }
 .col-item .txt { margin: 8px 0 0; font-size: var(--fs-sm); color: var(--ink-2); }
-.tag.xs { font-size: 11px; padding: 2px 6px; vertical-align: 1px; }
+.tag.xs { font-size: var(--fs-xxs); padding: 2px 6px; vertical-align: 1px; }
 
 /* Упущенный спрос: сколько искали вашу сферу и сколько увидели вас */
 .demand { margin: 4px 0 0; }
@@ -691,8 +692,8 @@ body.viewing-as #app { padding-top: 48px; }
 .card > .todo-rail:only-child { margin: 0; }
 
 /* «Убрать из знакомых» после первого нажатия: второе — уже насовсем */
-.link-row.danger { background: var(--warn-soft); color: var(--warn); }
-.link-row.danger i { color: var(--warn); opacity: .8; }
+.link-row.danger { background: var(--warn-soft); color: var(--warn-ink); }
+.link-row.danger i { color: var(--warn-ink); }
 
 /* «Тестовая версия» на главной — тёплая{ position: relative; z-index: 2; margin-bottom: 14px; background: linear-gradient(170deg, #fff8ec, #fff3e0); box-shadow: inset 0 0 0 1px rgba(232, 165, 40, .25); }
 
@@ -700,10 +701,10 @@ body.viewing-as #app { padding-top: 48px; }
 .catpick .chip.on .chip-x { margin: 0 0 0 2px; }
 
 /* «позвать» под ожидающим — это действие, а не состояние */
-.face i.call { color: var(--blue); font-weight: 600; font-style: normal; }
+.face i.call { color: var(--blue-text); font-weight: 600; font-style: normal; }
 
 /* Своё имя для знакомого: имя из Telegram — рядом серым, кнопка «назвать по-своему» — тихая */
-.tg-name { font-weight: 500; color: var(--ink-4); font-size: .62em; letter-spacing: 0; white-space: nowrap; }
+.tg-name { font-weight: 500; color: var(--ink-3); font-size: .62em; letter-spacing: 0; white-space: nowrap; }
 .rename { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 0; background: none; border: 0;
   color: var(--ink-3); font: 500 var(--fs-xs)/1.2 var(--t); cursor: pointer; }
 .rename svg { width: 13px; height: 13px; }
@@ -734,7 +735,7 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 /* «Вас позвали в [знак] сарафан» — логотип прямо в заголовке */
 .onb-h1 { text-align: center; font-size: 28px; line-height: 1.18; margin-top: -6px; position: relative; z-index: 1; }
 /* «в» и «сарафан» — на одной линии: надпись обычным текстом, знак опущен до уровня букв */
-.h1-logo { display: inline; white-space: nowrap; color: var(--blue); }
+.h1-logo { display: inline; white-space: nowrap; color: var(--blue-text); }
 .h1-logo .logo-mark { display: inline-block; width: 1em; height: 1em; margin: 0 .16em 0 .06em; vertical-align: -.14em; }
 
 /* Регистрация: главный вопрос — две крупные карточки выбора */
@@ -761,8 +762,8 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
   border: 1.5px solid transparent; color: var(--ink); cursor: pointer;
   transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.pro-opt:active { transform: scale(.98); }
-.pro-opt svg { width: 22px; height: 22px; color: var(--blue); margin-bottom: 8px; }
+.pro-opt:active { filter: brightness(.97); }
+.pro-opt svg { width: 22px; height: 22px; color: var(--blue-text); margin-bottom: 8px; }
 .pro-opt b { font: 700 var(--fs-lg)/1.2 var(--t); }
 .pro-opt i { font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); line-height: 1.3; }
 .pro-opt.on { background: var(--blue-soft); border-color: var(--blue); box-shadow: 0 6px 18px rgba(47, 123, 255, .16); }
@@ -796,7 +797,7 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 .onb-card .pro-opt svg { color: #fff; }
 .onb-card .pro-opt i { color: rgba(255, 255, 255, .72); }
 .onb-card .pro-opt.on { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 8px 20px rgba(10, 40, 110, .25); }
-.onb-card .pro-opt.on svg { color: var(--blue); }
+.onb-card .pro-opt.on svg { color: var(--blue-text); }
 .onb-card .pro-opt.on i { color: var(--blue-deep); }
 .onb-card .field > span { color: rgba(255, 255, 255, .8); }
 .onb-card .btn.primary { background: #fff; color: var(--blue-deep); box-shadow: 0 8px 20px rgba(10, 40, 110, .22); }
@@ -829,7 +830,7 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 
 /* Окно «тестовая версия»: где потом написать о проблеме */
 .beta-where { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-md); background: var(--blue-soft); }
-.beta-where svg { width: 22px; height: 22px; flex: none; color: var(--blue); margin-top: 1px; }
+.beta-where svg { width: 22px; height: 22px; flex: none; color: var(--blue-text); margin-top: 1px; }
 .beta-where b { display: block; font-weight: 700; color: var(--ink); }
 .beta-where span { font-size: var(--fs-sm); color: var(--ink-2); }
 
@@ -840,7 +841,7 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
   padding: 12px 10px 11px; border-radius: var(--r-md); background: var(--blue-soft); color: var(--ink); cursor: pointer;
   transition: transform var(--fast) var(--ease), opacity var(--fast) var(--ease);
 }
-.step3:active { transform: scale(.97); }
+.step3:active { transform: scale(.96); }
 .step3 .mark { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; margin-bottom: 6px; }
 .step3 .mark svg { width: 17px; height: 17px; }
 .step3 b { font: 700 var(--fs-md)/1.2 var(--t); }
@@ -873,7 +874,7 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 /* Своя анкета глазами других: контакты строкой */
 .my-contact { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .my-contact span { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--blue-soft); font-size: var(--fs-sm); }
-.my-contact svg { width: 16px; height: 16px; color: var(--blue); }
+.my-contact svg { width: 16px; height: 16px; color: var(--blue-text); }
 
 /* Профиль человека: вместо голых цифр — строки с лицами, ведут к рекомендациям и знакомым */
 .p-facts { margin-top: 16px; border-top: 1px solid var(--line, var(--line)); border-bottom: 1px solid var(--line, var(--line)); }
@@ -895,21 +896,21 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 .peek-about { margin: 12px 0 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .peek-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .peek-chips span { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; background: var(--card-2); font-size: var(--fs-xs); color: var(--ink-2); }
-.peek-chips svg { width: 13px; height: 13px; color: var(--blue); }
+.peek-chips svg { width: 13px; height: 13px; color: var(--blue-text); }
 .peek-svc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
 .peek-svc b { font-size: var(--fs-xs); color: var(--ink-3); font-weight: 600; margin-right: 2px; }
 #sheet .p-facts { margin-top: 12px; }
 
 /* Подборка: объяснение прямо в окне */
 .col-explain { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--blue-soft); }
-.col-explain svg { width: 22px; height: 22px; color: var(--blue); flex: none; margin-top: 2px; }
+.col-explain svg { width: 22px; height: 22px; color: var(--blue-text); flex: none; margin-top: 2px; }
 .col-explain p { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
 .col-explain b { color: var(--ink); }
 .chip svg { width: 14px; height: 14px; }
 
 /* Подборка, где человек уже есть: галочка, при наведении — крестик «убрать» */
 .col-in { background: var(--blue-soft); }
-.col-mark { position: relative; width: 20px; height: 20px; flex: none; color: var(--blue); }
+.col-mark { position: relative; width: 20px; height: 20px; flex: none; color: var(--blue-text); }
 .col-mark svg { position: absolute; inset: 0; width: 20px; height: 20px; transition: opacity var(--fast) var(--ease); }
 .col-mark svg + svg { opacity: 0; color: var(--bad, #e5484d); }
 @media (hover: hover) { .col-in:hover .col-mark svg:first-child { opacity: 0; } .col-in:hover .col-mark svg + svg { opacity: 1; } }
@@ -918,11 +919,11 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 .soc-btn { display: flex; width: 100%; box-sizing: border-box; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--r-md); background: var(--card-2); color: var(--ink); text-decoration: none; margin-top: 8px; }
 /* «Это ваше место?» — заметная строка с пояснением, зачем отмечаться (правка 25.09) */
 .link-row.owner-ask { margin-top: 12px; background: color-mix(in srgb, var(--blue) 8%, var(--card-2)); }
-.link-row.owner-ask > svg:first-child { color: var(--blue); }
+.link-row.owner-ask > svg:first-child { color: var(--blue-text); }
 .link-row.owner-ask b { color: var(--ink); }
 /* адрес и ссылка места — одним блоком с тонкой линией между строками (правка 25.09) */
  .soc-btn, .about) { margin: 0; border-radius: 0; background: transparent; padding: 12px 14px; gap: 12px; font-size: var(--fs-sm); } button):hover { box-shadow: none !important; background: color-mix(in srgb, var(--blue) 5%, transparent); }
-.soc-btn:active { transform: scale(.99); }
+.soc-btn:active { filter: brightness(.97); }
 .soc-btn .soc-ic, .soc-btn > svg:first-child { width: 24px; height: 24px; flex: none; }
 .soc-btn b { display: block; font-weight: 600; font-size: var(--fs-md); }
 .soc-btn i { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -956,7 +957,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
   }
   a.person:hover, button.person:hover, a.peek-row:hover, button.p-fact:not(:disabled):hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 7%, var(--card-2)); }
   a.link-row:hover > svg:last-child, a.soc-btn:hover > svg:last-child, a.peek-row:hover > svg:last-child,
-  button.link-row:not(:disabled):hover > svg:last-child, button.p-fact:hover > svg:last-child, a.person:hover .chev { color: var(--blue); transform: translateX(2px); }
+  button.link-row:not(:disabled):hover > svg:last-child, button.p-fact:hover > svg:last-child, a.person:hover .chev { color: var(--blue-text); transform: translateX(2px); }
   :where(.link-row, .soc-btn, .peek-row, .p-fact, .person) > svg:last-child, .person .chev { transition: transform var(--fast) var(--ease), color var(--fast) var(--ease); }
 }
 :where(a.link-row, button.link-row, a.soc-btn, a.peek-row, button.p-fact, a.person, button.person):active { filter: brightness(.97); }
@@ -976,7 +977,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
   background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--blue) 16%, transparent), transparent 70%); }
 .peek-cover.blank.company { background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--company-2) 16%, transparent), transparent 70%); }
 .peek-cover.blank::after { display: none; }
-.peek-cover.blank > svg { width: 56px; height: 56px; margin-top: -24px; color: var(--blue); opacity: .22; }
+.peek-cover.blank > svg { width: 56px; height: 56px; margin-top: -24px; color: var(--blue-text); opacity: .22; }
 .peek-cover.blank.company > svg { color: var(--company-2); }
 .peek-cover.ready { margin-bottom: -66px; }
 /* широкая: растворяется так же, как у мест, но название заходит только на уже растаявший край */
@@ -1004,17 +1005,17 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 
 /* «Что значит независимый источник» — тихая строка под блоком рекомендаций (правка 26.09) */
 .rep-why { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 0; border: 0; background: none;
-  color: var(--blue); font: 600 var(--fs-xxs)/1.3 var(--t); cursor: pointer; }
+  color: var(--blue-text); font: 600 var(--fs-xxs)/1.3 var(--t); cursor: pointer; }
 .rep-why svg { width: 14px; height: 14px; }
 
 /* Охват: большая цифра слева — сколько людей могут найти (правка 26.09) */
 .reach-card { display: flex; align-items: center; gap: 14px; width: 100%; margin: var(--s-4) 0 0; padding: 14px 16px; text-align: left;
   border: 0; border-radius: var(--r-lg); background: linear-gradient(135deg, #eef5ff, #e3eeff); box-shadow: inset 0 0 0 1px rgba(47, 123, 255, .14);
   color: var(--ink); cursor: pointer; }
-.reach-card .reach-n { flex: none; min-width: 52px; font: 800 34px/1 var(--t); letter-spacing: -.03em; color: var(--blue); }
+.reach-card .reach-n { flex: none; min-width: 52px; font: 800 34px/1 var(--t); letter-spacing: -.03em; color: var(--blue-text); }
 .reach-card b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); }
-.reach-card i { display: block; margin-top: 3px; font-style: normal; font-size: var(--fs-xxs); line-height: 1.35; color: var(--ink-3); }
-.reach-card > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--blue); }
+.reach-card i { display: block; margin-top: 3px; font-style: normal; font-size: var(--fs-xxs); line-height: 1.4; color: var(--ink-3); }
+.reach-card > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--blue-text); }
 .reach-card.in-me { margin-top: var(--s-3); }
 
 /* значок места или фирмы — всегда скруглённый квадрат одной формы, в любом размере (правка 26.09:
@@ -1031,7 +1032,7 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 .help-list { margin-top: 8px; border-radius: var(--r-md); background: var(--card-2); padding: 2px 14px; }
 .help-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; }
 .help-row + .help-row { border-top: 1px solid var(--line); }
-.help-row > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--blue); }
+.help-row > svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--blue-text); }
 .help-row b { display: block; font: 700 var(--fs-sm)/1.3 var(--t); color: var(--ink); }
 .help-row span { display: block; margin-top: 2px; font-size: var(--fs-xs); line-height: 1.4; color: var(--ink-2); }
-.help-row code, .eyebrow code { font-size: .92em; background: rgba(47, 123, 255, .08); color: var(--blue); padding: 1px 5px; border-radius: var(--r-xs); text-transform: none; }
+.help-row code, .eyebrow code { font-size: .92em; background: rgba(47, 123, 255, .08); color: var(--blue-text); padding: 1px 5px; border-radius: var(--r-xs); text-transform: none; }

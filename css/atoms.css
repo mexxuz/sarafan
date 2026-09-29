@@ -4,14 +4,14 @@
 
 /* Заголовки и текст */
 .h1 { font: 800 var(--fs-3xl)/1.1 var(--t); letter-spacing: -.03em; margin: 0; text-wrap: balance; }
-.h2 { font: 800 var(--fs-xl)/1.2 var(--t); letter-spacing: -.02em; margin: 0; }
-.h3 { font: 700 var(--fs-md)/1.35 var(--t); margin: 0; }
+.h2 { font: 800 var(--fs-xl)/1.2 var(--t); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.h3 { font: 700 var(--fs-md)/1.35 var(--t); margin: 0; text-wrap: balance; }
 .muted { color: var(--ink-3); }
 .small { font-size: var(--fs-xs); }
 .tiny { font-size: var(--fs-xxs); }
 .eyebrow { font: 500 var(--fs-xs)/1.2 var(--t); color: var(--ink-3); }
 .num { font-variant-numeric: tabular-nums; }
-.link { font: 600 var(--fs-xs)/1 var(--t); color: var(--blue); }
+.link { font: 600 var(--fs-xs)/1 var(--t); color: var(--blue-text); }
 p { text-wrap: pretty; }
 
 /* Знак */
@@ -25,8 +25,8 @@ p { text-wrap: pretty; }
   background: linear-gradient(160deg, #eef3f9, #dde6f1);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
 }
-.av img, .av video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.av.mine { background: linear-gradient(160deg, #e9f1ff, #d4e4ff); color: var(--blue); }
+.av img, .av video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; outline: 1px solid rgba(0, 0, 0, .1); outline-offset: -1px; }   /* обводка: светлое фото не сливается с белой карточкой */
+.av.mine { background: linear-gradient(160deg, #e9f1ff, #d4e4ff); color: var(--blue-text); }
 .av.r1 { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--blue), var(--glow-blue); }   /* 1-й круг */
 .av.r2 { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--line); }   /* 2-й круг */
 .av.r3 { opacity: .9; }                                                 /* дальше */
@@ -44,18 +44,18 @@ p { text-wrap: pretty; }
   display: inline-flex; align-items: center; gap: var(--s-1); padding: 5px 10px; border-radius: 999px;
   font: 600 var(--fs-xxs)/1.3 var(--t); background: var(--mist-2); color: var(--ink-2); white-space: nowrap;
 }
-.tag.brand { background: linear-gradient(170deg, #eff4ff, #e2ecff); color: var(--blue); }
-.tag.warm { background: var(--warn-soft); color: var(--warn); }
+.tag.brand { background: linear-gradient(170deg, #eff4ff, #e2ecff); color: var(--blue-text); }
+.tag.warm { background: var(--warn-soft); color: var(--warn-ink); }
 .tag.done { background: var(--good-soft); color: var(--good); }
 /* взаимно: двое поручились друг за друга — редкий и сильный знак */
-.tag.mutual { background: linear-gradient(170deg, #eef4ff, #e0e9ff); color: var(--blue); box-shadow: inset 0 0 0 1px rgba(47, 123, 255, .22); }
+.tag.mutual { background: linear-gradient(170deg, #eef4ff, #e0e9ff); color: var(--blue-text); box-shadow: inset 0 0 0 1px rgba(47, 123, 255, .22); }
 .tag.mutual svg { width: 12px; height: 12px; }
-.circle-1 { background: var(--blue-soft); color: var(--blue); }
+.circle-1 { background: var(--blue-soft); color: var(--blue-text); }
 .circle-2 { background: var(--mist-2); color: var(--ink-2); }
 .circle-3 { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink-3); }
 
 /* Счётчик */
-.badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-sm); background: var(--blue); color: #fff; font: 700 11px/18px var(--t); text-align: center; display: inline-block; }
+.badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-sm); background: var(--blue); color: #fff; font: 700 var(--fs-xxs)/18px var(--t); text-align: center; display: inline-block; }
 
 /* Значок «надёжно» — три и более независимых источника */
 .trust { display: inline-flex; align-items: center; gap: 4px; font: 600 var(--fs-xxs)/1 var(--t); color: var(--good); }
@@ -67,10 +67,10 @@ p { text-wrap: pretty; }
   border-radius: var(--r-sm); font: 700 var(--fs-sm)/1 var(--t); background: var(--mist); color: var(--ink); white-space: nowrap;
   transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.btn:active { transform: scale(.97); }
+.btn:active { transform: scale(.96); }   /* одна глубина нажатия для всех кнопок (правка 30.09) */
 .btn svg { width: 18px; height: 18px; flex: none; }
 .btn.primary { background: var(--grad-blue); color: var(--blue-ink); box-shadow: var(--sh-blue); }
-.btn.soft { background: linear-gradient(170deg, #f1f6ff, #e3edff); color: var(--blue); }
+.btn.soft { background: linear-gradient(170deg, #f1f6ff, #e3edff); color: var(--blue-text); }
 .btn.ghost { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); }
 .btn.block { width: 100%; }
 .btn.sm { height: 38px; padding: 0 var(--s-4); font-size: var(--fs-xs); }
@@ -83,14 +83,14 @@ p { text-wrap: pretty; }
 }
 
 /* Кнопка-ссылка в карточке человека */
-.go { box-shadow: 0 1px 3px rgba(47, 123, 255, .16); display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 var(--s-4); border-radius: 999px; background: var(--blue-soft); color: var(--blue); font: 700 var(--fs-xs)/1 var(--t); flex: none; }
+.go { box-shadow: 0 1px 3px rgba(47, 123, 255, .16); display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 var(--s-4); border-radius: 999px; background: var(--blue-soft); color: var(--blue-text); font: 700 var(--fs-xs)/1 var(--t); flex: none; }
 
 /* Круглая кнопка со значком */
 .back, .icon-btn {
   width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; flex: none; position: relative;
   background: var(--mist); color: var(--ink); transition: background var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.back:active, .icon-btn:active { transform: scale(.95); }
+.back:active, .icon-btn:active { transform: scale(.96); }
 .back svg, .icon-btn svg { width: 19px; height: 19px; }
 @media (hover: hover) { .back:hover, .icon-btn:hover { background: var(--mist-2); } }
 
@@ -101,7 +101,7 @@ p { text-wrap: pretty; }
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
     transform var(--fast) var(--ease), box-shadow var(--base) var(--ease);
 }
-.chip .n { font-weight: 700; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.chip .n { font-weight: 700; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .chip.on { background: var(--grad-blue); color: #fff; box-shadow: var(--sh-blue); }
 .chip.on .n { color: rgba(255, 255, 255, .75); }
 @media (hover: hover) { .chip:hover { background: var(--mist-2); } .chip.on:hover { background: var(--blue-deep); } }
@@ -112,7 +112,7 @@ p { text-wrap: pretty; }
   padding: 14px var(--s-4); font-size: var(--fs-md); color: var(--ink);
   box-shadow: inset 0 0 0 1.5px transparent; transition: box-shadow var(--fast) var(--ease), background var(--fast) var(--ease);
 }
-.input::placeholder, .textarea::placeholder { color: var(--ink-4); }
+.input::placeholder, .textarea::placeholder { color: var(--ink-3); }
 .input:focus, .textarea:focus { background: var(--paper); box-shadow: inset 0 0 0 2px var(--blue); }
 .textarea { min-height: 110px; resize: none; line-height: 1.5; }
 .hint { font-size: var(--fs-xxs); color: var(--ink-3); margin: var(--s-2) 0 0; }
@@ -137,7 +137,7 @@ p { text-wrap: pretty; }
 .peek-founder { margin-top: 8px; }
 
 /* Кнопка перед необратимым шагом: второе касание — уже насовсем */
-.btn.warn { background: var(--warn-soft); color: var(--warn); box-shadow: none; }
+.btn.warn { background: var(--warn-soft); color: var(--warn-ink); box-shadow: none; }
 
 /* iPhone увеличивает страницу, если нажать на поле со шрифтом мельче 16, и не всегда возвращает масштаб:
    страница оставалась крупной и «съезжала» вправо вместе с меню (правка 24.09). На телефонах — 16 */

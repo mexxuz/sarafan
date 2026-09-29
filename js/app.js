@@ -117,7 +117,7 @@
   // Кто сам ничего не указал (позвали, профиль пустой) — тогда по рекомендациям, иначе не понять, кто он
   // чем занимается — коротко: одна сфера — с уточнением, несколько — только названия, не больше двух и «+N» (правка 26.09: «колбаса»)
   const who = (id) => { const own = new Set((U(id) || {}).cats || []); const all = G.catsOf(id); const c = own.size ? all.filter((x) => own.has(x)) : all;
-    if (!c.length) return 'Участник сети';
+    if (!c.length) return 'Сфера не указана';   // «Участник сети» читалось как звание (правка 30.09)
     if (c.length === 1) return cat(c[0]).who + (focusOf(id, c[0]) ? ` (${focusOf(id, c[0])})` : '');
     return c.slice(0, 2).map((x) => cat(x).who).join(' · ') + (c.length > 2 ? ` +${c.length - 2}` : ''); };
   // Узкая специальность: подсказки для частых сфер, остальное пишут своими словами
@@ -152,7 +152,11 @@
     const dt = new Date(t); return dt.getDate() + ' ' + MONTHS[dt.getMonth()];
   };
   const hue = (id) => { let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 360; return (h * 7) % 360; };
-  const initials = (id) => U(id).name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  // без имени — первый знак из Telegram («🪄», «V»), а не «ИН» от «Имя не указано»
+  const initials = (id) => (U(id).noName && !U(id).aliasBy ? Array.from(U(id).tgName || '')[0] || '' : U(id).name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase());
+  // как узнать человека без имени: ник Telegram, а без ника — то, что стоит у него вместо имени.
+  // Только тому, кто его пригласил: остальным хватает «Имя не указано» (правка 30.09)
+  const tgHandle = (id) => { const u = U(id); if (u.invitedBy !== S.me) return ''; return u.username ? '@' + u.username : u.tgName ? 'В Telegram: ' + u.tgName : ''; };
   // Фото-заглушки: пока нет настоящих аватаров из Telegram, берём портреты randomuser.me
   const FEM = ['гузаль', 'айгуль', 'нигора'];
   const isFem = (id) => { const n = U(id).name.split(' ')[0].toLowerCase(); return /[ая]$/.test(n) || FEM.includes(n); };
@@ -1759,7 +1763,7 @@
       const tel = (x.phone || '').match(/\+?[\d\s\-()]{7,}/);
       return `<div class="col-item"><div class="row">${personAv(x)}
           <div class="grow" style="min-width:0">${U(x.user) ? `<a class="h3 ellip" href="#/p/${x.user}" style="display:block">${esc(x.name)}</a>` : `<div class="h3 ellip">${esc(x.name)}</div>`}
-          <div class="small muted ellip">${esc((x.cats || []).map((k) => cat(k).who).slice(0, 3).join(' · ') || 'Участник сети')}</div></div>${del}</div>
+          <div class="small muted ellip">${esc((x.cats || []).map((k) => cat(k).who).slice(0, 3).join(' · ') || 'Сфера не указана')}</div></div>${del}</div>
           ${x.note || x.rec ? `<p class="txt">«${esc(x.note || x.rec)}»${x.interest ? ` <span class="tag warm xs">${esc(INTEREST[x.interest])}</span>` : ''}</p>` : ''}
           ${!c.mine && (x.username || tel) ? `<div class="btn-row" style="margin-top:8px">${x.username ? `<button class="btn soft sm" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать</button>` : ''}${tel ? `<a class="btn ghost sm" href="tel:${esc(tel[0].replace(/[^\d+]/g, ''))}">${ic('phone')}Позвонить</a>` : ''}</div>` : ''}</div>`;
     };
@@ -3049,7 +3053,7 @@
     if (!LIVE || id === S.me || !G.connected(S.me, id) || G.catsOf(id).length) return '';
     const asked = (S.whoisAsked || []).includes(id);
     return `<div class="card" style="margin-top:14px"><div class="eyebrow">кем советовать</div>
-      <p class="small" style="margin:6px 0 12px">Пока не видно, чем занимается ${esc(first(id))}. ${asked ? 'Вы уже спросили — ответ придёт в Telegram' : 'Спросите — вопрос придёт в Telegram, ответ — вам'}</p>
+      <p class="small" style="margin:6px 0 12px">Пока не видно, чем ${U(id).noName && !U(id).aliasBy ? 'он' : ''} занимается${U(id).noName && !U(id).aliasBy ? '' : ' ' + esc(first(id))}. ${asked ? 'Вы уже спросили — ответ придёт в Telegram' : 'Спросите — вопрос придёт в Telegram, ответ — вам'}</p>
       ${asked ? '' : `<button class="btn primary block" data-act="whoisAsk" data-id="${id}">${ic('send')}Спросить, кем советовать</button>`}</div>`;
   }
   function sheetWhoIs(id) {
@@ -3136,7 +3140,7 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName && !u.noName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${u.noName ? `<div class="small muted" style="margin-top:2px">${u.aliasBy && U(u.aliasBy) ? `так его называет ${esc(first(u.aliasBy))}` : 'имени не указал'}${u.username ? ` · @${esc(u.username)}` : ''}</div>` : ''}${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.alias ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName && !u.noName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${u.noName ? `<div class="small muted" style="margin-top:2px">${u.aliasBy && U(u.aliasBy) ? `так его называет ${esc(first(u.aliasBy))}${tgHandle(id) ? ` · ${esc(tgHandle(id))}` : ''}` : esc(tgHandle(id))}</div>` : ''}${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.alias ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       ${personFacts(id, allRecs, indep)}
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
@@ -3834,6 +3838,8 @@
   let SH = null;
   // Стопка окон: окно, открытое из другого окна, ложится сверху, а «закрыть» возвращает к предыдущему
   const SHSTACK = [];
+  let sheetReturn = null;
+  const sheetBackdrop = (on) => ['#app', '#actions'].forEach((q) => { const x = $(q); if (x) x.inert = on; });
   function openSheet(obj) {
     const el = $('#sheet');
     const panel = $('#sheet .panel');
@@ -3843,8 +3849,13 @@
     const fb = $('#fixbtn'); if (fb) fb.hidden = true;
     if (layered) { panel.scrollTop = 0; drawSheet(); return; }
     el.hidden = false;
-    el.innerHTML = '<div class="shade" data-act="closeSheet"></div><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="body"></div></div>';
+    el.innerHTML = '<div class="shade" data-act="closeSheet"></div><div class="panel" role="dialog" aria-modal="true" tabindex="-1"><div class="grab"></div><div class="body"></div></div>';
     drawSheet();
+    // клавиатура и экранный диктор — внутрь шторки, экран под ней недоступен, а после закрытия
+    // фокус возвращается туда, откуда шторку открыли (правка 30.09)
+    sheetReturn = document.activeElement;
+    sheetBackdrop(true);
+    $('#sheet .panel').focus({ preventScroll: true });
     // проявляем через кадр — только если за это время шторку не закрыли: иначе она всплывала
     // поверх нового экрана уже ничьей, и закрыть её было нечем (правка 25.09, «профиль под шторкой»)
     requestAnimationFrame(() => requestAnimationFrame(() => { if (SH === obj) el.classList.add('open'); }));
@@ -3854,6 +3865,9 @@
     const p = $('#sheet .panel'); const st = p.scrollTop;
     $('#sheet .body').innerHTML = SH.render();
     p.scrollTop = st;
+    // название шторки для диктора — её заголовок
+    const h = $('#sheet .body h1, #sheet .body h2');
+    if (h) { h.id = 'sheet-title'; p.setAttribute('aria-labelledby', 'sheet-title'); } else p.removeAttribute('aria-labelledby');
     syncForm();
     const nl = $('#nodelogo', $('#sheet'));
     if (nl) nl.onchange = async () => { const file = nl.files && nl.files[0]; const id = nl.dataset.node; closeSheet();
@@ -3877,6 +3891,9 @@
     setTimeout(() => { if (!el.classList.contains('open')) { el.hidden = true; el.innerHTML = ''; } }, 300);
     document.documentElement.classList.remove('sheet-lock');
     SH = null;
+    sheetBackdrop(false);
+    if (sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
+    sheetReturn = null;
     catchUp();
     if (typeof drawFixBtn === 'function') drawFixBtn();
   }
@@ -3887,6 +3904,7 @@
     // на всякий случай: шторка видна, а за ней уже никого — убираем и её
     const el = $('#sheet');
     document.documentElement.classList.remove('sheet-lock');
+    sheetBackdrop(false);
     if (el && el.classList.contains('open')) { el.classList.remove('open'); setTimeout(() => { if (!SH) { el.hidden = true; el.innerHTML = ''; } }, 300); }
   }
   function syncForm() {
@@ -4306,7 +4324,7 @@
     const direct = G.connected(S.me, id);
     openSheet({
       F: {},
-      render: () => `${sheetHead(id, esc(U(id).name), esc(who(id)) + ' · ' + esc(U(id).city))}
+      render: () => `${sheetHead(id, esc(U(id).name), (U(id).noName && !U(id).aliasBy && tgHandle(id) ? esc(tgHandle(id)) + '<br>' : '') + esc(who(id)) + ' · ' + esc(U(id).city))}
         ${isFounder(id) ? `<div class="peek-founder">${founderTag(id)}</div>` : ''}
         ${peekInfo(id)}
         <div style="margin-top:12px">${chainLine(t.chain || [])}</div>

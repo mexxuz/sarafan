@@ -23,7 +23,7 @@
 .head-bar .grow { flex: 1; min-width: 0; }
 .head-bar .lbl { font-size: var(--fs-xs); color: var(--ink-3); }
 .head-bar .val { font: 800 var(--fs-lg)/1.25 var(--t); letter-spacing: -.02em; display: flex; align-items: center; gap: 6px; }
-.head-bar .val svg { width: 17px; height: 17px; color: var(--blue); }
+.head-bar .val svg { width: 17px; height: 17px; color: var(--blue-text); }
 .bell { position: relative; }
 .bell .badge { position: absolute; top: -3px; right: -3px; }
 
@@ -85,7 +85,7 @@
 
 /* Вкладки: переключение мягкое, без рывка */
 .tabs button { transition: background var(--base) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease); }
-.tabs button:active { transform: scale(.97); }
+.tabs button:active { transform: scale(.96); }
 
 /* Числа в профиле набегают при открытии */
 .stat b { animation: rise 420ms var(--ease) backwards; animation-delay: 80ms; }
@@ -126,7 +126,7 @@
 
 /* Портрет-дверь в профиль: одна на все экраны, в правом верхнем углу */
 .me-dot { flex: none; display: block; line-height: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--blue); transition: transform var(--fast) var(--ease); }
-.me-dot:active { transform: scale(.94); }
+.me-dot:active { transform: scale(.96); }
 .me-dot .av { width: 34px; height: 34px; font-size: 12px; }
 
 /* Меню у аватарки: на компьютере — при наведении, на телефоне — по нажатию */
@@ -142,7 +142,7 @@
 .me-pop::before { content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }   /* мостик: мышь доходит до меню, не теряя его */
 .me-menu.open .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
 @media (hover: hover) and (pointer: fine) { .me-menu:hover .me-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; } }
-.me-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink); font: 500 var(--fs-md)/1.2 var(--t); text-align: left; cursor: pointer; }
+.me-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: calc(var(--r-md) - 6px); background: none; color: var(--ink); font: 500 var(--fs-md)/1.2 var(--t); text-align: left; cursor: pointer; }
 .me-item:hover { background: var(--card-2); }
-.me-item svg { width: 18px; height: 18px; color: var(--blue); flex: none; }
+.me-item svg { width: 18px; height: 18px; color: var(--blue-text); flex: none; }
 .me-item em { font-style: normal; font-size: var(--fs-xs); font-weight: 600; color: var(--warn-ink, #b86a00); background: #fff3e0; padding: 2px 8px; border-radius: 999px; }

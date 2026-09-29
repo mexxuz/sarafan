@@ -31,7 +31,7 @@
   }
   .nav a span { max-height: none; opacity: 1; font: 600 var(--fs-xs)/1 var(--t); }
   .nav a svg { width: 18px; height: 18px; }
-  .nav a.on { background: var(--blue-soft); color: var(--blue); }
+  .nav a.on { background: var(--blue-soft); color: var(--blue-text); }
   .nav a.on svg { transform: none; }
   .nav a .badge { position: absolute; right: 12px; top: 50%; margin-top: -9px; }
   @media (hover: hover) { .nav a:hover { background: var(--mist); } .nav a.on:hover { background: var(--blue-soft); } }
@@ -44,7 +44,7 @@
   .nav a.ask span { display: block; }
   /* на телефоне «Спросить» — круглая кнопка на псевдоэлементе; здесь она лишняя */
   .nav a.ask::before { display: none; }
-  .nav a.ask .badge { position: absolute; top: 50%; right: 12px; margin-top: -9px; background: #fff; color: var(--blue); }
+  .nav a.ask .badge { position: absolute; top: 50%; right: 12px; margin-top: -9px; background: #fff; color: var(--blue-text); }
   .nav a.ask svg { width: 19px; height: 19px; }
   @media (hover: hover) { .nav a.ask:hover { background: var(--blue-deep); } }
 
