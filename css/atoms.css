@@ -142,3 +142,8 @@ p { text-wrap: pretty; }
 /* iPhone увеличивает страницу, если нажать на поле со шрифтом мельче 16, и не всегда возвращает масштаб:
    страница оставалась крупной и «съезжала» вправо вместе с меню (правка 24.09). На телефонах — 16 */
 @media (hover: none) { input, textarea, select { font-size: 16px !important; } }
+
+/* Выбор файла: поле спрятано глазу, но доступно клавиатуре; кольцо фокуса — на кнопке вокруг (правка 30.09) */
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+label:has(> .vh:focus-visible), label:has(.vh:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+label:has(> .vh) { position: relative; }

@@ -89,6 +89,8 @@
     checkPulse();
   };
   // Действие: в демо меняем данные на месте, вживую — просим сервер и перечитываем
+  // Переспросить перед тем, что не отменить одним нажатием: в Telegram — его окно, в браузере — обычное (правка 30.09)
+  const sure = (text) => new Promise((r) => (tg && tg.showConfirm ? tg.showConfirm(text, r) : r(window.confirm(text))));
   const mutate = async (demoFn, path, body, okMsg) => {
     if (!LIVE) { demoFn && demoFn(); commit(); if (okMsg) toast(okMsg); return; }
     try {
@@ -176,7 +178,7 @@
     + '<span><b>Взаимно</b> · знакомства</span></button></div>';
   // живая аватарка — только в крупных портретах: в списках десятки роликов разом тяжелы для телефона
   const video = (id) => (U(id) && U(id).video ? srvUrl(U(id).video) : '');
-  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${video(id) && (size === 'xl' || size === 'l') ? `<video src="${esc(video(id))}" autoplay muted loop playsinline preload="auto"></video>` : ''}</span>`;
+  const av = (id, size = '', ring = '') => `<span class="av ${size} ${ring} ${id === S.me ? 'mine' : ''}" style="--h:${hue(id)}" aria-hidden="true">${esc(initials(id))}${photo(id) ? `<img src="${photo(id)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${video(id) && (size === 'xl' || size === 'l') ? `<video src="${esc(video(id))}" ${calmMotion() ? '' : 'autoplay '}muted loop playsinline data-vid preload="auto"></video>` : ''}</span>`;
   const ringOf = (id) => { const d = G.dist[id]; return d === 1 ? 'r1' : d === 2 ? 'r2' : d === undefined ? '' : 'r3'; };
 
   // Примеры занятий на свободных местах орбиты — показывают, кого тут находят
@@ -243,8 +245,8 @@
     ? `<span class="trust">${ic('seal')}надёжно</span>` : '');
 
   const REL = { client: 'Опыт клиента', together: 'Работали вместе', team: 'Через сотрудника', colleague: 'Коллеги по цеху', friend: 'Знаю лично', other: 'Другое' };
-  const circleName = (c) => (c === 0 ? 'Это вы' : c === 1 ? 'Ваш контакт'
-    : c === 2 ? 'Через вашего знакомого' : c === 3 ? 'В двух шагах от вас' : 'Вне вашей сети');
+  const circleName = (c) => (c === 0 ? 'Это вы' : c === 1 ? 'Ваш знакомый'
+    : c === 2 ? 'Через вашего знакомого' : c === 3 ? 'Через знакомых ваших знакомых' : 'Вне вашей сети');
   const circleTag = (c) => `<span class="tag circle-${Math.min(c, 3)}">${circleName(c)}</span>`;
   const myContacts = () => [...(G.adj[S.me] || [])].sort((a, b) => U(a).name.localeCompare(U(b).name));
 
@@ -310,7 +312,7 @@
       const isRec = i === chain.length - 1 && prevId === recAuthor;
       const role = i === 0 ? 'начало цепочки'
         : isRec ? (prevId === S.me ? 'вы его рекомендуете' : `${esc(first(prevId))} рекомендует${catId ? ' · ' + esc(cat(catId).who.toLowerCase()) : ''}`)
-          : i === 1 ? 'ваш контакт' : `знакомый: ${esc(first(prevId))}`;
+          : i === 1 ? 'ваш знакомый' : `знакомый: ${esc(first(prevId))}`;
       const last = i === chain.length - 1;
       return `<a class="step ${last ? 'now' : ''}" href="#/p/${id}" style="--k:${i}">
         <span class="mark"><span class="dot"></span><span class="line"></span></span>
@@ -351,6 +353,21 @@
   let lastHash = null;
 
   let navBack = false;   // человек нажал «Назад» — экран должен уехать в другую сторону
+  // Выбранный чип, вкладка или день видны не только цветом: диктор слышит «нажата» (правка 30.09).
+  // Экран перерисовывается кусками, поэтому следим за любыми изменениями, а не за одной отрисовкой
+  const TOGGLES = new Set(['set', 'toggleWord', 'filter', 'askCat', 'askTo', 'askQuiet', 'tab', 'askDay', 'pickDay', 'askTeam', 'askRole']);
+  function syncPressed() {
+    $$('.chip, .pick, .cal-d, .tabs button').forEach((b) => {
+      if (b.tagName !== 'BUTTON') return;
+      const row = b.closest('.chips, .tabs, .cal');
+      const toggle = TOGGLES.has(b.dataset.act) || b.classList.contains('cal-d') || b.closest('.tabs') || (row && row.querySelector('.on'));
+      if (toggle) b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false');
+    });
+    $$('.nav a').forEach((a) => { if (a.classList.contains('on')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  let pressedQueued = false;
+  new MutationObserver(() => { if (pressedQueued) return; pressedQueued = true; setTimeout(() => { pressedQueued = false; syncPressed(); }, 30); })
+    .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   function render() {
     const { path, params } = route();
     const hashChanged = location.hash !== lastHash;
@@ -497,6 +514,13 @@
 
   // Числа в профиле набегают от нуля — видно, что за ними живые люди
   const calmMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Живая аватарка: при «уменьшить движение» стоит на первом кадре; нажатие на неё — пауза и снова пуск (правка 30.09)
+  document.addEventListener('click', (e) => {
+    const box = e.target.closest('.av');
+    const v = box && box.querySelector('video[data-vid]');
+    if (!v || e.target.closest('a, button')) return;
+    if (v.paused) v.play().catch(() => {}); else v.pause();
+  });
   function countUp(root) {
     if (calmMotion()) return;
     root.querySelectorAll('.stat b').forEach((el) => {
@@ -572,7 +596,7 @@
     ? `<button class="icon-btn full-btn" data-act="toggleFull" aria-label="${tg.isFullscreen ? 'Свернуть в окно' : 'Во весь экран'}" title="${tg.isFullscreen ? 'Свернуть в окно' : 'Во весь экран'}">${ic(tg.isFullscreen ? 'shrink' : 'expand')}</button>`
     : '');
   const screenHead = (title, sub, tools) => `<div class="top screen">
-      <div class="grow"><h1 class="h1 one">${title}</h1>${sub ? `<div class="sub ellip">${sub}</div>` : ''}</div>
+      <div class="grow"><h1 class="h1 one">${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div>
       ${tools || ''}${fullBtn()}${meMenu()}</div>`;
   const personMini = (id, sub, tag = 'a') => `<${tag} class="person" ${tag === 'a' ? `href="#/p/${id}"` : ''}>${av(id, 's')}<div class="grow"><div class="name ellip">${esc(full(id))}</div><div class="sub ellip">${esc(sub ?? who(id))}</div></div>${tag === 'a' ? ic('chev', 'chev') : ''}</${tag}>`;
 
@@ -590,7 +614,7 @@
   ];
   const worksGhost = (dirId) => `<div class="works ghost">
     ${GHOST_WORKS.map(([t, hint]) => `<label class="work-ghost">${ic('cam')}<b>${t}</b><span>${hint}</span>
-      <input type="file" accept="image/*" class="workfile" data-dir="${dirId || ''}" hidden></label>`).join('')}
+      <input type="file" accept="image/*" class="vh workfile" data-dir="${dirId || ''}"></label>`).join('')}
   </div>
   <p class="hint" style="text-align:center">Так галерея выглядит заполненной. Нажмите на любую рамку — и вместо неё встанет ваш снимок.</p>`;
 
@@ -800,7 +824,7 @@
   // Что написано на кнопке рекомендации: зависит от того, есть ли уже записи
   const recLabel = (id, catId) => {
     const mine = G.recsFrom(S.me).filter((r) => r.to === id);
-    if (catId ? mine.some((r) => r.cat === catId) : mine.length) return 'Изменить запись';
+    if (catId ? mine.some((r) => r.cat === catId) : mine.length) return 'Изменить рекомендацию';
     return G.recsTo(id).length ? 'Тоже рекомендую' : 'Рекомендовать';
   };
 
@@ -817,7 +841,7 @@
       + (helped >= 3 ? `<span class="tag warm" title="Его советы помогли ${helped} людям">советчик</span>` : '');
     const canThank = author !== S.me && r.to !== S.me && !r.private && LIVE;
     const thank = canThank ? (r.thanked ? `<span class="tiny muted">${ic('check')} Вы сказали спасибо</span>`
-      : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Обратился(ась) по совету — спасибо</button>`) : '';
+      : `<button class="btn ghost xs" data-act="recThank" data-id="${r.id}">Помог совет — спасибо</button>`) : '';
     // рекомендация о вас — можно убрать со своей страницы: шутка, чужая сфера. Второе касание — насовсем
     const uncat = r.to === S.me && author !== S.me && LIVE
       ? `<button class="btn ghost xs" data-act="recUncat" data-id="${r.id}" data-v="${r.catOff ? '' : '1'}">${r.catOff ? 'Вернуть сферу' : 'Не моя сфера'}</button>` : '';
@@ -844,28 +868,28 @@
     if (iRec) who1 = others.length ? `Вы и ещё ${others.length}` : 'Вы рекомендуете';
     else if (others.length) who1 = esc(first(others[0])) + (others.length > 1 ? ` и ещё ${others.length - 1}` : ' рекомендует');
     else if (r.via) who1 = esc(first(r.via)) + ' рекомендует';
-    else if (r.circle === 1) who1 = 'Ваш контакт';
+    else if (r.circle === 1) who1 = '';   // «ваш знакомый» уже написано в метке сверху — не повторяем (правка 30.09)
     else who1 = 'Общих знакомых нет';
     const otherCats = G.catsOf(u.id).filter((c) => c !== r.cat).length;
     const numbers = r.rep.count
       ? `${r.rep.count} ${pl(r.rep.count, 'рекомендация', 'рекомендации', 'рекомендаций').split(' ').pop()} · ${pl(r.rep.independent, 'источник', 'источника', 'источников')}`
-      : 'рекомендаций пока нет';
+      : '';   // что рекомендаций нет, скажет строка ниже
     // Номер круга — наш внутренний жаргон. Человеку нужно знать, как он до этого
     // человека дойдёт: сам напишет, попросит знакомого или пойдёт в два шага.
     const via = r.chain && r.chain.length > 1 ? r.chain[1] : null;
-    const path = r.circle === 1 ? 'Ваш контакт'
+    const path = r.circle === 1 ? 'Ваш знакомый'
       : r.circle === 2 && via ? `через ${esc(first(via))}`
         : r.circle === 2 ? 'через знакомого'
-          : r.circle === 3 ? 'в два шага' : '';
+          : r.circle === 3 ? 'через двоих знакомых' : '';
     return `<a class="card tap pcard ${accent ? 'accent' : ''}" href="#/p/${u.id}?cat=${r.cat}">
       <div class="head">${av(u.id, '', r.circle === 1 ? 'r1' : r.circle === 2 ? 'r2' : '')}
         <div class="grow"><div class="name ellip">${esc(u.name)} ${trustMark(r.rep)}</div>
           <div class="job ellip">${esc(cat(r.cat).name)}${otherCats ? ` <span class="more">+${otherCats}</span>` : ''}</div></div>
         ${path ? `<span class="tag circle-${r.circle}">${path}</span>` : ''}</div>
-      <div class="nums">${numbers}${u.busy ? ' · сейчас не берёт' : ''}${r.rep.suspicious ? ' · одна тесная группа' : ''}</div>
+      ${numbers || u.busy ? `<div class="nums">${[numbers, u.busy ? 'сейчас не берёт' : '', r.rep.suspicious ? 'часть советов — от одной компании друзей' : ''].filter(Boolean).join(' · ')}</div>` : ''}
       ${best ? `<p class="quote">«${esc(best.text)}»</p>
         <div class="by ellip">${esc(full(best.from))}${best.interest ? ` <span class="tag warm xs">${esc(INTEREST[best.interest])}</span>` : ''}</div>`
-    : `<p class="quote none">${r.circle === 1 ? 'Вы знакомы, но его пока никто не рекомендовал.' : 'Этого человека пока никто не рекомендовал.'}</p>`}
+    : `<p class="quote none">Пока никто не рекомендовал</p>`}
       <div class="foot">${authors.length ? stack(authors) : ''}
         <span class="who-line grow ellip">${who1}</span>${ic('arrow', 'arr')}</div></a>`;
   };
@@ -904,7 +928,7 @@
     S.requests.filter((q) => q.from === S.me).forEach((q) => q.answers.forEach((a) => ev.push({ at: a.at, html: `<div class="txt">Ответ на ваш запрос · <b>${esc(U(a.from).name)}</b> советует</div><div class="mini">${chainLine([S.me, a.from, a.person])}</div>`, who: a.from, link: `#/q/${q.id}` })));
     Object.values(S.users).forEach((u) => {
       if (u.id !== S.me && u.invitedBy && (c1.has(u.invitedBy) || u.invitedBy === S.me) && Date.now() - u.joined < 14 * 864e5)
-        ev.push({ at: u.joined, html: `<div class="txt"><b>${esc(u.name)}</b> теперь в сети · по приглашению: ${esc(full(u.invitedBy))}</div>`, who: u.id, link: `#/p/${u.id}` });
+        ev.push({ at: u.joined, html: `<div class="txt"><b>${esc(u.name)}</b> теперь в сети · ${u.invitedBy === S.me ? 'по вашему приглашению' : 'по приглашению от ' + esc(full(u.invitedBy))}</div>`, who: u.id, link: `#/p/${u.id}` });
     });
     nodesAll().forEach((n) => {
       (n.recs || []).filter((r) => !r.private).forEach((r) => {
@@ -941,13 +965,13 @@
     const shown = !!((sc.prices || '').trim() || (sc.works || []).length || (sc.dirs || []).length);
     const invite = { done: mine.length > 0, ico: 'user', h: '#/net' };
     const steps = stage === 'pro' ? [
-      { done: inRecs > 0, ico: 'seal', title: 'Отзывы', text: inRecs ? `о вас ${pl(inRecs, 'рекомендация', 'рекомендации', 'рекомендаций')}` : 'попросите 3 клиентов', act: 'askLink' },
+      { done: inRecs > 0, ico: 'seal', title: 'Рекомендации', text: inRecs ? `о вас ${pl(inRecs, 'рекомендация', 'рекомендации', 'рекомендаций')}` : 'попросите 3 клиентов', act: 'askLink' },
       { done: shown, ico: 'edit', title: 'Анкета', text: shown ? 'работы и цены есть' : 'работы и цены', act: 'wizOpen' },
       { ...invite, title: 'Коллеги', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'позовите, с кем работаете' },
     ] : stage === 'start' ? [
       { done: shown, ico: 'edit', title: 'Что умею', text: shown ? 'анкета заполнена' : 'и первая цена', act: 'wizOpen' },
       { ...invite, title: 'Рассказать', text: mine.length ? `знают ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : 'своим — пусть советуют' },
-      { done: inRecs > 0, ico: 'seal', title: 'Первый отзыв', text: inRecs ? 'уже есть' : 'от того, кому помогли', act: 'askLink' },
+      { done: inRecs > 0, ico: 'seal', title: 'Первая рекомендация', text: inRecs ? 'уже есть' : 'от того, кому помогли', act: 'askLink' },
     ] : [
       { done: asked > 0, ico: 'ask', title: 'Спросить', text: asked ? 'вопрос у знакомых' : open ? 'кто нужен — у своих' : 'после первого знакомого', h: open ? '#/ask' : '' },
       { ...invite, title: 'Позвать', text: mine.length ? `в сети ${pl(c1.length, 'знакомый', 'знакомых', 'знакомых')}` : '3 друзей — найдётся больше' },
@@ -1219,7 +1243,7 @@
             ${works.length ? `<div class="works small-works">${works.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
               <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
             <label class="btn block" style="margin-top:8px;cursor:pointer">${ic('cam')}Добавить фото работы
-              <input type="file" accept="image/*" class="workfile" data-dir="" hidden></label>
+              <input type="file" accept="image/*" class="vh workfile" data-dir=""></label>
             <p class="hint">Лучше всего продают готовые работы. JPG, PNG или WebP до 6 МБ</p></div>
           <label class="field"><span>Ссылки — по одной на строку</span>
             <textarea class="textarea" data-bind="links" rows="2" maxlength="600" placeholder="instagram.com/вы&#10;t.me/ваш_канал">${esc(f.links)}</textarea></label>` : ''}
@@ -1303,7 +1327,7 @@
     const main = G.catsOf(S.me)[0];
     const rep = G.reputation(S.me, main);
     const lines = miss.length
-      ? miss.map((d) => `<div class="demand-row"><b>${d.searched}</b><span>${esc(cat(d.cat).who)} искали за неделю ${pl(d.searched, 'человек', 'человека', 'человек')} из вашей сети — <b>вас увидели ${d.found}</b></span></div>`).join('')
+      ? miss.map((d) => `<div class="demand-row"><b>${d.searched}</b><span>В сфере «${esc(cat(d.cat).who)}» за неделю искали ${pl(d.searched, 'человек', 'человека', 'человек')} из вашей сети — <b>вашу карточку видели ${pl(d.found, 'раз', 'раза', 'раз')}</b></span></div>`).join('')
       : rep.independent < 3 ? `<p class="small" style="margin:0">${rep.independent
         ? `${esc(cat(main).who)}: ещё ${pl(3 - rep.independent, 'независимая рекомендация', 'независимые рекомендации', 'независимых рекомендаций')} — и отметка «надёжно». Таких находят первыми`
         : `${esc(cat(main).who)}: вас ещё никто не рекомендовал — поэтому в поиске знакомых вас нет`}</p>` : '';
@@ -1599,7 +1623,7 @@
   function pickInCloud(n) {
     if (n.self) { go('#/me'); return; }
     if (n.fc) { sheetFounder(); return; }
-    if (n.more) { toast(`Ещё ${n.more.count} человек через ${first(n.more.parent)} — они найдутся в поиске`); return; }
+    if (n.more) { toast(`Ещё ${pl(n.more.count, 'человек', 'человека', 'человек')} через ${first(n.more.parent)} — они найдутся в поиске`); return; }
     if (n.anon) { toast('Этого человека вы не знаете — он просто звено в цепочке до создателя'); return; }
     if (n.ghost) { go('#/net'); toast(`${n.label || 'Он'} ещё не в Сарафане — придёт, и вы станете знакомыми`); return; }
     if (n.kind === 'node') { sheetNodePeek(n.id.slice(1)); return; }
@@ -1607,7 +1631,7 @@
   }
 
   // Портрет создателя без его записи в сети: золотое кольцо, как везде
-  const founderCardAv = (fc, size) => `<span class="founder-av"><span class="av ${size} founder" style="--h:${hue(fc.id)}" aria-hidden="true">${esc((fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${fc.photo ? `<img src="${esc(fc.photo)}" alt="" onerror="this.remove()">` : ''}${fc.video && size === 'xl' ? `<video src="${esc(srvUrl(fc.video))}" autoplay muted loop playsinline></video>` : ''}</span></span>`;
+  const founderCardAv = (fc, size) => `<span class="founder-av"><span class="av ${size} founder" style="--h:${hue(fc.id)}" aria-hidden="true">${esc((fc.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase())}${fc.photo ? `<img src="${esc(fc.photo)}" alt="" onerror="this.remove()">` : ''}${fc.video && size === 'xl' ? `<video src="${esc(srvUrl(fc.video))}" ${calmMotion() ? '' : 'autoplay '}muted loop playsinline data-vid></video>` : ''}</span></span>`;
   const founderPortrait = (size) => {
     const fc = S.founderCard;
     if (!fc) return '';
@@ -1639,7 +1663,7 @@
         <div class="help-list">
           ${row('send', 'Прислали контакт', 'Перешлите боту — можно сразу несколько. Или вставьте текст в «Записать человека»')}
           ${row('check', 'С Telegram Premium', 'Подключите бота к личным чатам: Настройки → Telegram для бизнеса → Чат-боты. Под советами в личке появится «Сохранить себе»')}
-          ${row('list', 'Много контактов сразу', 'Пришлите боту файл: контакты из телефона (.vcf), таблицу (.csv) или карту XMind')}
+          ${row('list', 'Много контактов сразу', 'Пришлите боту файл: контакты из телефона (.vcf), или таблицу Excel (.csv)')}
         </div>`,
     });
   }
@@ -1690,12 +1714,12 @@
         .map((id) => `<button class="pick ${f.added.has(id) ? 'on' : ''}" data-act="colAddPick" data-u="${id}">${av(id, 's')}<span class="grow"><span class="h3 ellip" style="display:block">${esc(full(id))}</span><span class="small muted ellip" style="display:block">${esc(who(id))}${mine.has(id) ? ' · вы рекомендуете' : ''}</span></span>${f.added.has(id) ? ic('check') : ic('plus')}</button>`).join('');
       const ns = q ? nodesAll().filter((n) => ok(n.name + ' ' + (n.cat ? cat(n.cat).name : ''))).slice(0, 10)
         .map((n) => `<button class="pick ${f.added.has('o' + n.id) ? 'on' : ''}" data-act="colAddPick" data-n="${n.id}"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span><span class="grow"><span class="h3 ellip" style="display:block">${esc(n.name)}</span><span class="small muted">${esc(n.cat ? cat(n.cat).name : NODE_KIND[n.kind])}</span></span>${f.added.has('o' + n.id) ? ic('check') : ic('plus')}</button>`).join('') : '';
-      return ps + ns || '<p class="small muted">Никого не нашли</p>';
+      return ps + ns || '<p class="small muted">Никого не нашли — попробуйте имя или другую сферу</p>';
     };
     openSheet({
       F: f,
       render: () => `${sheetHead(null, 'Добавить в «' + esc(col.title) + '»', 'Нажмите — и человек в подборке')}
-        <input class="input" data-live="1" placeholder="Имя или сфера: диджей, ведущий, бар" autocomplete="off" value="${esc(f.q)}">
+        <input class="input" data-live="1" aria-label="Кого добавить: имя или сфера" placeholder="Имя или сфера: диджей, ведущий, бар" autocomplete="off" value="${esc(f.q)}">
         <div class="stack col-pick" style="gap:6px;margin-top:10px">${listHtml()}</div>
         <div class="s-foot"><button class="btn primary block" data-act="closeSheet">Готово</button></div>`,
       onLive: (v) => { f.q = v; const b = $('#sheet .col-pick'); if (b) b.innerHTML = listHtml(); },
@@ -1775,8 +1799,8 @@
           <span class="small muted">Подборка · ${author ? (author.id === S.me ? 'ваша' : esc(author.name)) : ''}</span></div>
         <h1 class="h1" style="margin-top:10px">${esc(c.title)}</h1>
         ${c.note ? `<p class="about">${esc(c.note)}</p>` : ''}
-        <p class="small muted" style="margin:8px 0 0">${pl(c.items.length, 'позиция', 'позиции', 'позиций')}${author && author.id !== S.me ? ' · за каждого ручается ' + esc(author.name.split(' ')[0]) : ''}</p></div>
-      ${c.items.length ? `<div class="card">${c.items.map(item).join('')}</div>` : `<div class="card"><p class="small muted" style="margin:0">Пока пусто</p></div>`}
+        <p class="small muted" style="margin:8px 0 0">${pl(c.items.length, 'позиция', 'позиции', 'позиций')}${author && author.id !== S.me ? ' · каждого рекомендует ' + esc(author.name.split(' ')[0]) : ''}</p></div>
+      ${c.items.length ? `<div class="card">${c.items.map(item).join('')}</div>` : `<div class="card"><p class="small muted" style="margin:0">В подборке пока никого — добавьте людей или места</p></div>`}
       <div class="btn-row" style="margin-top:14px">
         ${c.mine ? `<button class="btn primary" data-act="colAdd" data-id="${c.id}">${ic('plus')}Добавить</button>` : ''}
         <button class="btn ${c.mine ? 'soft' : 'primary'}" data-act="colShare">${ic('send')}Отправить в чат</button></div>
@@ -1973,7 +1997,7 @@
           <button class="btn ghost" data-act="closeSheet" data-go="#/o/${n.id}">Подробнее</button>
           ${canCard(n) ? `<button class="btn primary" data-act="nodeCard" data-id="${n.id}">${ic('edit')}Карточка ${n.kind === 'company' ? 'фирмы' : 'места'}</button>`
     : me ? `<button class="btn primary" data-act="addFact" data-id="${n.id}">${ic('plus')}Дописать сведения</button>`
-    : `<button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mineRec ? 'Изменить запись' : 'Рекомендовать'}</button>`}
+    : `<button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mineRec ? 'Изменить рекомендацию' : 'Рекомендовать'}</button>`}
         </div></div>`,
     });
   }
@@ -2016,7 +2040,7 @@
       <div class="cloud-box big"><canvas id="bigcloud" aria-label="Облако вашей сети"></canvas></div>
       <div class="map-foot"><div class="cloud-legend">
         <span><i class="lg-me"></i>вы</span>
-        ${F.show === 'places' ? `<span><i class="lg-1"></i>кто советует</span>` : `<span><i class="lg-1"></i>${pl(ring1.length, 'контакт', 'контакта', 'контактов')}</span>
+        ${F.show === 'places' ? `<span><i class="lg-1"></i>кто советует</span>` : `<span><i class="lg-1"></i>${pl(ring1.length, 'знакомый', 'знакомых', 'знакомых')}</span>
         <span><i class="lg-2"></i>${pl(ring2.length, 'человек', 'человека', 'человек')} через них</span>
         <span><i class="lg-far"></i>дальше</span>`}
         ${F.show === 'people' ? '' : `<span><i class="lg-place"></i>${pl(nodesAll().filter((n) => n.kind !== 'company').length, 'место', 'места', 'мест')}</span>
@@ -2094,7 +2118,7 @@
 
   // Снимок места — первое, что смотрят. Поэтому и кнопка живёт здесь же, а не в подвале.
   function photoBlock(n, can) {
-    const input = `<input type="file" accept="image/*" id="nodephoto" data-node="${n.id}" hidden>`;
+    const input = `<input type="file" class="vh" accept="image/*" id="nodephoto" data-node="${n.id}">`;
     if (n.photo) {
       return `<div class="node-photo full"><img src="${esc(srvUrl(n.photo))}" alt="${esc(n.name)}">
         ${can ? `<label class="shoot">${ic('cam')}Заменить${input}</label>` : ''}</div>`;
@@ -2128,7 +2152,7 @@
   function inviteWaitingText(w) {
     const url = `https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`;
     const g = (w.greeting || '').trim();
-    const text = `${g ? g + '\n\n' : ''}${first2(w.name) ? first2(w.name) + ', д' : 'Д'}обавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим. Вот приглашение: ${url}`;
+    const text = `${g ? g + '\n\n' : ''}${first2(w.name) ? first2(w.name) + ', з' : 'З'}ову тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим. Вот приглашение: ${url}`;
     if (w.username && tg && tg.openTelegramLink) tg.openTelegramLink(`https://t.me/${w.username}?text=${encodeURIComponent(text)}`);
     else tgShareLink(url, text.replace(': ' + url, ''));
   }
@@ -2144,7 +2168,7 @@
           <div class="small muted" style="margin-top:4px">${w.username ? '@' + esc(w.username) + ' · ' : ''}ещё не в Сарафане</div></div>
           <button class="icon-btn" data-act="closeSheet" aria-label="Закрыть" style="box-shadow:none;background:var(--card-2)">${ic('x')}</button></div>
         <label class="field"><span>Как вы его знаете</span><input class="input" data-bind="name" maxlength="60" placeholder="Шахина, менеджер PS" value="${esc(f.name)}"></label>
-        <label class="field"><span>Приветствие — уйдёт ему в Telegram вместе с приглашением</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Добавил тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
+        <label class="field"><span>Приветствие — уйдёт ему в Telegram вместе с приглашением</span><textarea class="textarea" data-bind="greeting" maxlength="500" rows="2" placeholder="${esc(first2(f.name) || 'Бахтиёр')}, привет! Зову тебя в свой круг — тут мои проверенные врачи и мастера, пригодится">${esc(f.greeting)}</textarea></label>
         <label class="field"><span>Заметка — видите только вы</span><textarea class="textarea" data-bind="note" maxlength="300" rows="2" placeholder="Коллега по PS, отвечает за закупки">${esc(f.note)}</textarea></label>
         ${catPick(f, 'cat', 'who', 'Чем занимается')}
         ${w.rec ? `<div class="note" style="color:var(--ink)">${ic('seal')} Ваша рекомендация ждёт его: «${esc(w.rec)}»</div>` : ''}
@@ -2210,7 +2234,7 @@
     [...recs, ...anon].forEach((r) => (r.tags || []).forEach((t) => { count[t] = (count[t] || 0) + 1; }));
     const tags = Object.keys(count).sort((a, b) => count[b] - count[a]).slice(0, 8);
     const peers = [...recs, ...anon].filter((r) => r.rel === 'colleague').length;
-    const circleWord = (c) => (c === 1 ? 'из вашего круга' : c === 2 ? 'через ваших знакомых' : c <= 3 ? 'из третьего круга' : 'из сети');
+    const circleWord = (c) => (c === 1 ? 'из вашего круга' : c === 2 ? 'через ваших знакомых' : c <= 3 ? 'через знакомых ваших знакомых' : 'дальше от вас');
     if (!tags.length && !peers && !anon.length) return '';
     return `${tags.length || peers ? `<div class="chips" style="margin-top:14px">${peers ? `<span class="tag brand">${ic('seal')}${pl(peers, 'коллега советует', 'коллеги советуют', 'коллег советуют')}</span>` : ''}${tags.map((t) => `<span class="tag soft">${esc(t)} · ${count[t]}</span>`).join('')}</div>` : ''}
       ${anon.length ? `<div class="sec-title"><h2 class="h2">Советуют без имени</h2><span class="tag">${anon.length}</span></div>
@@ -2240,8 +2264,8 @@
       return `<div class="person job-row"><a class="grow row" href="#/o/${n.id}" style="min-width:0"><span class="node-ic ${n.kind}" style="width:34px;height:34px">${nodeGlyph(n)}</span>
         <div class="grow"><div class="name">${esc(n.name)}</div><div class="sub ellip">${esc(jobRole(x) + jobDays(x))}${jobState(x) && !x.past ? ' · ' + jobState(x) : ''}${x.hidden ? ' · скрыто от других' : ''}</div></div></a>
         <div class="job-acts">${mine && !x.past && x.accepted !== false ? `<button class="btn ghost xs" data-act="workDays" data-id="${x.id}">${x.days ? 'Дни' : 'Дни приёма'}</button>` : ''}
-        ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Нет</button>`
-    : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Ушёл' : 'Отозвать'}</button>` : ''}
+        ${x.canAccept ? `<button class="btn xs" data-act="acceptWork" data-id="${x.id}">Да, работаю</button><button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">Не работаю здесь</button>`
+    : mine && !x.past ? `<button class="btn ghost xs" data-act="workLeave" data-id="${x.id}" data-name="${esc(n.name)}">${x.confirmed ? 'Больше не работаю' : 'Отменить отметку'}</button>` : ''}
         ${mine && x.past ? `<button class="btn ghost xs" data-act="workHide" data-id="${x.id}" data-v="${x.hidden ? '' : '1'}">${x.hidden ? 'Показывать' : 'Скрыть'}</button><button class="btn ghost xs" data-act="workErase" data-id="${x.id}" data-name="${esc(n.name)}">Удалить</button>` : ''}</div></div>`; };
     // чужой профиль: нынешние места уже стоят в шапке — здесь не повторяем, остаётся только «раньше» (правка 25.09)
     if (!mine && cur.length) {
@@ -2300,7 +2324,7 @@
       const w = waiters().map((x) => `<button class="person" data-act="pickWho" data-k="wait" data-v="${x.id}" style="width:100%;text-align:left">${waitAv(x, 's')}
           <div class="grow"><div class="name ellip">${esc(x.name || 'Без имени')}</div><div class="sub ellip">${x.username ? '@' + esc(x.username) + ' · ' : ''}ещё не в Сарафане</div></div></button>`).join('');
       return (a || '') + (w ? `<div class="eyebrow" style="margin:12px 2px 4px">ещё не в Сарафане — ждут в вашем круге</div>${w}` : '')
-        || '<p class="small muted">Никого не нашли. Кого нет в Сарафане — сначала добавьте в круг: «Моя сеть» → «Добавить знакомых из Telegram»</p>';
+        || '<p class="small muted">Никого не нашли. Кого нет в Сарафане — сначала позовите: «Моя сеть» → «Позвать из контактов Telegram»</p>';
     };
     openSheet({
       F: f,
@@ -2401,7 +2425,7 @@
         <div class="stack" style="gap:8px">${f.data.roles.map((r) => `<button class="link-row wide" data-act="viewAsGo" data-id="${r.user}" data-label="${esc(r.label)}" data-name="${esc(r.name)}">${ic('eye')}
           <span class="grow"><b>${esc(r.label)}</b><i>${esc(r.hint)}</i></span>${ic('arrow')}</button>`).join('')}</div>
         ${f.data.people.length ? `<div class="sec-title"><h2 class="h2">Или конкретный человек</h2></div>
-        <input class="input" data-live="1" placeholder="Имя — начните печатать" autocomplete="off" value="${esc(f.q)}" style="margin-bottom:10px">
+        <input class="input" data-live="1" aria-label="Имя человека" placeholder="Имя — начните печатать" autocomplete="off" value="${esc(f.q)}" style="margin-bottom:10px">
         <div class="card va-people">${peopleHtml()}</div>` : ''}`}`,
       onLive: (v) => { f.q = v; const b = $('#sheet .va-people'); if (b) b.innerHTML = peopleHtml(); },
     });
@@ -2446,7 +2470,7 @@
     : sheetHead(null, 'Сообщить о проблеме', `Это тестовая версия. Прочитает ${esc(by)} — каждое замечание делает Сарафан лучше для всех`)}
         <label class="field"><span>${own ? 'Что поправить' : 'Что случилось'}</span><textarea class="textarea" data-bind="text" rows="4" maxlength="2000" placeholder="${own ? 'Кнопка кривая, текст непонятный, хочу чтобы…' : 'Не сработала кнопка, непонятно, что делать на экране, не хватает…'}">${esc(f.text)}</textarea></label>
         <label class="link-row wide" style="cursor:pointer;margin-top:8px">${ic('cam')}<span class="grow"><b>${f.file ? 'Скриншот приложен' : 'Приложить скриншот'}</b><i>${f.file ? esc(f.file.name) : 'Необязательно, но так понятнее'}</i></span>
-          <input type="file" accept="image/*" id="fixfile" hidden></label>
+          <input type="file" class="vh" accept="image/*" id="fixfile"></label>
         <p class="tiny muted" style="margin:8px 2px 0">Экран, на котором вы были, приложу сам: ${esc(f.screen)}</p>
         <div class="s-foot"><button class="btn primary block" data-act="submitFix" data-submit>${ic('send')}${own ? 'Отправить правку' : 'Отправить'}</button></div>`,
       submit: async () => {
@@ -2581,7 +2605,7 @@
     const who = (x) => (x.user ? full(x.user) : x.node && nodeById(x.node) ? nodeById(x.node).name : x.name || 'Без имени');
     const pic = (x) => (x.user ? av(x.user, 's') : x.node ? `<span class="node-ic ${nodeById(x.node) ? nodeById(x.node).kind : 'company'}" style="width:34px;height:34px">${ic('house')}</span>`
       : `<span class="av s" style="--h:${hue(x.id)}" aria-hidden="true">${esc(((x.name || '?').match(/[A-Za-zА-Яа-яЁё0-9]/) || ['?'])[0].toUpperCase())}</span>`);
-    const via = (x) => (x.source === 'import' ? '' : x.via === S.me ? 'через вас' : x.via ? 'вёл(а) ' + first(x.via) : x.viaName ? 'вёл(а) ' + x.viaName : '');
+    const via = (x) => (x.source === 'import' ? '' : x.via === S.me ? 'через вас' : x.via ? 'кто вёл: ' + first(x.via) : x.viaName ? 'кто вёл: ' + x.viaName : '');
     const top = (x) => (x.section || '').split(' › ')[0];
     const rest = (x) => (x.section || '').split(' › ').slice(1).join(' › ');
     const reach = (x) => (x.inside ? [x.phone, x.username ? '@' + x.username : ''].filter(Boolean).join(' · ') : '');
@@ -2612,7 +2636,7 @@
       <p class="sec-note">Подрядчики и поставщики ${n.kind === 'company' ? 'фирмы' : 'места'} — рекомендация от ${esc(n.name)}, а не личная${member && list.some((x) => x.source === 'import') ? '. Телефоны и заметки видят только сотрудники' : ''}</p>
       <div class="card">${body || '<p class="small muted" style="margin:0 0 4px">Пока пусто. Добавьте подрядчиков и поставщиков, с которыми работает фирма — знакомые смогут на них выйти</p>'}
         ${member ? `<div class="btn-row" style="margin-top:12px"><button class="btn sm ghost" data-act="addPartner" data-id="${n.id}">${ic('plus')}Добавить подрядчика</button></div>
-        <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл: контакты из телефона (.vcf), таблицу (.csv) или карту XMind</p>` : ''}</div>`;
+        <p class="tiny muted" style="margin:6px 2px 0">Много контактов сразу — пришлите боту файл: контакты из телефона (.vcf), или таблицу Excel (.csv)</p>` : ''}</div>`;
   }
 
   // Контакт фирмы целиком: раздел, заметки и цены, как связаться
@@ -2632,7 +2656,7 @@
     openSheet({
       F: {},
       render: () => `${sheetHead(null, esc(x.name || 'Без имени'), esc([x.section, x.cat ? cat(x.cat).who : ''].filter(Boolean).join(' · ') || 'Контакт фирмы'))}
-        <p class="small muted" style="margin:0 0 12px">${ic('seal')} С ним работа${firms.length > 1 ? 'ют' : 'ет'} ${firms.map((n) => `<a class="link" href="#/o/${n.id}">${esc(n.name)}</a>`).join(', ') || 'фирма'}${x.viaName ? ' · вёл(а) ' + esc(x.viaName) : x.via && x.source !== 'import' ? ' · вёл(а) ' + esc(first(x.via)) : ''}</p>
+        <p class="small muted" style="margin:0 0 12px">${ic('seal')} С ним работа${firms.length > 1 ? 'ют' : 'ет'} ${firms.map((n) => `<a class="link" href="#/o/${n.id}">${esc(n.name)}</a>`).join(', ') || 'фирма'}${x.viaName ? ' · кто вёл: ' + esc(x.viaName) : x.via && x.source !== 'import' ? ' · вёл(а) ' + esc(first(x.via)) : ''}</p>
         ${notes.length ? `<div class="card" style="margin-bottom:12px">${notes.map((t) => `<p class="small" style="margin:4px 0">${esc(t)}</p>`).join('')}</div>` : ''}
         ${x.inside ? `<div class="stack" style="gap:8px">
           ${x.username ? `<button class="btn primary block" data-act="openTg" data-u="${esc(x.username)}">${ic('send')}Написать в Telegram · @${esc(x.username)}</button>` : ''}
@@ -2722,7 +2746,7 @@
       ${facts.length ? `<div class="card">${Object.keys(byKind).map((k) => `<div class="fact-group">
         <div class="eyebrow">${esc(FACT_KIND[k] || FACT_KIND.note)}</div>
         ${byKind[k].map((f) => `<div class="fact"><p>${esc(f.text)}</p>
-          <div class="row"><span class="tiny muted grow">${f.official ? '<b style="color:var(--company)">от владельца</b> · ' : ''}${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш контакт' : ''} · ${when(f.at)}</span>
+          <div class="row"><span class="tiny muted grow">${f.official ? '<b style="color:var(--company)">от владельца</b> · ' : ''}${esc(full(f.from))}${G.dist[f.from] === 1 ? ' · ваш знакомый' : ''} · ${when(f.at)}</span>
           ${f.from === S.me ? `<button class="btn ghost xs" data-act="delFact" data-id="${f.id}">Убрать</button>` : ''}</div></div>`).join('')}
       </div>`).join('')}</div>`
     : `<div class="card"><p class="small muted" style="margin:0">Пока никто ничего не уточнил. Знаете часы работы, цены или к кому подходить — расскажите, это увидят ваши знакомые.</p></div>`}
@@ -2735,7 +2759,7 @@
 
       <div style="height:96px"></div>
       <div class="actions"><div class="inner">
-        <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить запись' : 'Рекомендовать'}</button>
+        <button class="btn primary" data-act="recNode" data-id="${n.id}">${ic('seal')}${mine ? 'Изменить рекомендацию' : 'Рекомендовать'}</button>
         </div></div>`;
   }
 
@@ -2754,10 +2778,10 @@
           <span class="grow"><b>Поправить карточку</b><i>Название, сфера, адрес, ссылка</i></span>${ic('arrow')}</button>` : ''}
         <label class="link-row wide" style="cursor:pointer">${ic('cam')}
           <span class="grow"><b>${n.photo ? 'Заменить снимок' : 'Добавить снимок'}</b><i>Знакомые узнают место с первого взгляда</i></span>
-          <input type="file" accept="image/*" id="nodephoto2" data-node="${n.id}" hidden></label>
+          <input type="file" class="vh" accept="image/*" id="nodephoto2" data-node="${n.id}"></label>
         ${canCard(n) || n.by === S.me ? `<label class="link-row wide" style="cursor:pointer">${n.logo ? `<span class="node-ic" style="width:22px;height:22px;border-radius:6px">${nodeGlyph(n)}</span>` : ic('house')}
           <span class="grow"><b>${n.logo ? 'Заменить логотип' : 'Добавить логотип'}</b><i>Встанет кружком вместо значка — в списках, облаке и карточках в чатах</i></span>
-          <input type="file" accept="image/*" id="nodelogo" data-node="${n.id}" hidden></label>` : ''}
+          <input type="file" class="vh" accept="image/*" id="nodelogo" data-node="${n.id}"></label>` : ''}
         <button class="link-row wide" data-act="closeNode" data-id="${n.id}" data-v="${n.closed ? '' : '1'}">${ic('alert')}
           <span class="grow"><b>${n.closed ? 'Снова работает' : 'Закрылось или переехало'}</b><i>${n.closed ? 'Уберём отметку, карточка снова обычная' : 'Знакомые не поедут зря. Рекомендации останутся'}</i></span></button>`,
     });
@@ -2842,7 +2866,7 @@
     openSheet({
       F: f,
       valid: () => f.text.trim().length >= 20,
-      render: () => `${sheetHead(null, was ? 'Изменить запись' : 'Рекомендовать', esc(n.name))}
+      render: () => `${sheetHead(null, was ? 'Изменить рекомендацию' : 'Рекомендовать', esc(n.name))}
         <label class="field" style="margin-top:0"><span>За что рекомендуете</span>
           <textarea class="textarea" data-bind="text" maxlength="600" placeholder="Что здесь было хорошо: что делали, сколько ждали, чем кончилось">${esc(f.text)}</textarea>
           <p class="hint" data-count="text" data-min="20"></p></label>
@@ -2913,9 +2937,9 @@
     const ev = feed();
     const work = (S.nodePeople || []).filter((x) => (x.canConfirm || x.canAccept) && nodeById(x.node));
     const nothing = !asks.length && !pend.length && !inc.length && !howItWent.length && !ev.length && !work.length;
-    return screenHead('Новое', todo() ? 'Ждут вашего ответа' : 'Движение доверия вокруг вас') + `
+    return screenHead('Новое', todo() ? 'Ждут вашего ответа' : 'Что нового у ваших знакомых') + `
       ${nothing ? `<div class="empty" style="padding-top:18vh"><h2 class="h2">Пока тихо</h2>
-        <p>Здесь появится движение доверия: кто кого рекомендует, кто вошёл в сеть, кого просят познакомить.</p>
+        <p>Здесь появится, что нового у ваших знакомых: кто кого рекомендует, кто вошёл в сеть, кого просят познакомить.</p>
         <a class="btn primary" href="#/net">${ic('plus')}Позвать знакомых</a></div>` : ''}
       ${howItWent.map(resultAskCard).join('')}
       ${asks.length ? `<div class="sec-title"><h2 class="h2">Просят познакомить</h2><span class="badge">${asks.length}</span></div>${asks.map(introAskCard).join('')}` : ''}
@@ -2956,13 +2980,24 @@
   };
 
   // ——— Поиск ———
-  const FILTERS = [['all', 'Все'], ['1', 'Ваши контакты'], ['2', 'Через знакомых'], ['far', 'Дальше']];
+  const FILTERS = [['all', 'Все'], ['1', 'Ваши знакомые'], ['2', 'Через знакомых'], ['far', 'Дальше']];
   function Search(params) {
     if (F.q === undefined) { F.q = params.get('q') || ''; F.c = params.get('c') || ''; F.f = params.get('f') || 'all'; }
-    return `<div class="top">
+    return `<h1 class="vh">Поиск</h1><div class="top">
         <label class="search grow">${ic('search')}<input data-bind="q" value="${esc(F.q)}" placeholder="${F.c ? esc(cat(F.c).name) : 'Юрист, врач, репетитор, дизайнер…'}" autocomplete="off" enterkeyhint="search" ${F.c ? '' : 'autofocus'} aria-label="Кого ищете">${F.q || F.c ? `<button class="clear" data-act="clearSearch" aria-label="Очистить">${ic('x')}</button>` : ''}</label>
         ${fullBtn()}${meMenu()}</div>
+      <p id="search-status" class="vh" role="status"></p>
       <div id="results">${searchResults()}</div>`;
+  }
+  // Что нашлось — вслух для диктора: число людей или «никого не нашли» (правка 30.09)
+  let statusT = null;
+  function searchStatus() {
+    clearTimeout(statusT);
+    statusT = setTimeout(() => {
+      const box = $('#search-status'); if (!box) return;
+      const c = $('#results .count-line b'), e = $('#results .empty h2');
+      box.textContent = c ? c.textContent : e ? e.textContent : '';
+    }, 700);
   }
   // Места и фирмы, подходящие под запрос: по названию и по сфере
   const findNodes = (q, catId) => {
@@ -3013,7 +3048,7 @@
       tiles.splice(0, tiles.length, ...tiles.filter((x) => x.close.length || (placeBy[x.c.id] || []).length)
         .sort((a, b) => b.close.length - a.close.length || b.all.length - a.all.length));
       return `<div class="sec-title"><h2 class="h2">Сферы</h2><span class="small muted">${pl(near.length, 'человек', 'человека', 'человек')} в вашей сети</span></div>
-        <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>`}</a>`; }).join('')}</div>`;
+        <div class="cat-grid">${tiles.map((x) => { const ps = (placeBy[x.c.id] || []).length; return `<a class="cat-tile" href="#/search?c=${x.c.id}" style="text-decoration:none"><b>${esc(x.c.name)}</b>${x.close.length ? `<div class="av-stack">${x.close.slice(0, 3).map((id) => av(id, 'xs')).join('')}</div><span>${pl(x.close.length, 'человек', 'человека', 'человек')} через ваших знакомых${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}</span>` : x.all.length ? `<span>${pl(x.all.length, 'человек', 'человека', 'человек')}${ps ? ` · ${pl(ps, 'место', 'места', 'мест')}` : ''}, но не через вашу сеть</span>` : `<span>${pl(ps, 'место', 'места', 'мест')}</span>`}</a>`; }).join('')}</div>`;
     }
     const all = G.search(q, F.c);
     logSearch(F.c ? [F.c] : G.matchCats(q).slice(0, 2), all.slice(0, 20).map((r) => r.user.id));
@@ -3022,7 +3057,7 @@
     all.forEach((r) => counts[bucket(r)]++);
     const list = F.f === 'all' ? all : all.filter((r) => bucket(r) === F.f);
     const catsFound = F.c ? [F.c] : G.matchCats(q);
-    const filt = `<div class="chips scroll" style="margin-top:12px">${F.c ? `<button class="chip on" data-act="clearCat">${esc(cat(F.c).name)} ${ic('x').replace('<svg', '<svg style="width:14px;height:14px"')}</button>` : ''}${FILTERS.map(([k, l]) => `<button class="chip ${F.f === k ? 'on' : ''}" data-act="filter" data-v="${k}" ${counts[k] ? '' : 'disabled style="opacity:.45"'}>${l}<span class="n">${counts[k]}</span></button>`).join('')}</div>`;
+    const filt = `<div class="chips scroll" style="margin-top:12px">${F.c ? `<button class="chip on" data-act="clearCat">${esc(cat(F.c).name)} ${ic('x').replace('<svg', '<svg style="width:14px;height:14px"')}</button>` : ''}${all.length ? FILTERS.filter(([k]) => counts[k] || F.f === k).map(([k, l]) => `<button class="chip ${F.f === k ? 'on' : ''}" aria-pressed="${F.f === k}" data-act="filter" data-v="${k}">${l}<span class="n">${counts[k]}</span></button>`).join('') : ''}</div>`;   // пустые фильтры не показываем (правка 30.09)
     const askPrefill = encodeURIComponent(q || (F.c ? cat(F.c).who : ''));
     const askCard = `<div class="card" style="margin-top:16px;text-align:center"><div class="h3">${list.length ? 'Спросить знакомых?' : 'В кругах знакомых никого'}</div><p class="small muted" style="margin:6px 0 14px">Запрос получат ${pl(myContacts().length, 'человек', 'человека', 'человек')} из вашего круга — они посмотрят у себя и посоветуют.</p><a class="btn primary" href="#/ask?t=${askPrefill}&c=${catsFound[0] || ''}">${ic('ask')}Спросить свою сеть</a></div>`;
     const places = findNodes(q, F.c);
@@ -3037,7 +3072,7 @@
       if (places.length || partnersFound.length) return filt + placeBlock + partnerBlock + addPlace + askCard;
       return filt + `<div class="empty"><h2 class="h2">${catsFound.length ? 'Никого не нашли' : 'Не понимаем запрос'}</h2><p>${catsFound.length ? 'В кругах ваших знакомых в этой сфере пока никого.' : 'Попробуйте иначе: «юрист», «стоматолог», «бухгалтер», «репетитор».'}</p></div>` + addPlace + askCard;
     }
-    const groups = [['1', 'Ваши контакты'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
+    const groups = [['1', 'Ваши знакомые'], ['2', 'Через ваших знакомых'], ['far', 'Дальше от вас']];
     let html = filt + `<div class="count-line"><b>${pl(list.length, 'человек найден', 'человека найдено', 'человек найдено')}</b>${F.f !== 'all' ? '<button class="link" data-act="filter" data-v="all">Показать всех</button>' : ''}</div>`;
     groups.forEach(([k, label]) => {
       const g = list.filter((r) => bucket(r) === k);
@@ -3225,10 +3260,21 @@
           <div class="field"><span>На какой день${F.date ? ': <b style="color:var(--ink)">' + fmtDay(F.date) + '</b>' : ''}</span>${calendar(F.date, 'askDay')}</div>`
     : `<div id="askcats">${askCats()}</div>`}
         ${askTo(c1)}
-        <button class="btn primary block" style="margin-top:14px" data-act="postAsk" data-submit ${askValid() ? '' : 'disabled'}>${ic('send')}Отправить запрос</button>
+        <p class="hint" id="askwhy" role="status"></p>
+        <button class="btn primary block" style="margin-top:14px" data-act="postAsk" aria-describedby="askwhy">${ic('send')}Отправить запрос</button>
       </div>
       ${mine.length ? `<div class="sec-title"><h2 class="h2">Ваши запросы</h2></div><div class="stack">${mine.map((q) => requestCard(q, true)).join('')}</div>` : ''}`;
   }
+  // Чего не хватает запросу — кнопка не серая без причины, а говорит это при нажатии (правка 30.09)
+  const askMissing = () => {
+    const n = (F.t || '').trim().length;
+    if (n < 10) return n ? `Напишите чуть подробнее — ещё ${pl(10 - n, 'знак', 'знака', 'знаков')}` : 'Напишите, кого ищете';
+    if (F.team && !(F.cats || []).length) return 'Выберите, кто нужен';
+    if (F.team && !F.date) return 'Выберите день';
+    if (!F.team && !F.cat) return 'Выберите сферу — или заведите свою';
+    if (F.quiet && !(F.to || []).length) return 'Отметьте хотя бы одного человека';
+    return '';
+  };
   const askValid = () => (F.t || '').trim().length >= 10 && (F.team ? (F.cats || []).length > 0 && !!F.date : !!F.cat)
     && (!F.quiet || (F.to || []).length > 0);
   // Кому уйдёт запрос: всем знакомым или только выбранным. Деликатное спрашивают тихо
@@ -3239,7 +3285,7 @@
       ? `<div class="chips" style="margin-top:8px">${c1.map((id) => `<button class="chip ${picked.includes(id) ? 'on' : ''}" data-act="askTo" data-v="${id}">${esc(first(id))}</button>`).join('')}</div>
          <button class="pick ${F.anon ? 'on' : ''}" style="margin-top:10px" data-act="askAnon"><span class="grow"><span class="h3" style="display:block">Не показывать моё имя</span><span class="small muted">Имя увидит только тот, кто ответит</span></span>
            <span class="radio"></span></button>`
-      : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">${c1.length === 1 || (c1.length % 10 === 1 && c1.length % 100 !== 11) ? 'Получит' : 'Получат'} ${pl(c1.length, 'человек', 'человека', 'человек')} из 1-го круга. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
+      : `<div class="row" style="margin-top:10px"><div class="av-stack">${c1.slice(0, 5).map((id) => av(id, 'xs')).join('')}</div><div class="grow small muted">${c1.length === 1 || (c1.length % 10 === 1 && c1.length % 100 !== 11) ? 'Получит' : 'Получат'} ${pl(c1.length, 'ваш знакомый', 'ваших знакомых', 'ваших знакомых')}. Они посоветуют своих — с цепочкой, через кого.</div></div>`;
     return `<div class="field" id="askto"><span>Кому уйдёт</span>
       <div class="chips"><button class="chip ${quiet ? '' : 'on'}" data-act="askQuiet" data-v="">Всем знакомым</button><button class="chip ${quiet ? 'on' : ''}" data-act="askQuiet" data-v="1">Выбрать, кому</button></div>
       ${rows}
@@ -3285,7 +3331,7 @@
       for (let d = from; d <= total; d++) {
         const day = new Date(first.getFullYear(), first.getMonth(), d);
         const key = ymd(day), past = day < t;
-        cells += `<button class="cal-d ${sel.has(key) ? 'on' : ''} ${key === ymd(t) ? 'today' : ''}" ${past ? 'disabled' : `data-act="${act}" data-v="${key}"`}>${d}</button>`;
+        cells += `<button class="cal-d ${sel.has(key) ? 'on' : ''} ${key === ymd(t) ? 'today' : ''}" aria-label="${day.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}" ${past ? 'disabled' : `data-act="${act}" data-v="${key}"`}>${d}</button>`;
       }
       out += `<div class="cal"><div class="cal-m">${MONTHS_NOM[first.getMonth()]}</div><div class="cal-w">${['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((w) => `<span>${w}</span>`).join('')}</div><div class="cal-g">${cells}</div></div>`;
     }
@@ -3357,7 +3403,7 @@
       <div class="sec-title"><h2 class="h2">${q.answers.length ? pl(q.answers.length, 'ответ', 'ответа', 'ответов') : 'Ответов пока нет'}</h2></div>
       ${answers ? `<div class="card" style="padding:6px 10px 10px">${answers}</div>` : `<div class="card"><p class="small muted" style="margin:0">${mine ? 'Мы сообщим в Telegram, как только кто-то посоветует человека.' : 'Будьте первым, кто поможет.'}</p></div>`}
       <div style="margin-top:16px">${mine
-        ? (q.closed ? '<p class="small muted" style="text-align:center">Запрос закрыт</p>' : `<button class="btn ghost block" data-act="closeReq" data-id="${q.id}">${ic('check')}Нашёл, закрыть запрос</button>`)
+        ? (q.closed ? '<p class="small muted" style="text-align:center">Запрос закрыт</p>' : `<button class="btn ghost block" data-act="closeReq" data-id="${q.id}">${ic('check')}Нашли — закрыть запрос</button>`)
         : answered ? '' : `${partnersForRequest(q).length ? `<div class="note" style="margin-bottom:12px">${ic('seal')} У подрядчиков вашей фирмы есть подходящие: <b>${esc(partnersForRequest(q).slice(0, 3).map((x) => x.name.split(' ')[0]).join(', '))}</b>
           <button class="btn ghost xs" style="margin-top:10px" data-act="answerPartner" data-q="${q.id}" data-id="${partnersForRequest(q)[0].id}">Посоветовать</button></div>` : ''}<button class="btn primary block" data-act="answer" data-id="${q.id}">Посоветовать человека</button>`}</div>`;
   }
@@ -3391,7 +3437,7 @@
         ${gaps.length ? `<p class="small" style="margin:0 0 10px">В вашей сети пока нет: <b>${gaps.map((c) => esc(cat(c).who.toLowerCase())).join(', ')}</b>. Позовите знакомых — у кого-то из них такие точно есть</p>` : ''}
         <div class="link-box plain">${ic('link').replace('<svg', '<svg style="width:17px;height:17px;flex:none;opacity:.6"')}<span class="grow" style="min-width:0;overflow:hidden;text-overflow:ellipsis">${link}</span><button data-act="copy" data-v="https://${link}" aria-label="Скопировать ссылку" style="flex:none;border:0;background:none;padding:6px;margin:-6px -4px -6px 0;color:var(--accent,#2a7de1);cursor:pointer;display:flex">${ic('copy').replace('<svg', '<svg style="width:20px;height:20px"')}</button></div>
         <button class="btn primary block" data-act="sendInvite" style="margin-top:10px">${ic('send')}Отправить ссылку</button>
-        <p class="tiny muted" style="margin:8px 2px 0">Кто войдёт по ссылке — сразу ваш контакт</p>
+        <p class="tiny muted" style="margin:8px 2px 0">Кто войдёт по ссылке — сразу станет вашим знакомым</p>
         <button class="link-row wide" data-act="pickCircle">${ic('user')}
           <span class="grow"><b>Позвать из контактов Telegram</b><i>Отметьте людей — придут и сразу станут вашими знакомыми. Порекомендовать можно здесь же</i></span>${ic('arrow')}</button>
         ${waiting.length ? `<div class="invite-wait"><div class="small" style="font-weight:600">Ждут в круге · ${waiting.length}</div>
@@ -3404,7 +3450,7 @@
       <div class="rail" style="margin-top:10px">
         ${[['Вы отправляете ссылку', 'в Telegram, любым знакомым'],
            ['Человек открывает её', 'и нажимает «Открыть Сарафан»'],
-           ['Он в сети и он ваш контакт', 'дальше вы можете рекомендовать друг друга']]
+           ['Он в сети и он ваш знакомый', 'дальше вы можете рекомендовать друг друга']]
           .map(([t, d], i, all) => `<div class="step ${i === all.length - 1 ? 'now' : ''}" style="--k:${i}">
             <span class="mark"><span class="dot"></span><span class="line"></span></span>
             <span class="body"><span class="grow"><span class="who">${t}</span><span class="role">${d}</span></span></span></div>`).join('')}
@@ -3422,8 +3468,8 @@
         return r.length ? 'Вы рекомендуете: ' + r.join(', ') : who(id);
       };
       return `<div class="sec-title" style="margin-top:var(--s-5)"><h2 class="h2">Люди в сети</h2></div>
-      <div class="tabs" role="tablist"><button class="${far ? '' : 'on'}" data-act="tab" data-v="c1">Ваши знакомые<i>${c1.length}</i></button><button class="${far ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button></div>
-      <div class="card" style="padding:6px 10px">${shown.map((id) => personMini(id, sub(id))).join('') || '<p class="small muted" style="margin:8px 0">Пока никого</p>'}</div>
+      <div class="tabs"><button class="${far ? '' : 'on'}" data-act="tab" data-v="c1">Ваши знакомые<i>${c1.length}</i></button><button class="${far ? 'on' : ''}" data-act="tab" data-v="c2">Через них<i>${c2.length}</i></button></div>
+      <div class="card" style="padding:6px 10px">${shown.map((id) => personMini(id, sub(id))).join('') || '<p class="small muted" style="margin:8px 0">Пока никого — позовите знакомых по ссылке выше</p>'}</div>
       ${ids.length > shown.length ? `<p style="text-align:center;margin-top:10px"><button class="btn ghost sm" data-act="netAll">Показать всех · ${ids.length}</button></p>` : ''}`;
     }
 
@@ -3456,7 +3502,7 @@
     // пришёл искать людей и сфер не указал — без блоков мастера (работа, занятые дни, витрина, «вас рекомендуют»);
     // вместо них одна строка: «оказываете услуги?» (правка 26.09)
     const seeker = me.stage === 'seek' && !(me.cats || []).length && !inRecs.length && !jobsOf(S.me).length;
-    return `<div class="top"><h1 class="h2 grow">Профиль</h1><button class="icon-btn" data-act="shareMe" aria-label="Поделиться своей карточкой">${ic('share')}</button><button class="btn sm primary" data-act="editMe">${ic('edit')}Изменить</button></div>
+    return `<div class="top"><p class="h2 grow" style="margin:0">Профиль</p><button class="icon-btn" data-act="shareMe" aria-label="Поделиться своей карточкой">${ic('share')}</button><button class="btn sm primary" data-act="editMe">${ic('edit')}Изменить</button></div>
       <div class="p-head"><button class="av-edit" data-act="avatarMenu" aria-label="Сменить фото">${founderAv(S.me, 'xl')}<span class="av-cam">${ic('cam')}</span></button><div><div class="who">${esc(who(S.me))} · ${esc(me.city)}</div><h1 class="h1" style="margin-top:6px">${esc(me.name)}</h1>${founderTag(S.me)}${jobLine(S.me)}</div>${me.about ? `<p class="about">${esc(me.about)}</p>` : ''}</div>
       ${personFacts(S.me, inRecs, indep)}
       ${reachCard('in-me')}
@@ -3487,7 +3533,7 @@
       ${voicesView(S.me)}
       ${rs.people ? `
       <div class="sec-title"><h2 class="h2">Ваши советы помогают</h2></div>
-      <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>раз карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
+      <div class="card"><div class="stat-grid"><div class="stat"><b>${rs.people}</b><span>${plural(rs.people, 'человек', 'человека', 'человек')} рекомендуете</span></div><div class="stat"><b>${(S.impact || { shares: 0, thanks: 0, worked: 0 }).shares}</b><span>${plural((S.impact || { shares: 0 }).shares, 'раз', 'раза', 'раз')} карточки ушли в чаты</span></div><div class="stat"><b>${thanks}</b><span>${plural(thanks, 'спасибо', 'спасибо', 'спасибо')} за советы</span></div></div>
         ${(S.impact || { shares: 0, thanks: 0, worked: 0 }).worked ? `<p class="small" style="margin:12px 0 0;color:var(--good);font-weight:600">Через вас сложилось ${pl((S.impact || { shares: 0, thanks: 0, worked: 0 }).worked, 'знакомство', 'знакомства', 'знакомств')}</p>` : ''}
         <p class="small muted" style="margin:12px 0 0">Записали однажды — а советы продолжают работать без вас: их находят в поиске и отправляют в чаты. Раз в неделю бот расскажет, кому они помогли.</p></div>
       ` : ''}
@@ -3495,8 +3541,8 @@
         <span class="grow"><b>Как это работает</b><i>Короткое демо: что делать и что это даёт</i></span>${ic('arrow')}</button>
       ${LIVE ? `<button class="link-row wide" data-act="report">${ic('send')}<span class="grow"><b>Сообщить о проблеме</b><i>Это тестовая версия: не работает, непонятно, чего-то не хватает — напишите</i></span>${ic('arrow')}</button>` : ''}
       <div class="sec-title" id="recs"><h2 class="h2">Рекомендации</h2></div>
-      <div class="tabs" role="tablist"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
-      <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || '<p class="small muted" style="margin:0">Пока пусто</p>'}</div>
+      <div class="tabs"><button class="${F.tab === 'in' ? 'on' : ''}" data-act="tab" data-v="in">Вам<i>${inRecs.length}</i></button><button class="${F.tab === 'out' ? 'on' : ''}" data-act="tab" data-v="out">От вас<i>${outRecs.length}</i></button></div>
+      <div class="card">${(F.tab === 'in' ? inRecs.map((r) => recItem(r)) : outRecs.map((r) => recItem(r, true))).join('') || (F.tab === 'in' ? '<p class="small muted" style="margin:0 0 10px">Вас пока никто не рекомендовал</p><button class="btn sm" data-act="askLink">Попросить рекомендацию</button>' : '<p class="small muted" style="margin:0 0 10px">Вы пока никого не рекомендовали</p><button class="btn sm" data-act="outsider">Записать человека</button>')}</div>
       ${LIVE && !window.API.inTelegram ? '' : `<div class="card" style="margin-top:20px"><div class="h3">Войти в браузере</div>
         <p class="small muted" style="margin:6px 0 12px">Сарафан открывается и на компьютере, без Telegram. Возьмите код и наберите его там — вход сохранится в том браузере.</p>
         <div id="handoff"><button class="btn block" data-act="handoff">Получить код</button></div></div>`}
@@ -3715,9 +3761,9 @@
       <button class="tour-tap next" data-act="tourNext" aria-label="Дальше"></button></div>`;
   }
 
-  let tourAt = 0, tourT = null;
+  let tourAt = 0, tourT = null, tourHands = false;   // листнул сам — дальше не листаем за него (правка 30.09)
   function mountTour(from) {
-    tourAt = from || 0;
+    tourAt = from || 0; tourHands = false;
     showScene();
   }
   function showScene() {
@@ -3734,12 +3780,14 @@
     if (btn) btn.textContent = last ? 'Понятно, начнём' : 'Дальше';
     const by = root.querySelector('.tour-by');   // кто делает — одной строкой под кнопкой на последнем шаге
     if (by) by.hidden = !last;
-    if (!last) tourT = setTimeout(() => { tourAt++; showScene(); }, 6400);
+    root.classList.toggle('hands', tourHands);
+    if (!last && !tourHands) tourT = setTimeout(() => { tourAt++; showScene(); }, 6400);
   }
   function tourStep(d) {
     const root = $('.tour');
     if (!root) return;
     if (tourAt + d >= TOUR.length) { endTour(); return; }
+    tourHands = true; clearTimeout(tourT);
     tourAt = Math.max(0, tourAt + d);
     showScene();
   }
@@ -3784,7 +3832,7 @@
     // кто позвал, имя и один вопрос — советовать ли вас. Остальное человек узнает уже внутри
     return `<div class="onb">
       <div class="cloud-box onb-cloud"><canvas id="onbcloud" aria-label="Ваша сеть"></canvas></div>
-      <h1 class="h1 onb-h1">${inviter && named(inviter) ? `${esc(first(inviter))} позвал вас` : inviter ? 'Вас позвали' : 'Добро пожаловать'}<br>в <span class="h1-logo">${logoMark}сарафан</span></h1>
+      <h1 class="h1 onb-h1">${inviter && named(inviter) ? `${esc(first(inviter))} зовёт вас` : inviter ? 'Вас позвали' : 'Добро пожаловать'}<br>в <span class="h1-logo">${logoMark}сарафан</span></h1>
       <p class="muted" style="text-align:center;margin:10px auto 18px;max-width:300px">Справочник проверенных людей — ваших знакомых и их знакомых</p>
       <div class="card onb-card">
         <label class="name-in"><span>Меня зовут</span><input data-bind="name" value="${esc(F.name)}" maxlength="40" autocomplete="name" aria-label="Как вас зовут" placeholder="имя"></label>
@@ -3962,8 +4010,8 @@
     const show = (id) => esc(cat(id)[label] || cat(id).name);
     return `<div class="field catpick"><span>${title}</span>
       ${chosen.length ? `<div class="chips" style="margin-bottom:8px">${chosen.map((id) => `<span class="chip on">${show(id)}
-        <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать">${ic('x')}</button></span>`).join('')}</div>` : ''}
-      <input class="input" data-catq="${key}" data-label="${label}" autocomplete="off" maxlength="40"
+        <button class="chip-x" data-act="${key === 'cats' ? 'toggle' : 'set'}" data-k="${key}" data-v="${key === 'cats' ? id : ''}" aria-label="Убрать: ${show(id)}">${ic('x')}</button></span>`).join('')}</div>` : ''}
+      <input class="input" data-catq="${key}" data-label="${label}" aria-label="${esc(title)}" autocomplete="off" maxlength="40"
         placeholder="${chosen.length && key === 'cat' ? 'Поменять: начните печатать' : key === 'cats' && chosen.length ? 'Ещё одна — начните печатать' : key === 'cats' ? 'Начните печатать: врач, продавец, юрист…' : 'Начните печатать: врач, юрист, магазин…'}">
       <div class="cat-sugg"></div></div>`;
   };
@@ -4044,7 +4092,7 @@
       render: () => {
         const e = existing();
         const limit = !e && recsToday() >= REC_LIMIT;
-        return `${sheetHead(id, e ? 'Изменить запись' : 'Рекомендовать', esc(U(id).name))}
+        return `${sheetHead(id, e ? 'Изменить рекомендацию' : 'Рекомендовать', esc(U(id).name))}
           ${catChips(f, prefer)}${relChips(f)}
           <label class="field"><span>Почему рекомендуете</span><textarea class="textarea" data-bind="text" maxlength="600" placeholder="Одной фразой, как сказали бы в чате: «делал нам ремонт, уложился в срок»">${esc(f.text)}</textarea><p class="hint" data-count="text" data-min="${MIN_TEXT}"></p></label>
           ${quickChips()}
@@ -4075,7 +4123,7 @@
           if (e) { (e.history = e.history || []).push({ text: e.text, rel: e.rel, at: e.at }); e.text = f.text.trim(); e.rel = f.rel; e.interest = f.interest; e.private = f.priv; e.tags = f.tags; e.anon = f.anon; e.edited = true; }
           else S.recs.push({ id: 'r' + uid(), from: S.me, to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, tags: f.tags, anon: f.anon, at: Date.now(), confirmed: false });
         }, '/recommendations', { to: id, cat: f.cat, rel: f.rel, text: f.text.trim(), interest: f.interest, private: f.priv, tags: f.tags, anon: !!f.anon && !f.priv },
-          e ? 'Запись обновлена' : f.priv ? 'Записали только для вас' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
+          e ? 'Рекомендация обновлена' : f.priv ? 'Записали только для вас' : `Готово. ${U(id).name.split(' ')[0]} получит уведомление в Telegram`);
       },
     });
   }
@@ -4119,7 +4167,7 @@
       valid: () => f.text.trim().length >= 10,
       render: () => `${sheetHead(null, far ? 'Шаг к знакомству' : 'Попросить знакомство', 'Через: ' + esc(U(via).name))}
         <div class="card" style="box-shadow:none;background:var(--card-2);margin-top:12px">${chainBig(step, viaForced || t.via, catId)}</div>
-        ${far ? `<div class="note" style="margin-top:12px">Сюда два шага: знакомит только общий знакомый. Ближайшее звено — ${esc(full(goal))}; дальше просьба пойдёт через этого человека.</div>` : ''}
+        ${far ? `<div class="note" style="margin-top:12px">Напрямую вы не знакомы — знакомит общий знакомый. Ближайшее звено — ${esc(full(goal))}; дальше просьба пойдёт через этого человека.</div>` : ''}
         <label class="field"><span>Коротко о задаче</span><textarea class="textarea" data-bind="text" maxlength="400" placeholder="Например: нужен логотип и вывеска для кофейни, бюджет обсуждаем">${esc(f.text)}</textarea>${req ? '<p class="hint">Взяли из вашего запроса — поправьте, если нужно</p>' : '<p class="hint" data-count="text" data-min="10"></p>'}</label>
         <div class="note"><b>${esc(U(via).name)}</b> увидит вашу просьбу и решит, знакомить ли. ${esc(U(goal).name)} получит ваш профиль только после этого — так никто не получает холодных сообщений.</div>
         <div class="s-foot"><button class="btn primary block" data-act="submitIntro" data-submit>${ic('hand')}Отправить просьбу</button></div>`,
@@ -4255,7 +4303,7 @@
           return `${sheetHead(null, 'Записали. Позвать его?', esc(f.done.name) + ' · ' + esc(cat(f.done.cat).who))}
             <div class="invite-card" style="margin-top:12px"><div class="small" style="opacity:.8">По этой ссылке ${esc(f.done.name)} войдёт в Сарафан и сразу увидит вашу рекомендацию.</div><div class="link-box">${ic('link').replace('<svg', '<svg style="width:18px;height:18px;flex:none;opacity:.7"')}<span>${link}</span></div>
             <div class="btn-row"><button class="btn sm" data-act="cardSend" data-kind="rec" data-text="${esc(`${f.done.name}, я рекомендую вас в Сарафане — это сеть, где нужных людей находят через знакомых. Заберите профиль:`)}" data-url="https://${link}">${ic('send')}Отправить</button><button class="btn ghost sm" data-act="copy" data-v="https://${link}">${ic('copy')}Скопировать</button></div></div>
-            <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым контактом, а рекомендация появится в профиле.</div>
+            <div class="note">Когда ${esc(f.done.name)} примет приглашение, вы станете первым знакомым, а рекомендация появится в профиле.</div>
             <div class="s-foot">${f.next ? `<button class="btn primary block" data-act="openDraft" data-id="${f.next}">Следующий из переписки</button>` : ''}<button class="btn ghost block" data-act="closeSheet">Позову позже</button></div>`;
         }
         const heard = f.rel === 'heard';
@@ -4333,7 +4381,7 @@
         <div class="s-foot"><div class="btn-row">
           <button class="btn ghost" data-act="closeSheet" data-go="#/p/${id}">Профиль</button>
           ${direct ? `<button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${c || ''}">${ic('seal')}${recLabel(id, c)}</button>`
-            : t.chain && t.chain.length > 2 ? `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${c || ''}">${ic('hand')}Знакомство</button>`
+            : t.chain && t.chain.length > 2 ? `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${c || ''}">${ic('hand')}Попросить знакомство</button>`
               : `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться</button>`}
         </div></div>`,
     });
@@ -4357,22 +4405,22 @@
         <label class="field"><span>Имя</span><input class="input" data-bind="name" maxlength="40" value="${esc(f.name)}"></label>
         <div class="field"><span>Живая аватарка</span>
           <div class="row" style="gap:12px">${av(S.me, 'l')}<div class="grow">
-            <label class="btn sm">${ic('cam')}${U(S.me).video ? 'Заменить ролик' : 'Загрузить ролик'}<input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
+            <label class="btn sm">${ic('cam')}${U(S.me).video ? 'Заменить ролик' : 'Загрузить ролик'}<input type="file" class="vh" id="videoav" accept="video/*,image/gif"></label>
             ${U(S.me).video ? '<button class="btn sm ghost" data-act="dropVideo" style="margin-left:6px">Убрать</button>' : ''}</div></div>
           <p class="hint">Несколько секунд видео или GIF — будет крутиться без звука в профиле и в облаке сети</p></div>
         <div class="field"><span>Здесь я</span><div class="chips">${[['client', 'Ищу людей'], ['pro', 'Помогаю сам'], ['both', 'И то и другое']].map(([k, l]) => `<button class="chip ${f.role === k ? 'on' : ''}" data-act="set" data-k="role" data-v="${k}">${l}</button>`).join('')}</div></div>
         ${f.role === 'client' ? '' : catPick(f, 'cats', 'who', 'Чем занимаетесь')}
         ${f.role === 'client' ? '' : f.cats.filter((c) => FOCUS_HINT[c] || f['focus_' + c]).map((c) => `<div class="field"><span>${esc(cat(c).who)} — узкая специальность, если есть</span>
-          <input class="input" data-bind="focus_${c}" maxlength="60" placeholder="${esc((FOCUS_HINT[c] || ['например, детский'])[0])}" value="${esc(f['focus_' + c] || '')}">
+          <input class="input" data-bind="focus_${c}" maxlength="60" aria-label="${esc(cat(c).who)} — узкая специальность" placeholder="${esc((FOCUS_HINT[c] || ['например, детский'])[0])}" value="${esc(f['focus_' + c] || '')}">
           ${FOCUS_HINT[c] ? `<div class="chips" style="margin-top:6px">${FOCUS_HINT[c].map((h) => `<button class="chip" data-act="focusPick" data-c="${c}" data-v="${esc(h)}">${esc(h)}</button>`).join('')}</div>` : ''}</div>`).join('')}
         <label class="field"><span>О себе</span><textarea class="textarea" data-bind="about" maxlength="300">${esc(f.about)}</textarea></label>
         ${f.role === 'client' ? '' : `<div class="field"><span>Как с вами работать</span>
-          <input class="input" data-bind="area" maxlength="80" placeholder="Район: Мирабад, Юнусабад…" value="${esc(f.area || '')}">
-          <div class="chips" style="margin-top:8px">${Object.entries(HOW.visit).map(([k, l]) => `<button class="chip ${f.visit === k ? 'on' : ''}" data-act="set" data-k="visit" data-v="${k}">${l}</button>`).join('')}</div>
-          <div class="chips" style="margin-top:8px">${Object.entries(HOW.reply).map(([k, l]) => `<button class="chip ${f.reply === k ? 'on' : ''}" data-act="set" data-k="reply" data-v="${k}">${l}</button>`).join('')}</div>
-          <div class="chips" style="margin-top:8px">${Object.entries(HOW.pay).map(([k, l]) => `<button class="chip ${howList(f.pay).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="pay" data-v="${k}">${l}</button>`).join('')}</div>
-          <div class="chips" style="margin-top:8px">${Object.entries(HOW.langs).map(([k, l]) => `<button class="chip ${howList(f.langs).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="langs" data-v="${k}">${l}</button>`).join('')}</div>
-          <input class="input" style="margin-top:8px" data-bind="hours" maxlength="80" placeholder="Когда удобно писать: будни до 20:00" value="${esc(f.hours || '')}">
+          <label class="sub-field"><span class="cap">Район</span><input class="input" data-bind="area" maxlength="80" placeholder="Мирабад, Юнусабад…" value="${esc(f.area || '')}"></label>
+          <span class="cap" id="cap-visit">Выезжаете или принимаете</span><div class="chips" role="group" aria-labelledby="cap-visit">${Object.entries(HOW.visit).map(([k, l]) => `<button class="chip ${f.visit === k ? 'on' : ''}" data-act="set" data-k="visit" data-v="${k}">${l}</button>`).join('')}</div>
+          <span class="cap" id="cap-reply">Как быстро отвечаете</span><div class="chips" role="group" aria-labelledby="cap-reply">${Object.entries(HOW.reply).map(([k, l]) => `<button class="chip ${f.reply === k ? 'on' : ''}" data-act="set" data-k="reply" data-v="${k}">${l}</button>`).join('')}</div>
+          <span class="cap" id="cap-pay">Как берёте оплату</span><div class="chips" role="group" aria-labelledby="cap-pay">${Object.entries(HOW.pay).map(([k, l]) => `<button class="chip ${howList(f.pay).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="pay" data-v="${k}">${l}</button>`).join('')}</div>
+          <span class="cap" id="cap-langs">На каких языках</span><div class="chips" role="group" aria-labelledby="cap-langs">${Object.entries(HOW.langs).map(([k, l]) => `<button class="chip ${howList(f.langs).includes(k) ? 'on' : ''}" data-act="toggleWord" data-k="langs" data-v="${k}">${l}</button>`).join('')}</div>
+          <label class="sub-field"><span class="cap">Когда удобно писать</span><input class="input" data-bind="hours" maxlength="80" placeholder="Будни до 20:00" value="${esc(f.hours || '')}"></label>
           <p class="hint">Это снимает половину вопросов ещё до первого сообщения</p></div>
         <label class="field"><span>Телефон для карточки в чатах</span><input class="input" data-bind="cardPhone" inputmode="tel" maxlength="30" placeholder="+998 90 123 45 67" value="${esc(f.cardPhone || '')}">
           ${tg && tg.requestContact ? `<button class="btn sm ghost" style="margin-top:8px" data-act="takePhone">${ic('user')}Взять номер из Telegram</button>` : ''}
@@ -4482,9 +4530,9 @@
               ${mine.length ? `<div class="works small-works">${mine.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
                 <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>`
         : `<div class="works small-works ghost">${GHOST_WORKS.slice(0, 3).map(([t]) => `<label class="work-ghost sm">${ic('cam')}<span>${t}</span>
-                <input type="file" accept="image/*" class="workfile" data-dir="${d.id}" hidden></label>`).join('')}</div>`}
+                <input type="file" accept="image/*" class="vh workfile" data-dir="${d.id}"></label>`).join('')}</div>`}
               <label class="btn ghost xs" style="margin-top:8px;cursor:pointer">${ic('plus')}Картинка сюда
-                <input type="file" accept="image/*" class="workfile" data-dir="${d.id}" hidden></label></div>`;
+                <input type="file" accept="image/*" class="vh workfile" data-dir="${d.id}"></label></div>`;
     }).join('')}
             <button class="btn block" style="margin-top:10px" data-act="editDir" data-id="">${ic('plus')}Добавить направление</button></div>
 
@@ -4492,7 +4540,7 @@
             ${loose.length ? `<div class="works small-works">${loose.map((w) => `<figure class="work"><img src="${esc(srvUrl(w.url))}" alt="" loading="lazy">
               <button class="work-x" data-act="delWork" data-id="${w.id}" aria-label="Убрать">${ic('x')}</button></figure>`).join('')}</div>` : ''}
             <label class="btn block" style="margin-top:10px;cursor:pointer">${ic('plus')}Добавить картинку
-              <input type="file" accept="image/*" class="workfile" data-dir="" hidden></label>
+              <input type="file" accept="image/*" class="vh workfile" data-dir=""></label>
             <p class="hint">JPG, PNG или WebP до 6 МБ. Всего до 12 работ.</p></div>
           <div class="s-foot"><button class="btn primary block" data-act="submitShowcase" data-submit>Сохранить</button></div>`;
       },
@@ -4516,9 +4564,9 @@
       F: {},
       render: () => `${sheetHead(null, 'Фото профиля', 'Его видят знакомые в облаке, поиске и карточках')}
         <label class="link-row wide" style="cursor:pointer;margin-top:0">${ic('cam')}<span class="grow"><b>${U(S.me).photo ? 'Выбрать другое фото' : 'Выбрать фото'}</b><i>Из галереи или снять сейчас</i></span>
-          <input type="file" id="avphoto" accept="image/*" hidden></label>
+          <input type="file" class="vh" id="avphoto" accept="image/*"></label>
         <label class="link-row wide" style="cursor:pointer">${ic('spark')}<span class="grow"><b>${U(S.me).video ? 'Заменить живую аватарку' : 'Живая аватарка'}</b><i>Короткий ролик вместо фото — оживает в профиле</i></span>
-          <input type="file" id="videoav" accept="video/*,image/gif" hidden></label>
+          <input type="file" class="vh" id="videoav" accept="video/*,image/gif"></label>
         ${U(S.me).video ? `<button class="link-row wide" data-act="dropVideo">${ic('x')}<span class="grow"><b>Убрать живую аватарку</b><i>Останется фото</i></span></button>` : ''}
         ${own ? `<button class="link-row wide" data-act="dropPhoto">${ic('back')}<span class="grow"><b>Вернуть фото из Telegram</b><i>Подтянется при следующем входе</i></span></button>` : ''}`,
     });
@@ -4619,7 +4667,7 @@
     // и в окне, и на странице входа (там сферы выбирают до того, как открылось хоть одно окно)
     toggle: (d) => { const data = SH ? SH.F : F; const a = data[d.k] = data[d.k] || []; const i = a.indexOf(d.v); i < 0 ? a.push(d.v) : a.splice(i, 1); if (SH) drawSheet(); else render(); },
     // Поиск
-    filter: (d) => { F.f = d.v; $('#results').innerHTML = searchResults(); },
+    filter: (d) => { F.f = d.v; $('#results').innerHTML = searchResults(); searchStatus(); },
     clearCat: () => { F.c = ''; history.replaceState(null, '', '#/search'); lastHash = location.hash; render(); },
     clearSearch: () => { F.q = ''; F.c = ''; F.f = 'all'; history.replaceState(null, '', '#/search'); lastHash = location.hash; render(); $('[data-bind=q]').focus(); },
     // Профиль
@@ -4689,6 +4737,7 @@
     dropSaved: (d) => mutate(() => { S.saved = (S.saved || []).filter((x) => !(x.kind === d.kind && x.id === d.id)); }, '/saved/delete', { kind: d.kind, id: d.id }, 'Убрали'),
     dropVideo: async () => {
       if (!LIVE) return;
+      if (!(await sure('Убрать живую аватарку? Ролик удалится'))) return;
       try { await window.API.post('/profile/video/delete', {}); await refresh(); if (SH) { drawSheet(); wireVideoInput(); } toast('Живая аватарка убрана'); } catch (e) { toast(e.message); }
     },
     // Номер для карточки — из самого Telegram: он спросит разрешения, набирать ничего не нужно
@@ -4778,6 +4827,13 @@
     askCat: (d) => { F.cat = d.v || ''; F.catTouched = true; F.allCats = false; $('#askcats').innerHTML = askCats(); syncForm(); },
     askAllCats: () => { F.allCats = true; $('#askcats').innerHTML = askCats(); },
     postAsk: async () => {
+      const why = askMissing();
+      if (why) {
+        const w = $('#askwhy'); if (w) w.textContent = why;
+        const ta = $('#app textarea[data-bind="t"]');
+        if (ta && (F.t || '').trim().length < 10) { ta.setAttribute('aria-invalid', 'true'); ta.focus(); }
+        return;
+      }
       const text = F.t.trim(), cat = F.team ? (F.cats || [])[0] : F.cat;
       const team = F.team ? { roles: F.cats || [], date: F.date || '' } : {};
       const to = F.quiet ? (F.to || []) : [];
@@ -4813,7 +4869,7 @@
     // Сеть
     tab: (d) => { F.tab = d.v; F.netAll = false; render(); },
     netAll: () => { F.netAll = true; render(); },
-    sendInvite: () => inviteCard('', () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Добавил тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим.')),
+    sendInvite: () => inviteCard('', () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${S.invite.code}`, 'Зову тебя в свой круг в Сарафане — это наш общий справочник проверенных людей — врачи, юристы, мастера, которых советуют знакомые. Нужен кто-то — спросишь своих. Расскажи там, чем занимаешься, — буду советовать тебя своим.')),
     copy: (d) => { try { navigator.clipboard.writeText(d.v).then(() => toast('Ссылка скопирована'), () => toast(d.v)); } catch (e) { toast(d.v); } },
     pickCat: (d, el) => {
       const inSheet = !!el.closest('#sheet');
@@ -4853,7 +4909,7 @@
     },
     askOwn: () => { F.own = true; $('#askcats').innerHTML = askCats(); },
     callPending: (d) => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?start=${d.code}`,
-      `${d.name}, я записал вас в Сарафан — сети рекомендаций по знакомым. Моя рекомендация уже ждёт в вашем профиле:`),
+      `${d.name}, вы теперь есть в Сарафане — сети рекомендаций по знакомым. Моя рекомендация уже ждёт в вашем профиле:`),
     outsider: (d) => sheetOutsider(d.cat),
     submitOutsider: () => SH.submit(),
     saveMyName: () => SH.submit(),
@@ -4912,7 +4968,7 @@
       if (!ok) return;
       try { await window.API.post('/collections/delete', { id: d.id }); await refresh(); go('#/me'); toast('Подборка удалена'); } catch (e) { toast(e.message); }
     },
-    colShare: () => { const c = F.col; if (!c) return; tgShareLink(colLink(c.code), `${c.title} — ${c.author && c.author.id === S.me ? 'моя подборка' : 'подборка'} в Сарафане, за каждого ручаюсь:`); },
+    colShare: () => { const c = F.col; if (!c) return; tgShareLink(colLink(c.code), `${c.title} — ${c.author && c.author.id === S.me ? 'моя подборка' : 'подборка'} в Сарафане, каждого рекомендую:`); },
     answerPartner: (d) => sheetAnswerPartner(d.q, d.id),
     submitAnswerPartner: () => SH.submit(),
     viewAsOpen: () => sheetViewAs(),
@@ -4942,7 +4998,7 @@
       try {
         await window.API.post('/recommendations/uncat', { id: d.id, off: !!d.v });
         await refresh(); render();
-        toast(d.v ? 'Сфера снята: слова остались, а сфера вам не засчитывается' : 'Сфера снова засчитывается');
+        toast(d.v ? 'Сфера снята — рекомендация остаётся, но по этой сфере вас не ищут' : 'По этой сфере вас снова ищут');
       } catch (e) { toast(e.message); }
     },
     recDecline: (d) => {
@@ -4987,16 +5043,17 @@
     workJoin: (d) => sheetWorkJoin(d.id, d.v),
     workConfirm: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) { x.confirmed = true; x.waiting = false; x.canConfirm = false; } },
       '/nodes/people/confirm', { id: d.id }, 'Подтверждено'),
-    workLeave: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.past = true; },
+    workLeave: async (d) => (await sure(`Отметить, что вы больше не работаете${d.name ? ' в «' + d.name + '»' : ''}?`)) && mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.past = true; },
       '/nodes/people/leave', { id: d.id }, 'Готово: ' + (d.name || 'убрали')),
     // попало по ошибке — удаляем насовсем, из истории тоже
-    workErase: (d) => mutate(() => { S.nodePeople = (S.nodePeople || []).filter((y) => y.id !== d.id); },
+    workErase: async (d) => (await sure('Удалить эту отметку насовсем? Она пропадёт и из истории')) && mutate(() => { S.nodePeople = (S.nodePeople || []).filter((y) => y.id !== d.id); },
       '/nodes/people/erase', { id: d.id }, 'Удалено: ' + (d.name || '')),
     workHide: (d) => mutate(() => { const x = (S.nodePeople || []).find((y) => y.id === d.id); if (x) x.hidden = !!d.v; },
       '/nodes/people/hide', { id: d.id, hidden: !!d.v }, d.v ? 'Скрыто от других' : 'Снова видно'),
     // «Не показывайте меня этому человеку»: перестают видеть друг друга, он не узнаёт
-    hideFrom: (d) => {
+    hideFrom: async (d) => {
       const name = U(d.id).name;
+      if (!(await sure(`Не показывать вас ${name}? Вы перестанете видеть друг друга и больше не будете знакомыми в Сарафане`))) return;
       mutate(() => {
         S.blocked = [...(S.blocked || []), { id: d.id, name }];
         S.conns = S.conns.filter((c) => !((c.a === S.me && c.b === d.id) || (c.b === S.me && c.a === d.id)));
@@ -5019,7 +5076,7 @@
         const r = await window.API.handoff();
         const site = location.origin + location.pathname;
         box.innerHTML = `<div class="note" style="text-align:center"><div style="font:800 30px/1.1 var(--t);letter-spacing:.12em">${esc(r.code)}</div>
-          <p class="small muted" style="margin:10px 0 0">Откройте на компьютере<br><b>${esc(site.replace(/^https?:\/\//, ''))}</b><br>и наберите этот код. Он живёт ${r.minutes} минут.</p></div>`;
+          <p class="small muted" style="margin:10px 0 0">Откройте на компьютере<br><b>${esc(site.replace(/^https?:\/\//, ''))}</b><br>и наберите этот код. Он действует ${pl(r.minutes, 'минуту', 'минуты', 'минут')}.</p></div>`;
       } catch (e) { box.innerHTML = `<div class="note">${esc(e.message)}</div>`; }
     },
     hideStarter: () => { try { localStorage.setItem(STARTER_KEY, '1'); } catch (e) { /* */ } render(); toast('Убрали. Всё это есть в разделах ниже'); },
@@ -5047,7 +5104,7 @@
     submitNodeRec: () => SH.submit(),
     addFact: (d) => sheetFact(d.id),
     submitFact: () => SH.submit(),
-    delFact: (d) => mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
+    delFact: async (d) => (await sure('Убрать это уточнение?')) && mutate(null, '/nodes/fact/delete', { id: d.id }, 'Убрали'),
     shareNode: (d) => { const n = nodeById(d.id); shareCard('place', d.id, () => tgShareLink(`https://t.me/${S.bot || 'sarafanibot'}?startapp=${S.invite ? S.invite.code + '_' : ''}o${d.id}`,
       `${n.name} — советую, посмотри в Сарафане:`)); },
     toggleWord: (d) => {
@@ -5059,14 +5116,14 @@
     submitUserFact: () => SH.submit(),
     factYes: (d) => mutate(() => { const f = (S.userFacts || []).find((x) => x.id === d.id); if (f) f.status = 'ok'; },
       '/user/fact/decide', { id: d.id, ok: true }, 'Подтвердили'),
-    factNo: (d) => mutate(() => { S.userFacts = (S.userFacts || []).filter((x) => x.id !== d.id); },
+    factNo: async (d) => (await sure('Убрать это уточнение о вас?')) && mutate(() => { S.userFacts = (S.userFacts || []).filter((x) => x.id !== d.id); },
       '/user/fact/decide', { id: d.id, ok: false }, 'Убрали'),
     editShowcase: () => sheetShowcase(),
     editDir: (d) => sheetDir(d.id || ''),
     submitDir: () => SH.submit(),
-    delDir: (d) => { closeSheet(); mutate(null, '/showcase/dir/delete', { id: d.id }, 'Направление убрано'); },
+    delDir: async (d) => { if (!(await sure('Убрать это направление?'))) return; closeSheet(); mutate(null, '/showcase/dir/delete', { id: d.id }, 'Направление убрано'); },
     submitShowcase: () => SH.submit(),
-    delWork: (d) => mutate(() => {
+    delWork: async (d) => (await sure('Убрать эту работу из витрины?')) && mutate(() => {
       const box = (S.showcases || {})[S.me];
       if (box) box.works = box.works.filter((w) => w.id !== d.id);
     }, '/works/delete', { id: d.id }, 'Работа убрана'),
@@ -5098,7 +5155,7 @@
       // три входа (правка 26.09): специалист и тот, кто начинает своё дело, — со сферой; ищущий — без
       const body = { name: F.name.trim(), about: (pro && (F.about || '').trim()) || me.about || '', role: pro ? 'both' : 'client', cats: pro ? F.cats : [], stage: F.pro };
       try { localStorage.setItem('sarafan.onbAt', String(Date.now())); } catch (e) { /* приватный режим */ }
-      const hello = me.invitedBy && U(me.invitedBy) ? U(me.invitedBy).name + ' — ваш первый контакт' : 'Добро пожаловать';
+      const hello = me.invitedBy && U(me.invitedBy) ? U(me.invitedBy).name + ' — ваш первый знакомый' : 'Добро пожаловать';
       mutate(() => { me.name = body.name; me.cats = F.cats; me.stage = F.pro; S.onboarded = true; }, '/profile', body, hello)
         .then(() => {
           // кто позвал и хотел знать, кем советовать, — получит ответ
@@ -5195,7 +5252,7 @@
     if (!inSheet && k === 'q') {
       history.replaceState(null, '', '#/search' + (F.q ? '?q=' + encodeURIComponent(F.q) : '') + (F.c ? (F.q ? '&' : '?') + 'c=' + F.c : ''));
       lastHash = location.hash; F.f = 'all';
-      $('#results').innerHTML = searchResults();
+      $('#results').innerHTML = searchResults(); searchStatus();
     }
     if (!inSheet && k === 't') $('#askcats').innerHTML = askCats();
     syncForm();

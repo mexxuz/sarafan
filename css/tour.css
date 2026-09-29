@@ -29,6 +29,7 @@
 .tour .bars i b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--blue); }
 .tour .bars i.done b { width: 100%; }
 .tour .bars i.run b { animation: bar 6.4s linear forwards; }
+.tour.hands .bars i.run b { animation: none; width: 100%; }   /* листает сам — полоска не бежит */
 @keyframes bar { from { width: 0; } to { width: 100%; } }
 
 .tour-skip {

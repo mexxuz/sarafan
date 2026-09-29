@@ -93,7 +93,7 @@ window.API = (function () {
       });
       let data = null;
       try { data = await r.json(); } catch (e) { /* пусто */ }
-      if (!r.ok) throw new Error((data && (data.detail || data.message)) || 'Картинка не загрузилась');
+      if (!r.ok) throw new Error((data && (data.detail || data.message)) || 'Картинка не загрузилась. Проверьте связь и попробуйте ещё раз');
       return data;
     },
     pulse: () => call('/pulse'),
