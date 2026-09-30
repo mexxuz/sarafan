@@ -1,2 +1,2 @@
 // Адрес сервера. Его вписывает сторож — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://citysearch-dna-unknown-assisted.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://beginner-air-cycle-ordinary.trycloudflare.com';
