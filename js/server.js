@@ -1,2 +1,2 @@
-﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://porter-inquiry-thriller-indicating.trycloudflare.com';
+// Адрес сервера. Его вписывает сторож — руками трогать не нужно.
+window.SARAFAN_SERVER = 'https://forever-supposed-baseball-ranks.trycloudflare.com';
