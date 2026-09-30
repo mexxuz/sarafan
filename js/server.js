@@ -1,2 +1,2 @@
 // Адрес сервера. Его вписывает сторож — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://hold-late-rouge-boys.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://fixed-scanners-americas-military.trycloudflare.com';
