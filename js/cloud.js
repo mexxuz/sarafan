@@ -9,6 +9,7 @@ window.Cloud = function (canvas, opts) {
   let W = 0, H = 0, dpr = 1;
   let nodes = [], edges = [], byId = {};
   let raf = null, held = null, hover = null, moved = 0;
+  let focus = null;   // подсветка по поиску на главной: { nodes: Set, edges: Set('a|b') } (правка 30.09)
   let pointer = { x: 0, y: 0, down: false, id: null };
   // Полотно бесконечное: у графа нет стен, зато есть камера — её можно двигать и приближать
   const cam = { x: 0, y: 0, scale: 1, vx: 0, vy: 0 };
@@ -223,19 +224,21 @@ window.Cloud = function (canvas, opts) {
     const depth = (n) => (n.self || n.fc || n.ring <= 1 ? 1 : n.ring === 2 ? 0.6 : 0.36);   // создатель — всегда в полную силу
 
     const lit = hover || held;
-    const near = new Set();
+    const foc = !lit && focus;   // навели на человека — главнее; иначе горят найденные поиском и путь к ним
+    const near = foc ? focus.nodes : new Set();
     if (lit) { near.add(lit.id); edges.forEach((e) => { if (e.a === lit.id) near.add(e.b); if (e.b === lit.id) near.add(e.a); }); }
+    const on = lit || foc;
 
     ctx.lineCap = 'round';
     edges.forEach((e) => {
       const a = byId[e.a], b = byId[e.b];
       const grow = Math.min(a.born, b.born);
       if (grow <= 0.02) return;
-      const hot = lit && (e.a === lit.id || e.b === lit.id);
+      const hot = lit ? (e.a === lit.id || e.b === lit.id) : foc ? (focus.edges.has(e.a + '|' + e.b) || focus.edges.has(e.b + '|' + e.a)) : false;
       ctx.strokeStyle = hot ? COLOR[e.kind + 'Hot'] : (e.both ? COLOR.both
         : big() && !e.faint && e.kind === 'know' ? 'rgba(70,110,190,.42)' : COLOR[e.kind]);   // линии вашего созвездия видны отчётливо
       ctx.lineWidth = hot ? 1.4 : e.faint ? 0.5 : big() ? (e.kind === 'vouch' ? 1.6 : 1.3) : (e.both ? 1.7 : e.kind === 'vouch' ? 1.1 : 0.9);
-      ctx.globalAlpha = (lit && !hot ? 0.12 : e.faint && !hot ? 0.3 : 1) * grow * Math.min(depth(a), depth(b));
+      ctx.globalAlpha = (on && !hot ? 0.12 : e.faint && !hot ? 0.3 : 1) * grow * (hot && foc ? 1 : Math.min(depth(a), depth(b)));
       // Маленькое облако — лёгкие дуги: пучок линий перестаёт выглядеть спицами колеса.
       // Звёздное небо — прямые, как в рисунках созвездий, и чуть не доходят до звезды
       const sky = big();
@@ -269,7 +272,7 @@ window.Cloud = function (canvas, opts) {
       };
       const half = 0.16;
       const tone = e.kind === 'vouch' ? '47,123,255' : '126,146,178';
-      const power = (lit && !hot ? 0.12 : e.both ? 0.5 : 0.42) * Math.sin(cycle * Math.PI);
+      const power = (on && !hot ? 0.12 : e.both ? 0.5 : 0.42) * Math.sin(cycle * Math.PI);
       // на взаимной нити проблеск идёт сразу в обе стороны — согласие видно без слов
       const runs = e.both ? [cycle, 1 - cycle] : [cycle];
       ctx.globalAlpha = grow * Math.min(depth(a), depth(b));
@@ -295,10 +298,10 @@ window.Cloud = function (canvas, opts) {
 
     nodes.forEach((n) => {
       if (n.born <= 0.02) return;
-      const dim = lit && !near.has(n.id);
+      const dim = on && !near.has(n.id);
       const ease = n.born * n.born * (3 - 2 * n.born);      // мягкий вход
       const R = n.r * (0.7 + 0.3 * ease) * (1 + n.glow * 0.12);
-      ctx.globalAlpha = (dim ? 0.24 : 1) * ease * (lit && near.has(n.id) ? 1 : depth(n));
+      ctx.globalAlpha = (dim ? 0.24 : 1) * ease * (on && near.has(n.id) ? 1 : depth(n));
 
       // ореол: свои светятся чуть заметнее — иерархия без лишних обводок
       // создатель за вашими кругами — без ореола: маячок, а не главный герой (правка 25.09)
@@ -324,7 +327,7 @@ window.Cloud = function (canvas, opts) {
 
       const showLabel = n.label && (n.self || n.ring <= 1 || n.fc || n.founder || n === lit || near.has(n.id));
       if (showLabel) {
-        ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.85 : 0.55) * ease * (lit && near.has(n.id) ? 1 : depth(n));
+        ctx.globalAlpha = (dim ? 0.25 : n.ring <= 1 ? 0.85 : 0.55) * ease * (on && near.has(n.id) ? 1 : depth(n));
         ctx.fillStyle = '#6b7488';
         ctx.font = `${n.self || n.ring <= 1 ? 600 : 500} 9.5px Manrope, system-ui, sans-serif`;
         ctx.textAlign = 'center';
@@ -376,6 +379,17 @@ window.Cloud = function (canvas, opts) {
       ctx.arc(n.x, n.y, n.r + 3.2, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(232,165,40,.95)';
       ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
+    // есть что сделать — оранжевая точка на своём портрете, как была на портрете в углу (правка 30.09)
+    if (n.self && opts.selfBadge && opts.selfBadge()) {
+      ctx.beginPath();
+      ctx.arc(n.x + n.r * 0.74, n.y - n.r * 0.74, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8683c';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
 
@@ -693,5 +707,16 @@ window.Cloud = function (canvas, opts) {
     start,
     stop,
     resize: () => { size(); },
+    // Подсветить людей и путь к ним: ids — кого нашли, paths — цепочки от вас до них. Пусто — обычное облако
+    focus: (ids, paths) => {
+      if (!ids || !ids.length) focus = null;
+      else {
+        const nodes = new Set(), fe = new Set();
+        ids.forEach((id) => nodes.add(String(id)));
+        (paths || []).forEach((p) => p.forEach((id, i) => { nodes.add(String(id)); if (i) fe.add(p[i - 1] + '|' + id); }));
+        focus = { nodes, edges: fe };
+      }
+      if (calm) draw();
+    },
   };
 };

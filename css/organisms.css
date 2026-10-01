@@ -710,7 +710,11 @@ body.viewing-as #app { padding-top: 48px; }
 .rename svg { width: 13px; height: 13px; }
 
 /* Главная: «Кто вам нужен?» под облаком и размер справочника */
-.home-find { position: relative; z-index: 2; margin-top: 6px; text-decoration: none; color: var(--ink-3); background: var(--paper); box-shadow: var(--sh-1, 0 4px 16px rgba(30, 60, 120, .08)); }
+.home-find { position: relative; z-index: 2; margin-top: 6px; text-decoration: none; color: #fff; font-weight: 600;
+  /* главное действие главной — синим, чтобы было видно, куда жать (правка 30.09). Оттенок глубже фирменного:
+     белый текст читается не хуже 4,6:1 на всём переходе */
+  background: linear-gradient(150deg, #2f6fe8 0%, #2662cc 100%); box-shadow: var(--sh-blue); }
+.home-find svg { color: #fff; }
 .home-find span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dir-line { position: relative; z-index: 2; margin: 10px 4px 0; text-align: center; font-size: var(--fs-xs); color: var(--ink-3); }
 .dir-line b { color: var(--ink); font-weight: 700; }
@@ -844,7 +848,8 @@ button.grew { font: inherit; font-weight: 600; background: none; border: 0; padd
 .step3:active { transform: scale(.96); }
 .step3 .mark { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; margin-bottom: 6px; }
 .step3 .mark svg { width: 17px; height: 17px; }
-.step3 b { font: 700 var(--fs-md)/1.2 var(--t); }
+.step3 { min-width: 0; }
+.step3 b { font: 700 var(--fs-md)/1.2 var(--t); hyphens: auto; overflow-wrap: break-word; }   /* «Рекомендации» не лезет на соседнюю карточку — переносится (правка 30.09) */
 .step3 i { font-style: normal; font-size: var(--fs-xxs); line-height: 1.3; color: var(--ink-3); }
 .step3.done { background: var(--card-2); }
 .step3.done .mark { background: var(--good, #1faa6b); }
@@ -1040,3 +1045,30 @@ a.peek-row, a.person, button.person { border-radius: var(--r-sm); }
 /* Мелкие текстовые кнопки — не ниже 24 пикселей, чтобы попасть пальцем (правка 30.09) */
 .rename, .rep-why, .job-line a, button.link { min-height: 24px; }
 button.link { display: inline-flex; align-items: center; }   /* ссылки внутри текста не трогаем — там строка сама задаёт высоту */
+
+/* Сеть одним рядом значений под поиском (правка 30.09) */
+.dir-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 0; }
+.dir-stat { text-align: center; padding: 2px 4px; }   /* без плашек — только числа и подписи */
+.dir-stat b { font: 800 var(--fs-xl)/1 var(--t); letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.dir-stat span { display: block; margin-top: 4px; font: 500 var(--fs-xxs)/1.25 var(--t); color: var(--ink-3); }
+.dir-stat .grew { margin: 0 0 0 4px; padding: 2px 6px; min-height: 0; border-radius: 999px; background: var(--good-soft); color: var(--good); font: 700 var(--fs-xxs)/1.2 var(--t); vertical-align: 4px; text-decoration: none; border: 0; }
+
+/* Поиск на главной — поле ввода на синем: белый текст, белая подсказка, синий и при вводе (правка 30.09) */
+.home-find input { color: #fff; caret-color: #fff; font-weight: 600; }
+.home-find input::placeholder { color: #fff; opacity: 1; }
+.home-find input::-webkit-search-cancel-button { filter: invert(1) brightness(2); }
+.search.home-find:focus-within { background: linear-gradient(150deg, #2f6fe8 0%, #2662cc 100%); box-shadow: var(--sh-blue), 0 0 0 3px rgba(47, 123, 255, .28); }
+.home-hits { margin-top: 10px; padding: 6px 10px; }
+.home-hits .link-row { margin: 4px -4px 2px; }
+.dir-stats + * { margin-top: var(--s-6, 24px); }   /* воздух между числами и тем, что под ними (правка 30.09) */
+
+/* Первые шаги: следующий шаг крупно, сделанные — полоской (правка 30.09) */
+.steps-head { gap: 8px; align-items: center; }
+.steps-bar { display: flex; gap: 3px; }
+.steps-bar i { width: 18px; height: 4px; border-radius: 2px; background: var(--line); }
+.steps-bar i.on { background: var(--good); }
+.step-now { display: flex; gap: 12px; align-items: flex-start; margin-top: 8px; }
+.step-now .mark { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue-text); }
+.step-now .mark svg { width: 18px; height: 18px; }
+.step-now b { display: block; font: 700 var(--fs-md)/1.3 var(--t); color: var(--ink); text-wrap: balance; }
+.step-now p { margin: 4px 0 10px; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-2); text-wrap: pretty; }

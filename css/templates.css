@@ -146,3 +146,12 @@
 .me-item:hover { background: var(--card-2); }
 .me-item svg { width: 18px; height: 18px; color: var(--blue-text); flex: none; }
 .me-item em { font-style: normal; font-size: var(--fs-xs); font-weight: 600; color: var(--warn-ink, #b86a00); background: #fff3e0; padding: 2px 8px; border-radius: 999px; }
+
+/* Меню на главной — у своего портрета в центре облака (правка 30.09). Кнопка поверх портрета прозрачна
+   и не ловит касания — их ловит облако; видна она только с клавиатуры, кольцом вокруг портрета */
+.me-menu.at-cloud { position: absolute; left: 50%; top: 56%; width: 0; height: 0; }
+.me-menu.at-cloud .me-dot.vh-focus { position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; background: none; box-shadow: none; pointer-events: none; }
+.me-menu.at-cloud .me-dot.vh-focus > * { visibility: hidden; }
+.me-menu.at-cloud .me-pop { top: 36px; right: auto; left: -116px; transform-origin: top center; }
+.me-menu.at-cloud .me-pop::before { display: none; }
+.cloud-box:has(.me-menu.open) { z-index: 5; }
