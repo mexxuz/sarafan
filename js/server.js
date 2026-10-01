@@ -1,2 +1,2 @@
 // Адрес сервера. Его вписывает сторож — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://evaluations-rabbit-artists-lemon.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://sub-going-presenting-vocabulary.trycloudflare.com';
