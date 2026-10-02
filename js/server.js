@@ -1,2 +1,2 @@
-// Адрес сервера. Его вписывает сторож — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://supervisor-formula-divide-textbook.trycloudflare.com';
+﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
+window.SARAFAN_SERVER = 'https://influences-flowers-legendary-cursor.trycloudflare.com';
