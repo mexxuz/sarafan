@@ -29,6 +29,9 @@
 /* Ряд кнопок */
 .btn-row { display: flex; gap: var(--s-3); }
 .btn-row .btn { flex: 1 1 0; min-width: 0; padding: 0 var(--s-3); }
+/* в нижней строке окна главное действие забирает остаток ширины, второстепенное — по своему тексту, как внизу профиля (правка 03.10) */
+.s-foot .btn-row:has(.btn.primary) .btn { flex: 0 1 auto; padding: 0 var(--s-4); }
+.s-foot .btn-row:has(.btn.primary) .btn.primary { flex: 1 1 auto; }
 
 /* Стопка лиц со счётчиком «+N» */
 .av-stack { display: flex; }

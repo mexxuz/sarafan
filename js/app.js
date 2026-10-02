@@ -267,7 +267,7 @@
     tag: '<path d="M12.6 3.1a1.8 1.8 0 0 0-1.3-.5H4.4a1.8 1.8 0 0 0-1.8 1.8v6.9c0 .5.2 .9.5 1.3l8.3 8.3a2.2 2.2 0 0 0 3.1 0l6.2-6.2a2.2 2.2 0 0 0 0-3.1z"/><circle cx="7.6" cy="7.6" r="1.3"/>',   // ценник на весь квадрат — стоит вровень с другими значками
     shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
-    send: '<path d="M4 11.5 20 4l-7.5 16-2.3-6.2z"/><path d="m10.2 13.8 4.3-4.3"/>',
+    send: '<path d="M14.5 6.5 20 12l-5.5 5.5"/><path d="M20 12h-9.5A6.5 6.5 0 0 0 4 18.5"/>',   // «переслать», как в Telegram, вместо кривого самолётика (правка 03.10)
     eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
     calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
     list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>',
@@ -4471,10 +4471,13 @@
         ${personFacts(id, G.recsTo(id), rep ? rep.independent : 0).replace('data-act="toRecs"', `data-act="closeSheet" data-go="#/p/${id}"`)}
         ${rep && rep.recs.length ? `<div class="note" style="color:var(--ink);margin-top:12px">«${esc(rep.recs[0].text)}»<div class="tiny muted" style="margin-top:6px">${esc(full(rep.recs[0].from))} · ${esc(cat(rep.recs[0].cat).name)}</div></div>` : ''}
         <div class="s-foot"><div class="btn-row">
-          <button class="btn ghost" data-act="closeSheet" data-go="#/p/${id}">Профиль</button>
+          ${direct && recLabel(id, c) === 'Изменить рекомендацию'
+    // уже рекомендовали — «Изменить» есть в профиле; здесь одна кнопка, чтобы не встречать её дважды подряд (правка 03.10)
+    ? `<button class="btn primary" data-act="closeSheet" data-go="#/p/${id}">${ic('user')}Открыть профиль</button>`
+    : `<button class="btn soft" data-act="closeSheet" data-go="#/p/${id}">Профиль</button>
           ${direct ? `<button class="btn primary" data-act="recommend" data-id="${id}" data-cat="${c || ''}">${ic('seal')}${recLabel(id, c)}</button>`
             : t.chain && t.chain.length > 2 ? `<button class="btn primary" data-act="intro" data-id="${id}" data-cat="${c || ''}">${ic('hand')}Попросить знакомство</button>`
-              : `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться</button>`}
+              : `<button class="btn primary" data-act="share" data-id="${id}">${ic('share')}Поделиться</button>`}`}
         </div></div>`,
     });
   }
@@ -4782,7 +4785,7 @@
     tgSend: (d) => tgShareLink(d.url, d.text),
     // карточкой с картинкой и кнопкой; где Telegram так не умеет — как раньше, текстом со ссылкой
     cardSend: async (d) => {
-      const code = (String(d.url).match(/start=([\w-]+)/) || [])[1];
+      const code = (String(d.url).match(/start(?:app)?=([\w-]+)/) || [])[1];   // ссылка бывает ?start=… и ?startapp=… — карточкой должны уходить обе (правка 03.10)
       if (!(LIVE && tg && tg.shareMessage && code)) { tgShareLink(d.url, d.text); return; }
       try {
         const res = await window.API.post('/cards/prepare', { kind: d.kind, code });
