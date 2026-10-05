@@ -1,2 +1,2 @@
 // Адрес сервера. Его вписывает сторож — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://electoral-mostly-perspectives-expression.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://bat-gateway-take-apartments.trycloudflare.com';
