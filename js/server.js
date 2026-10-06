@@ -1,2 +1,2 @@
 ﻿// Адрес сервера. Его вписывает tools/start.ps1 — руками трогать не нужно.
-window.SARAFAN_SERVER = 'https://noticed-ringtone-hit-investigator.trycloudflare.com';
+window.SARAFAN_SERVER = 'https://significantly-housewives-independence-thousand.trycloudflare.com';
