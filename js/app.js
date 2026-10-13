@@ -3266,7 +3266,7 @@
 
     return `<div class="top"><button class="back" data-act="back" aria-label="Назад">${ic('back')}</button><button class="back" data-act="goHome" aria-label="На главную">${ic('home')}</button><div class="grow"></div><button class="icon-btn" data-act="share" data-id="${id}" aria-label="Поделиться">${ic('share')}</button></div>
       ${share ? `<div class="shared-banner">${av(share.from, 's')}<div><div>Контакт прислали вам: <b>${esc(U(share.from).name)}</b></div>${share.note ? `<div style="margin-top:4px;color:var(--ink-2)">«${esc(share.note)}»</div>` : ''}</div></div>` : ''}
-      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName && !u.noName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${u.noName ? `<div class="small muted" style="margin-top:2px">${u.aliasBy && U(u.aliasBy) ? `так его называет ${esc(first(u.aliasBy))}${tgHandle(id) ? ` · ${esc(tgHandle(id))}` : ''}` : esc(tgHandle(id))}</div>` : ''}${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.alias ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
+      <div class="p-head">${founderAv(id, 'xl', ringOf(id))}<div><div class="who">${esc(who(id))} · ${esc(u.city)}</div><h1 class="h1" style="margin-top:4px">${esc(u.name)}${u.tgName && !u.noName ? ` <span class="tg-name">(${esc(u.tgName)})</span>` : ''}</h1>${u.noName ? `<div class="small muted" style="margin-top:2px">${u.aliasBy && U(u.aliasBy) ? `так его называет ${esc(first(u.aliasBy))}${tgHandle(id) ? ` · ${esc(tgHandle(id))}` : ''}` : esc(tgHandle(id))}</div>` : U(id).username && tgHandle(id) ? `<div class="small muted" style="margin-top:2px">${esc(tgHandle(id))}</div>` : ''}${founderTag(id)}${LIVE && id !== S.me ? `<button class="rename" data-act="renameContact" data-id="${id}">${ic('edit')}${u.alias ? 'Изменить, как вы его зовёте' : 'Назвать по-своему'}</button>` : ''}${jobLine(id)}</div>${u.busy ? '<div class="chips" style="margin-top:8px"><span class="tag warm">Сейчас не берёт работу</span></div>' : ''}${u.about ? `<p class="about">${esc(u.about)}</p>` : ''}</div>
       ${personFacts(id, allRecs, indep)}
       ${direct ? '' : `<div class="sec-title"><h2 class="h2">Как вы связаны</h2>${t.circle && t.circle < Infinity ? circleTag(t.circle) : ''}</div>
       <div class="card">${how}</div>`}
@@ -4464,7 +4464,7 @@
     const direct = G.connected(S.me, id);
     openSheet({
       F: {},
-      render: () => `${sheetHead(id, esc(U(id).name), (U(id).noName && !U(id).aliasBy && tgHandle(id) ? esc(tgHandle(id)) + '<br>' : '') + esc(who(id)) + ' · ' + esc(U(id).city))}
+      render: () => `${sheetHead(id, esc(U(id).name), ((U(id).noName && !U(id).aliasBy || U(id).username) && tgHandle(id) ? esc(tgHandle(id)) + '<br>' : '') + esc(who(id)) + ' · ' + esc(U(id).city))}
         ${isFounder(id) ? `<div class="peek-founder">${founderTag(id)}</div>` : ''}
         ${peekInfo(id)}
         <div style="margin-top:12px">${chainLine(t.chain || [])}</div>
