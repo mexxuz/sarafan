@@ -663,7 +663,15 @@ window.Cloud = function (canvas, opts) {
   const release = (e) => {
     if (e && e.pointerId != null) touches.delete(e.pointerId);
     if (touches.size < 2) pinch = 0;
-    if (held && moved < TAP && opts.onPick) opts.onPick(held);
+    if (held && moved < TAP && opts.onPick) {
+      // Телефон после отпускания пальца ещё шлёт «щелчок» в ту же точку — а там уже фон открытой
+      // карточки, и он её сразу закрывал: открывалось только долгим удержанием (правка 17.10).
+      // Глотаем этот один щелчок.
+      const eat = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+      document.addEventListener('click', eat, { capture: true, once: true });
+      setTimeout(() => document.removeEventListener('click', eat, { capture: true }), 450);
+      opts.onPick(held);
+    }
     if (held) settleUntil = frames + 90;   // отпустили точку — соседи ещё немного укладываются и снова замирают
     held = null; pointer.down = false;
     canvas.style.cursor = 'grab';
